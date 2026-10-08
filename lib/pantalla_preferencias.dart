@@ -33,6 +33,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
     'Walmart',
     'Soriana',
     'La Comer',
+    'Central de Abasto',
     'Costco',
     'Sam\'s Club',
   ];

@@ -10,12 +10,14 @@ import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
 
 class ItemCotizadoDetalle {
+  final int? idItem;
   final String nombre;
   final String cantidadTexto;
   final double precioUnitario;
   final double subtotal;
 
   const ItemCotizadoDetalle({
+    this.idItem,
     required this.nombre,
     required this.cantidadTexto,
     required this.precioUnitario,
@@ -53,6 +55,9 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   bool _estaCargando = false;
   PreferenciasUsuario? _preferencias;
   CotizacionSupermercado? _mejorCotizacion;
+  Map<int, double> _preciosEstimadosPorItem = {};
+  String _nombreSuperDestacado = 'Walmart';
+  bool _esSuperFavoritoActivo = false;
   List<Map<String, dynamic>> _ultimosItems = [];
   int _ultimoTotalItems = -1;
 
@@ -76,6 +81,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     final prefs = await ServicioPreferencias.obtenerPreferencias();
     if (mounted) {
       setState(() => _preferencias = prefs);
+      _recalcularPresupuesto();
     }
   }
 
@@ -83,15 +89,45 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     try {
       final cotizaciones = await cotizarListaCompleta();
       if (mounted && cotizaciones.isNotEmpty) {
-        setState(() {
-          _mejorCotizacion = cotizaciones.firstWhere(
+        final String favPref =
+            (_preferencias?.superFavorito ?? '').trim().toLowerCase();
+
+        CotizacionSupermercado cotizacionElegida;
+        bool esFavorito = false;
+
+        final matchFavorito = cotizaciones.where((c) {
+          final n = c.nombreSupermercado.toLowerCase();
+          return favPref.isNotEmpty &&
+              favPref != 'ninguno' &&
+              (n.contains(favPref) || favPref.contains(n));
+        }).toList();
+
+        if (matchFavorito.isNotEmpty) {
+          cotizacionElegida = matchFavorito.first;
+          esFavorito = true;
+        } else {
+          cotizacionElegida = cotizaciones.firstWhere(
             (c) => c.total > 0,
             orElse: () => cotizaciones.first,
           );
+        }
+
+        final Map<int, double> preciosMap = {};
+        for (var d in cotizacionElegida.desglose) {
+          if (d.idItem != null) {
+            preciosMap[d.idItem!] = d.subtotal;
+          }
+        }
+
+        setState(() {
+          _mejorCotizacion = cotizacionElegida;
+          _preciosEstimadosPorItem = preciosMap;
+          _nombreSuperDestacado = cotizacionElegida.nombreSupermercado;
+          _esSuperFavoritoActivo = esFavorito;
         });
       }
     } catch (e) {
-      debugPrint('Error silencioso al recalcular presupuesto: $e');
+      debugPrint('Error al recalcular presupuesto: $e');
     }
   }
 
@@ -933,13 +969,15 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   Future<List<CotizacionSupermercado>> cotizarListaCompleta() async {
     final resLista = await supabase
         .from('lista_compras')
-        .select('id, nombre, cantidad')
-        .eq('comprado', false);
+        .select('id, nombre, cantidad, comprado');
 
-    final List itemsPendientes = resLista as List;
-    if (itemsPendientes.isEmpty) {
+    final List itemsTodos = resLista as List;
+    if (itemsTodos.isEmpty) {
       return [];
     }
+
+    final int pendientesCount =
+        itemsTodos.where((it) => it['comprado'] != true).length;
 
     final supers = await supabase
         .from('supermercados')
@@ -962,7 +1000,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
       desglosesPorSuper[id] = [];
     }
 
-    for (var item in itemsPendientes) {
+    for (var item in itemsTodos) {
       final String nombreItem = (item['nombre'] ?? '')
           .toString()
           .toLowerCase()
@@ -1015,11 +1053,14 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
 
             final double subtotal =
                 (costoUnitario * multiplicador * 100).round() / 100.0;
-            totalesPorSuper[idSuper] =
-                (totalesPorSuper[idSuper] ?? 0.0) + subtotal;
-            conteoPorSuper[idSuper] = (conteoPorSuper[idSuper] ?? 0) + 1;
+            if (item['comprado'] != true) {
+              totalesPorSuper[idSuper] =
+                  (totalesPorSuper[idSuper] ?? 0.0) + subtotal;
+              conteoPorSuper[idSuper] = (conteoPorSuper[idSuper] ?? 0) + 1;
+            }
             desglosesPorSuper[idSuper]?.add(
               ItemCotizadoDetalle(
+                idItem: item['id'] as int?,
                 nombre: (item['nombre'] ?? '').toString(),
                 cantidadTexto: (item['cantidad'] ?? '1').toString(),
                 precioUnitario: costoUnitario,
@@ -1039,7 +1080,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             nombreSupermercado: s['nombre'] ?? 'Supermercado',
             total: ((totalesPorSuper[id] ?? 0.0) * 100).round() / 100.0,
             itemsCotizados: conteoPorSuper[id] ?? 0,
-            itemsTotales: itemsPendientes.length,
+            itemsTotales: pendientesCount,
             desglose: desglosesPorSuper[id] ?? [],
           );
         })
@@ -1533,31 +1574,31 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
           // 🛒 Cotizar en Supermercados
           IconButton(
             tooltip: 'Cotizar en supermercados',
-            icon: const Icon(Icons.storefront, color: Colors.deepOrange),
+            icon: const Icon(Icons.storefront, color: Colors.white),
             onPressed: _estaCargando ? null : mostrarModalCotizaciones,
           ),
           // 💬 Compartir por WhatsApp
           IconButton(
             tooltip: 'Compartir por WhatsApp',
-            icon: const Icon(Icons.share, color: Colors.green),
+            icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () => _compartirListaPorWhatsApp(_ultimosItems),
           ),
           // 🗑️ Botón para vaciar toda la lista
           IconButton(
             tooltip: 'Vaciar toda la lista',
-            icon: const Icon(Icons.delete_sweep),
+            icon: const Icon(Icons.delete_sweep, color: Colors.white),
             onPressed: _confirmarBorrarListaCompleta,
           ),
           // Botón para autollenar
           IconButton(
             tooltip: 'Autollenar desde Planeador',
-            icon: const Icon(Icons.sync_alt),
+            icon: const Icon(Icons.sync_alt, color: Colors.white),
             onPressed: _estaCargando ? null : autollenarListaDesdePlaneador,
           ),
           // Botón para transferir a despensa
           IconButton(
             tooltip: 'Mover comprados a Despensa',
-            icon: const Icon(Icons.inventory_2_outlined),
+            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
             onPressed: _estaCargando ? null : transferirCompradosADespensa,
           ),
         ],
@@ -1644,11 +1685,28 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                                     color: comprado
                                         ? Colors.grey
                                         : Colors.black87,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                subtitle:
-                                    Text('Cantidad: ${item['cantidad'] ?? 1}'),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Cantidad: ${item['cantidad'] ?? 1}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: comprado
+                                            ? Colors.grey
+                                            : Colors.black54,
+                                      ),
+                                    ),
+                                    _construirBadgePrecioItem(
+                                      item['id'] as int?,
+                                      comprado,
+                                    ),
+                                  ],
+                                ),
                                 // 🗑️ Botón individual para borrar elemento por elemento
                                 trailing: IconButton(
                                   icon: const Icon(
@@ -1705,6 +1763,85 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _construirBadgePrecioItem(int? idItem, bool comprado) {
+    final double? precio =
+        idItem != null ? _preciosEstimadosPorItem[idItem] : null;
+    final String superNombre = _nombreSuperDestacado;
+    final bool esFavorito = _esSuperFavoritoActivo;
+
+    if (precio == null || precio <= 0) {
+      return Container(
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          'Cotización pendiente',
+          style: TextStyle(
+            fontSize: 10.5,
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    }
+
+    final Color badgeBg =
+        esFavorito ? const Color(0xFFFFF9C4) : const Color(0xFFF1F8E9);
+    final Color borderColor =
+        esFavorito ? const Color(0xFFFFCA28) : const Color(0xFFAED581);
+    final Color textColor =
+        esFavorito ? const Color(0xFFE65100) : const Color(0xFF33691E);
+    final Color precioColor =
+        esFavorito ? const Color(0xFFBF360C) : const Color(0xFF1B5E20);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: comprado ? Colors.grey.shade100 : badgeBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: comprado ? Colors.grey.shade300 : borderColor,
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            esFavorito ? Icons.star_rounded : Icons.storefront_outlined,
+            size: 14,
+            color: comprado
+                ? Colors.grey
+                : (esFavorito
+                    ? Colors.amber.shade900
+                    : Colors.green.shade700),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            esFavorito ? '⭐ $superNombre (Favorito): ' : '$superNombre: ',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: esFavorito ? FontWeight.bold : FontWeight.w600,
+              color: comprado ? Colors.grey : textColor,
+            ),
+          ),
+          Text(
+            '\$${precio.toStringAsFixed(2)} MXN',
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: comprado ? Colors.grey : precioColor,
+            ),
+          ),
+        ],
       ),
     );
   }
