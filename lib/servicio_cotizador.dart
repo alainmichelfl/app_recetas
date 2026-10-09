@@ -125,10 +125,14 @@ class ServicioCotizador {
               nombreItem,
             );
             double multiplicador = cantidadLimpia;
-            if (u == 'pza') {
-              if (ConversorUnidades.sinAcentos(nombreItem).contains('huevo')) {
+            if (ConversorUnidades.sinAcentos(nombreItem).contains('huevo')) {
+              if (u == 'pza') {
                 multiplicador = (cantidadLimpia / 16.0).clamp(0.5, 5.0);
-              } else if (ConversorUnidades.esFrutaOVerduraPorKilo(nombreItem)) {
+              } else {
+                multiplicador = cantidadLimpia.clamp(1.0, 3.0);
+              }
+            } else if (u == 'pza') {
+              if (ConversorUnidades.esFrutaOVerduraPorKilo(nombreItem)) {
                 multiplicador = cantidadLimpia *
                     ConversorUnidades.pesoAproximadoKilosPorPieza(nombreItem);
               }

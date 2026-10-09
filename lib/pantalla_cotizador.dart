@@ -440,6 +440,10 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
 
     // 4. Huevos (precio por paquete/cartera de 12-18)
     if (normNom.contains('huevo') || normNom.contains('blanquillo')) {
+      if (normUnid.contains('carton') || normUnid.contains('cartón')) {
+        final double cartones = cantAjustada.clamp(1.0, 5.0);
+        return (precioUnit * cartones * 100).round() / 100.0;
+      }
       final int paquetes = (cantAjustada / 12.0).ceil().clamp(1, 10);
       return (precioUnit * paquetes * 100).round() / 100.0;
     }

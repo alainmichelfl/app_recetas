@@ -49,6 +49,23 @@ class ConversorUnidades {
       return false;
     }
 
+    // Distinguir explícitamente tipos y variantes de chocolate y chispas
+    final bool aChoc = cleanA.contains('chispas') || cleanA.contains('chocolate');
+    final bool bChoc = cleanB.contains('chispas') || cleanB.contains('chocolate');
+    if (aChoc && bChoc) {
+      final bool aEsChispas = cleanA.contains('chispas');
+      final bool bEsChispas = cleanB.contains('chispas');
+      if (aEsChispas != bEsChispas) return false;
+
+      final bool aEs70 = cleanA.contains('70%') || cleanA.contains('70 %') || cleanA.contains('cacao');
+      final bool bEs70 = cleanB.contains('70%') || cleanB.contains('70 %') || cleanB.contains('cacao');
+      if (aEs70 != bEs70) return false;
+
+      final bool aEsAmargo = cleanA.contains('amargo') || cleanA.contains('negro');
+      final bool bEsAmargo = cleanB.contains('amargo') || cleanB.contains('negro');
+      if (aEsAmargo != bEsAmargo) return false;
+    }
+
     // Si alguno es corto (<= 4 letras como "agua", "sal", "ajo"), exigir palabra completa
     if (cleanA.length <= 4 || cleanB.length <= 4) {
       final regA = RegExp(r'\b' + RegExp.escape(cleanA) + r'\b');
@@ -112,15 +129,15 @@ class ConversorUnidades {
     'consome',
     'caldo de pollo en polvo',
     'achiote',
+    'romero',
     'romero seco',
+    'romero fresco',
+    'tomillo',
     'tomillo seco',
     'laurel',
-    'endulzante sin calorias',
-    'endulzante',
-    'stevia',
   };
 
-  // 🫒 Aceites, vinagres y salsas: en recetas piden cucharadas, en el súper compras 1 botella/frasco
+  // 🫒 Aceites, vinagres y salsas / abarrotes líquidos y condimentos de alacena:
   static const Set<String> _aceitesYSalsas = {
     'aceite de oliva',
     'aceite de oliva extra virgen',
@@ -149,6 +166,13 @@ class ConversorUnidades {
     'aderezo',
     'aderezo cesar',
     'guacamole',
+    'endulzante sin calorias',
+    'endulzante',
+    'stevia',
+    'splenda',
+    'monk fruit',
+    'tajin',
+    'chile en polvo tajin',
   };
 
   // 🥜 Frutos secos, semillas y botanas: en el súper se compran por paquete / bolsa (no piezas sueltas)
@@ -189,7 +213,13 @@ class ConversorUnidades {
     'edamames',
     'vainas de edamame',
     'chispas de chocolate',
+    'chispas de chocolate amargo',
+    'chispas de chocolate 70% cacao',
+    'chispas de chocolate semiamargo',
     'chocolate amargo',
+    'chocolate amargo 70% cacao',
+    'chocolate amargo 70%',
+    'chocolate 70% cacao',
   };
 
   // 🍞 Panadería, tostadas, tortillas, galletas: se compran por paquete (no 4 tostadas sueltas)
@@ -570,15 +600,17 @@ class ConversorUnidades {
       }
     }
 
-    // 8. Huevos -> paquete (cartera de 12 o 18 pzas)
+    // 8. Huevos -> cartón (cartera de 12 o 18 pzas)
     for (var h in _huevos) {
       if (normNombre.contains(h)) {
-        final double paquetes = (cantSegura / 12.0).ceilToDouble().clamp(1.0, 10.0);
+        final double cartones = cantSegura <= 18.0
+            ? 1.0
+            : (cantSegura / 18.0).ceilToDouble().clamp(1.0, 5.0);
         return ItemSupermercado(
           nombre: 'Huevo',
-          cantidad: paquetes,
-          unidad: 'paquete',
-          textoCantidad: '${paquetes.toInt()} paquete${paquetes > 1 ? 's' : ''} (cartera 12-18 pzas)',
+          cantidad: cartones,
+          unidad: 'cartón',
+          textoCantidad: '${cartones.toInt()} cartón${cartones > 1 ? 'es' : ''} (cartera 12-18 pzas)',
         );
       }
     }
@@ -863,11 +895,27 @@ class ConversorUnidades {
     if (norm.contains('atun fresco') || norm.contains('medallon de atun') || norm.contains('medallones de atun')) {
       return 'Medallón de atún fresco';
     }
-    if (norm.contains('chispas de chocolate')) {
+    // Chispas de chocolate y variantes de chocolate
+    if (norm.contains('chispas de chocolate') || (norm.contains('chispas') && norm.contains('chocolate'))) {
+      if (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao')) {
+        return 'Chispas de chocolate 70% cacao';
+      }
+      if (norm.contains('amargo') || norm.contains('negro') || norm.contains('oscuro')) {
+        return 'Chispas de chocolate amargo';
+      }
+      if (norm.contains('semiamargo') || norm.contains('semi-amargo')) {
+        return 'Chispas de chocolate semiamargo';
+      }
       return 'Chispas de chocolate';
     }
     if (norm.contains('chocolate amargo') || norm.contains('chocolate negro')) {
+      if (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao')) {
+        return 'Chocolate amargo 70% cacao';
+      }
       return 'Chocolate amargo';
+    }
+    if (norm.contains('chocolate') && (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao'))) {
+      return 'Chocolate amargo 70% cacao';
     }
     if (norm == 'avena' || norm.contains('hojuelas de avena') || norm.contains('avena en hojuelas')) {
       return 'Avena en hojuelas';
@@ -980,6 +1028,27 @@ class ConversorUnidades {
     if (norm.contains('huevo') || norm.contains('blanquillo')) {
       return 'Huevo';
     }
+    if (norm.contains('tajin')) {
+      return 'Chile en polvo Tajín';
+    }
+    if (norm.contains('endulzante') || norm.contains('stevia') || norm.contains('splenda')) {
+      return 'Endulzante sin calorías';
+    }
+    if (norm.contains('guacamole')) {
+      return 'Guacamole';
+    }
+    if (norm.contains('jengibre')) {
+      return 'Jengibre';
+    }
+    if (norm.contains('maiz palomero') || norm.contains('palomitas')) {
+      return 'Maíz palomero';
+    }
+    if (norm.contains('romero')) {
+      return norm.contains('seco') ? 'Romero seco' : 'Romero fresco';
+    }
+    if (norm.contains('rabano')) {
+      return 'Rábanos';
+    }
 
     if (r.isEmpty) return s;
     return _capitalizar(r);
@@ -1072,11 +1141,12 @@ class ConversorUnidades {
       return 'paquete';
     }
 
-    // 0.6 Huevo
+    // 0.6 Huevo -> cartón (cartera de 12-18 pzas)
     if (normNom.contains('huevo') || normNom.contains('blanquillo')) {
-      return 'paquete';
+      return 'cartón';
     }
 
+    if (s.contains('carton') || s.contains('cartón')) return 'cartón';
     if (s.contains('lata')) return 'lata';
     if (s.contains('paquete') || s.contains('bolsa')) return 'paquete';
     if (s.contains('frasco') || s.contains('sobre')) return 'frasco';
@@ -1147,6 +1217,8 @@ class ConversorUnidades {
       double nuevaCant = cantExistenteNum;
       if (unidadExistente == 'frasco' || unidadExistente == 'botella') {
         nuevaCant = 1.0;
+      } else if (unidadExistente == 'cartón' || key.contains('huevo')) {
+        nuevaCant = ((cantExistenteNum + item.cantidad) <= 3.0 ? 1.0 : 2.0);
       } else if (unidadExistente == 'paquete') {
         nuevaCant = (cantExistenteNum + item.cantidad).clamp(1.0, 5.0).ceilToDouble();
       } else {
@@ -1154,7 +1226,10 @@ class ConversorUnidades {
       }
 
       String nuevoTexto = '$nuevaCant $unidadExistente';
-      if (unidadExistente == 'pza' ||
+      if (unidadExistente == 'cartón' || key.contains('huevo')) {
+        final int cInt = nuevaCant.ceil();
+        nuevoTexto = '$cInt cartón${cInt > 1 ? 'es' : ''} (cartera 12-18 pzas)';
+      } else if (unidadExistente == 'pza' ||
           unidadExistente == 'cabeza' ||
           unidadExistente == 'lata' ||
           unidadExistente == 'paquete') {
@@ -1217,6 +1292,9 @@ class ConversorUnidades {
 
         if (prevUnidad == 'frasco' || prevUnidad == 'botella') {
           prev['cantNum'] = 1.0;
+        } else if (prevUnidad == 'cartón' || key.contains('huevo')) {
+          prev['cantNum'] = ((prevCant + cantNum) <= 3.0 ? 1.0 : 2.0);
+          prev['unidad'] = 'cartón';
         } else if (prevUnidad == 'paquete') {
           final double nueva = (prevCant + cantNum).clamp(1.0, 5.0);
           prev['cantNum'] = nueva.ceilToDouble();
@@ -1241,7 +1319,10 @@ class ConversorUnidades {
       final double c = entry['cantNum'] as double;
       final String u = entry['unidad'] as String;
       String textoCant = '';
-      if (u == 'pza' || u == 'lata' || u == 'cabeza' || u == 'paquete') {
+      if (u == 'cartón' || entry['nombre'].toString().toLowerCase().contains('huevo')) {
+        final int cInt = c.ceil();
+        textoCant = '$cInt cartón${cInt > 1 ? 'es' : ''} (cartera 12-18 pzas)';
+      } else if (u == 'pza' || u == 'lata' || u == 'cabeza' || u == 'paquete') {
         final int cInt = c.ceil();
         textoCant = '$cInt $u${cInt > 1 ? 's' : ''}';
       } else if (u == 'kg' || u == 'L') {
@@ -1409,6 +1490,13 @@ class ConversorUnidades {
   static String determinarCategoria(String nombre) {
     final n = sinAcentos(nombre).trim();
 
+    // 0. REGLA FUNDAMENTAL DE ACEITES:
+    // Todos los aceites comestibles (oliva, ajonjolí, vegetal, aguacate, coco, spray, etc.)
+    // van DIRECTAMENTE a Abarrotes y Alacena (¡nunca a frutas o verduras!).
+    if (n.contains('aceite')) {
+      return 'Abarrotes y Alacena';
+    }
+
     // 1. Pescados y Mariscos (revisar antes de carnes generales)
     if (n.contains('atun fresco') ||
         n.contains('medallon de atun') ||
@@ -1420,7 +1508,10 @@ class ConversorUnidades {
         n.contains('camaron') ||
         n.contains('camarones') ||
         n.contains('marisco') ||
-        n.contains('pulpo')) {
+        n.contains('pulpo') ||
+        n.contains('calamar') ||
+        n.contains('almeja') ||
+        n.contains('mejillon')) {
       return 'Pescados y Mariscos';
     }
 
@@ -1431,13 +1522,14 @@ class ConversorUnidades {
         n.contains('pierna') ||
         n.contains('milanesa') ||
         n.contains('bistec') ||
-        n.contains('res') ||
-        n.contains('carne') ||
+        n.contains('arrachera') ||
+        n.contains('carne molida') ||
+        n.contains('molida de') ||
+        (n.contains('res') && !n.contains('fres')) ||
+        (n.contains('carne') && !n.contains('chile')) ||
         n.contains('cerdo') ||
         n.contains('puerco') ||
         n.contains('pavo') ||
-        n.contains('arrachera') ||
-        n.contains('molida') ||
         n.contains('jamon') ||
         n.contains('tocino') ||
         n.contains('salchicha')) {
@@ -1447,6 +1539,8 @@ class ConversorUnidades {
     // 3. Lácteos y Huevos
     if (n.contains('huevo') ||
         n.contains('blanquillo') ||
+        n.contains('clara de huevo') ||
+        n.contains('claras') ||
         n.contains('leche') ||
         n.contains('queso') ||
         n.contains('panela') ||
@@ -1461,13 +1555,20 @@ class ConversorUnidades {
       return 'Lácteos y Huevos';
     }
 
-    // 4. Frutas y Verduras
+    // 4. Frutas y Verduras (Verduras, hortalizas, tubérculos y frutas frescas)
+    // NOTA CLAVE: Para 'ajo', exigir palabra completa para evitar falsos positivos con 'ajonjoli'!
+    final bool esAjoSeguro = (n.contains('diente de ajo') ||
+            n.contains('cabeza de ajo') ||
+            RegExp(r'\bajo\b').hasMatch(n)) &&
+        !n.contains('ajonjoli') &&
+        !n.contains('polvo');
+
     if (n.contains('jitomate') ||
-        n.contains('tomate') ||
-        n.contains('cebolla') ||
-        n.contains('ajo') ||
+        (n.contains('tomate') && !n.contains('pure') && !n.contains('pasta')) ||
+        (n.contains('cebolla') && !n.contains('polvo')) ||
+        esAjoSeguro ||
         n.contains('limon') ||
-        n.contains('aguacate') ||
+        (n.contains('aguacate') && !n.contains('aceite')) ||
         n.contains('esparrago') ||
         n.contains('cilantro') ||
         n.contains('perejil') ||
@@ -1478,9 +1579,12 @@ class ConversorUnidades {
         n.contains('zanahoria') ||
         n.contains('papa') ||
         n.contains('nopal') ||
+        n.contains('edamame') || // Solicitado: edamames verdura o congelados
+        n.contains('jengibre') || // Solicitado: jengibre verduras
+        n.contains('rabano') || // Solicitado: rábanos verduras / tubérculo
         n.contains('chile serrano') ||
         n.contains('chile jalapeño') ||
-        n.contains('chile jalape') ||
+        n.contains('chile jalapeno') ||
         n.contains('chile poblano') ||
         n.contains('chile habanero') ||
         n.contains('chile verde') ||
@@ -1491,9 +1595,12 @@ class ConversorUnidades {
         n.contains('fresa') ||
         n.contains('champiñon') ||
         n.contains('champinon') ||
+        n.contains('champiñones') ||
         n.contains('setas') ||
+        n.contains('hongos') ||
         n.contains('col ') ||
         n.contains('col blanca') ||
+        n.contains('col morada') ||
         n.contains('coliflor') ||
         n.contains('brocoli') ||
         n.contains('apio') ||
@@ -1511,7 +1618,10 @@ class ConversorUnidades {
         n.contains('melon') ||
         n.contains('piña') ||
         n.contains('pina') ||
-        n.contains('guayaba')) {
+        n.contains('guayaba') ||
+        n.contains('papaya') ||
+        n.contains('durazno') ||
+        n.contains('kiwi')) {
       return 'Frutas y Verduras';
     }
 
@@ -1526,7 +1636,8 @@ class ConversorUnidades {
         n.contains('totopo') ||
         n.contains('bolillo') ||
         n.contains('telera') ||
-        n.contains('galleta')) {
+        n.contains('galleta') ||
+        n.contains('cruton')) {
       return 'Panadería y Tortillería';
     }
 
@@ -1544,17 +1655,29 @@ class ConversorUnidades {
         n.contains('cebolla en polvo') ||
         n.contains('polvo para hornear') ||
         n.contains('bicarbonato') ||
+        n.contains('levadura') ||
         n.contains('vainilla') ||
         n.contains('laurel') ||
-        n.contains('romero seco') ||
-        n.contains('tomillo seco') ||
+        n.contains('romero') || // Solicitado: romero fresco / seco en especias
+        n.contains('tomillo') ||
+        n.contains('albahaca') ||
+        n.contains('eneldo') ||
+        n.contains('achiote') ||
         n.contains('consome') ||
         n.contains('caldo de pollo en polvo')) {
       return 'Especias y Condimentos';
     }
 
     // 7. Abarrotes y Alacena
-    if (n.contains('arroz') ||
+    if (n.contains('tajin') || // Solicitado: tajín abarrote
+        n.contains('endulzante') || // Solicitado: endulzante abarrote/alacena
+        n.contains('stevia') ||
+        n.contains('splenda') ||
+        n.contains('monk fruit') ||
+        n.contains('guacamole') || // Solicitado: guacamole abarrote/alacena
+        n.contains('palomero') || // Solicitado: maíz palomero abarrote
+        n.contains('palomitas') ||
+        n.contains('arroz') ||
         n.contains('frijol') ||
         n.contains('lenteja') ||
         n.contains('garbanzo') ||
@@ -1569,21 +1692,36 @@ class ConversorUnidades {
         n.contains('elote') ||
         n.contains('chipotle') ||
         n.contains('guajillo') ||
+        n.contains('ancho') ||
+        n.contains('pasilla') ||
+        n.contains('morita') ||
         n.contains('chile seco') ||
         n.contains('agua de coco') ||
-        n.contains('aceite') ||
+        n.contains('leche evaporada') ||
+        n.contains('leche condensada') ||
+        n.contains('media crema') ||
+        n.contains('pure de tomate') ||
+        n.contains('pasta de tomate') ||
         n.contains('vinagre') ||
         n.contains('miel') ||
+        n.contains('azucar') ||
         n.contains('mayonesa') ||
         n.contains('mostaza') ||
         n.contains('salsa') ||
+        n.contains('aderezo') ||
         n.contains('almendra') ||
         n.contains('nuez') ||
         n.contains('cacahuate') ||
+        n.contains('pistache') ||
         n.contains('chia') ||
+        n.contains('linaza') ||
+        n.contains('ajonjoli') || // Semillas de ajonjolí en abarrotes
         n.contains('semilla') ||
+        n.contains('pepitas') ||
         n.contains('amaranto') ||
-        n.contains('chocolate')) {
+        n.contains('chocolate') ||
+        n.contains('chispas') ||
+        n.contains('cacao')) {
       return 'Abarrotes y Alacena';
     }
 

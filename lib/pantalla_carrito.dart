@@ -683,11 +683,26 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             );
             return;
           }
+          // Huevos: 1 cartón (cartera de 12-18 pzas) cubre típicamente la semana (máx 2 si es consumo muy alto)
+          if (ConversorUnidades.sinAcentos(existente.nombre).contains('huevo')) {
+            final double nuevoTotal = (existente.cantidad + 0.15).clamp(1.0, 3.0);
+            final int cartonesInt = nuevoTotal.floor().clamp(1, 3);
+            requerimientos[key] = ItemSupermercado(
+              nombre: 'Huevo',
+              cantidad: cartonesInt.toDouble(),
+              unidad: 'cartón',
+              textoCantidad: '$cartonesInt cartón${cartonesInt > 1 ? 'es' : ''} (cartera 12-18 pzas)',
+            );
+            return;
+          }
           // Unidades sumables (kg, L, pza, cabeza, lata, paquete)
           final nuevaCantidad =
               ((existente.cantidad + item.cantidad) * 100).round() / 100.0;
           String texto = '$nuevaCantidad ${existente.unidad}';
-          if (existente.unidad == 'pza' ||
+          if (existente.unidad == 'cartón') {
+            final int cantInt = nuevaCantidad.ceil();
+            texto = '$cantInt cartón${cantInt > 1 ? 'es' : ''} (cartera 12-18 pzas)';
+          } else if (existente.unidad == 'pza' ||
               existente.unidad == 'cabeza' ||
               existente.unidad == 'lata' ||
               existente.unidad == 'paquete') {
