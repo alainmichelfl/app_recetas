@@ -35,11 +35,27 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
 
-  final List<String> listaSupermercados = ['Walmart', 'Soriana', 'La Comer'];
+  int porcionesBase = 1;
+  int porcionesActuales = 1;
+
+  double get multiplicadorActual {
+    if (recetaActualId == -1) {
+      return porcionesActuales.toDouble();
+    }
+    return porcionesActuales / (porcionesBase > 0 ? porcionesBase : 1);
+  }
+
+  final List<String> listaSupermercados = [
+    'Walmart',
+    'Soriana',
+    'La Comer',
+    'Central de Abasto',
+  ];
 
   @override
   void initState() {
     super.initState();
+    porcionesActuales = (widget.multiplicador > 0 ? widget.multiplicador : 1.0).round().clamp(1, 20);
     _cargarHistorial();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -134,6 +150,7 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
     if (n.contains('walmart')) return 'Walmart';
     if (n.contains('soriana')) return 'Soriana';
     if (n.contains('comer')) return 'La Comer';
+    if (n.contains('abasto') || n.contains('central')) return 'Central de Abasto';
     return 'Walmart';
   }
 
@@ -144,6 +161,8 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
       List<Map<String, dynamic>> itemsTemp = [];
 
       if (recetaActualId == -1) {
+        porcionesBase = 1;
+        porcionesActuales = 1;
         final resCompras = await supabase
             .from('lista_compras')
             .select('id, nombre, cantidad')
@@ -160,6 +179,31 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
           });
         }
       } else {
+        if (recetaActualId != null && recetaActualId! > 0) {
+          try {
+            final recetaInfo = await supabase
+                .from('recetas')
+                .select('porciones, descripcion')
+                .eq('id_receta', recetaActualId!)
+                .maybeSingle();
+            if (recetaInfo != null) {
+              int pBase = 1;
+              if (recetaInfo['porciones'] != null && recetaInfo['porciones'] is int) {
+                pBase = recetaInfo['porciones'] as int;
+              } else {
+                final match = RegExp(r'PORCIONES:\s*(\d+)', caseSensitive: false)
+                    .firstMatch(recetaInfo['descripcion']?.toString() ?? '');
+                if (match != null) {
+                  pBase = int.tryParse(match.group(1)!) ?? 1;
+                }
+              }
+              if (pBase <= 0) pBase = 1;
+              porcionesBase = pBase;
+              porcionesActuales = (pBase * widget.multiplicador).round().clamp(1, 20);
+            }
+          } catch (_) {}
+        }
+
         final respuesta = await supabase
             .from('receta_detalle')
             .select(
@@ -334,6 +378,10 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
           'La Comer',
           () => (precioBaseReferencia * 1.05).roundToDouble(),
         );
+        preciosPorSuper.putIfAbsent(
+          'Central de Abasto',
+          () => (precioBaseReferencia * 0.75).roundToDouble(),
+        );
 
         listaFinal.add({
           'nombre': nombre,
@@ -356,21 +404,64 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
     }
   }
 
+  double calcularSubtotalItem(Map<String, dynamic> item, String supermercado) {
+    final String nombre = (item['nombre'] ?? '').toString();
+    final double cantBase = (item['cantidad'] is num)
+        ? (item['cantidad'] as num).toDouble()
+        : double.tryParse(item['cantidad']?.toString() ?? '1') ?? 1.0;
+    final String unidad = (item['unidad'] ?? 'pza').toString();
+    final double cantAjustada = cantBase * multiplicadorActual;
+
+    final Map<String, double> precios = Map<String, double>.from(item['precios'] ?? {});
+    double precioUnit = precios[supermercado] ?? 0.0;
+    if (precioUnit == 0.0 && precios.isNotEmpty) {
+      precioUnit = precios.values.first;
+    }
+    if (precioUnit <= 0) return 0.0;
+
+    final normNom = ConversorUnidades.sinAcentos(nombre);
+    final normUnid = ConversorUnidades.sinAcentos(unidad);
+
+    // 1. Frutas y verduras por kilo vendidas en piezas
+    if (normUnid == 'pza' && ConversorUnidades.esFrutaOVerduraPorKilo(nombre)) {
+      final pesoKilos = cantAjustada * ConversorUnidades.pesoAproximadoKilosPorPieza(nombre);
+      return (precioUnit * pesoKilos * 100).round() / 100.0;
+    }
+
+    // 2. Carnes y proteínas o productos por kg
+    if (normUnid == 'kg' || normUnid == 'kilo') {
+      return (precioUnit * cantAjustada * 100).round() / 100.0;
+    }
+
+    // 3. Líquidos por litro
+    if (normUnid == 'l' || normUnid == 'lt') {
+      return (precioUnit * cantAjustada * 100).round() / 100.0;
+    }
+
+    // 4. Huevos (precio por paquete/cartera de 12-18)
+    if (normNom.contains('huevo') || normNom.contains('blanquillo')) {
+      final int paquetes = (cantAjustada / 12.0).ceil().clamp(1, 10);
+      return (precioUnit * paquetes * 100).round() / 100.0;
+    }
+
+    // 5. Especias o aceites/botellas que no se multiplican si es poca cantidad (1 frasco basta)
+    if (normUnid == 'frasco' || normUnid == 'botella' || ConversorUnidades.esEspecia(nombre)) {
+      return precioUnit;
+    }
+
+    // 6. Paquetes, latas, manojos, cabezas, o piezas enteras
+    final double cantComercial = cantAjustada < 1.0 ? 1.0 : cantAjustada.ceilToDouble();
+    return (precioUnit * cantComercial * 100).round() / 100.0;
+  }
+
   double calcularTotalDe(String supermercado) {
     double total = 0;
     for (var item in ingredientesDinamicos) {
       if (item['incluir'] == true) {
-        final Map<String, double> precios = Map<String, double>.from(
-          item['precios'] ?? {},
-        );
-        double precioPaquete = precios[supermercado] ?? 0.0;
-        if (precioPaquete == 0.0 && precios.isNotEmpty) {
-          precioPaquete = precios.values.first;
-        }
-        total += (precioPaquete * widget.multiplicador);
+        total += calcularSubtotalItem(item, supermercado);
       }
     }
-    return total;
+    return (total * 100).round() / 100.0;
   }
 
   Future<void> guardarSeleccionadosEnCarrito() async {
@@ -394,7 +485,7 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
               ? (item['cantidad'] as int).toDouble()
               : double.tryParse(item['cantidad'].toString()) ?? 1.0;
 
-          final cantidadCalculada = cantidadBase * widget.multiplicador;
+          final cantidadCalculada = cantidadBase * multiplicadorActual;
           final itemNorm = ConversorUnidades.normalizarParaSupermercado(
             item['nombre'],
             cantidadCalculada,
@@ -1060,7 +1151,58 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 20),
+                      if (recetaActualId != -1) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.deepPurple,
+                                size: 28,
+                              ),
+                              tooltip: 'Menos porciones',
+                              onPressed: porcionesActuales > 1
+                                  ? () => setState(() => porcionesActuales--)
+                                  : null,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.deepPurple.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Text(
+                                '🍽️ $porcionesActuales porciones',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.deepPurple,
+                                size: 28,
+                              ),
+                              tooltip: 'Más porciones',
+                              onPressed: porcionesActuales < 20
+                                  ? () => setState(() => porcionesActuales++)
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: listaSupermercados.map((superm) {
@@ -1191,7 +1333,7 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                       final double cant = (item['cantidad'] is num)
                           ? (item['cantidad'] as num).toDouble()
                           : 1.0;
-                      final double cantCalculada = cant * widget.multiplicador;
+                      final double cantCalculada = cant * multiplicadorActual;
                       final String presentacionComercial =
                           ConversorUnidades.normalizarParaSupermercado(
                             item['nombre'],
@@ -1199,11 +1341,10 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                             item['unidad'] ?? 'pza',
                           ).textoCantidad;
 
-                      final Map<String, double> preciosMap =
-                          Map<String, double>.from(item['precios'] ?? {});
-                      final double precioRef = preciosMap.values.isNotEmpty
-                          ? preciosMap.values.reduce((a, b) => a < b ? a : b)
-                          : 0.0;
+                      final double precioRef = calcularSubtotalItem(
+                        item,
+                        superMasBarato.isNotEmpty ? superMasBarato : 'Walmart',
+                      );
 
                       return Card(
                         margin: const EdgeInsets.symmetric(

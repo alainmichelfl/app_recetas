@@ -144,16 +144,18 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
 
     if (textoPasos.isNotEmpty) {
       final lineas = textoPasos.split('\n');
+      int numeroPaso = 1;
       for (var linea in lineas) {
         String paso = linea.trim();
         paso = paso.replaceAll(RegExp(r'^[\*\-\•]\s*'), '');
         paso = paso.replaceAll(RegExp(r'\*\*'), '');
-        paso = paso.replaceAll(RegExp(r'^\d+\.\s*'), '');
+        paso = paso.replaceAll(RegExp(r'^(?:paso\s*\d+[:\.]?|\d+[\.\)]\s*)', caseSensitive: false), '');
 
-        if (paso.length > 8) {
+        if (paso.length > 5) {
           paginasCocina.add({
             'tipo': 'paso',
             'titulo': 'Paso a Paso',
+            'numeroPaso': numeroPaso++,
             'contenido': paso,
           });
         }
@@ -164,6 +166,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
       paginasCocina.add({
         'tipo': 'paso',
         'titulo': 'Preparación',
+        'numeroPaso': 1,
         'contenido': widget.recetaInstrucciones,
       });
     }
@@ -172,10 +175,9 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
   @override
   Widget build(BuildContext context) {
     // Calculamos cuántos pasos reales hay (restando la tarjeta de preparación)
-    int totalPasosReales = paginasCocina
+    final int totalPasosReales = paginasCocina
         .where((p) => p['tipo'] == 'paso')
         .length;
-    int contadorPasos = 0;
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -197,7 +199,9 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
         children: [
           // Barra de progreso superior
           LinearProgressIndicator(
-            value: (_pasoActual + 1) / paginasCocina.length,
+            value: paginasCocina.isNotEmpty
+                ? (_pasoActual + 1) / paginasCocina.length
+                : 1.0,
             backgroundColor: Colors.grey[800],
             color: const Color(0xFFE53935),
             minHeight: 6,
@@ -213,10 +217,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
               itemBuilder: (context, index) {
                 final pagina = paginasCocina[index];
                 final bool esPreparacion = pagina['tipo'] == 'preparacion';
-
-                if (!esPreparacion) {
-                  contadorPasos++;
-                }
+                final int numPaso = pagina['numeroPaso'] ?? index;
 
                 return Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -265,7 +266,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                                 Text(
                                   esPreparacion
                                       ? pagina['titulo']
-                                      : 'Paso $contadorPasos de $totalPasosReales',
+                                      : 'Paso $numPaso de $totalPasosReales',
                                   style: TextStyle(
                                     color: esPreparacion
                                         ? Colors.orange[800]

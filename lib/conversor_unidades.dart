@@ -43,6 +43,12 @@ class ConversorUnidades {
     if (cleanA.isEmpty || cleanB.isEmpty) return false;
     if (cleanA == cleanB) return true;
 
+    // Distinguir explícitamente manzana verde vs manzana roja
+    if ((cleanA.contains('verde') && cleanB.contains('roja')) ||
+        (cleanA.contains('roja') && cleanB.contains('verde'))) {
+      return false;
+    }
+
     // Si alguno es corto (<= 4 letras como "agua", "sal", "ajo"), exigir palabra completa
     if (cleanA.length <= 4 || cleanB.length <= 4) {
       final regA = RegExp(r'\b' + RegExp.escape(cleanA) + r'\b');
@@ -74,6 +80,8 @@ class ConversorUnidades {
     'berros',
     'arugula',
     'acelga',
+    'esparrago',
+    'esparragos',
   };
 
   // 🧂 Especias secas y condimentos: no compras una pizca, compras 1 frasco / sobre
@@ -209,9 +217,10 @@ class ConversorUnidades {
 
   // 🥫 Enlatados típicos
   static const Set<String> _enlatados = {
-    'atun',
     'atun en agua',
     'atun en aceite',
+    'atun enlatado',
+    'lata de atun',
     'sardina',
     'sardinas',
     'elote',
@@ -226,6 +235,23 @@ class ConversorUnidades {
     'media crema',
     'pure de tomate',
     'pasta de tomate',
+  };
+
+  // 🌶️ Chiles secos: en el supermercado se compran por paquete / bolsa (100g)
+  static const Set<String> _chilesSecos = {
+    'chile guajillo',
+    'chiles guajillo',
+    'guajillo',
+    'chile ancho',
+    'chiles anchos',
+    'chile pasilla',
+    'chiles pasilla',
+    'chile morita',
+    'chiles morita',
+    'chile cascabel',
+    'chile de arbol seco',
+    'chiles secos',
+    'chile seco',
   };
 
   // 🥩 Carnes y proteínas vendidas por kilo en mostrador
@@ -348,7 +374,19 @@ class ConversorUnidades {
       }
     }
 
-    // 2. Hierbas frescas (cilantro, perejil, albahaca...) -> manojo
+    // 1.5. Chiles secos (chile guajillo, ancho, pasilla, etc.) -> 1 paquete (100g)
+    for (var cs in _chilesSecos) {
+      if (normNombre.contains(cs)) {
+        return ItemSupermercado(
+          nombre: _capitalizar(nombreLimpio),
+          cantidad: 1.0,
+          unidad: 'paquete',
+          textoCantidad: '1 paquete (100g)',
+        );
+      }
+    }
+
+    // 2. Hierbas frescas y espárragos (cilantro, perejil, albahaca, espárragos...) -> manojo
     for (var hierba in _hierbasFrescas) {
       if (normNombre.contains(hierba)) {
         final manojos = (cantSegura < 1.0 ? 1.0 : cantSegura.ceilToDouble()).clamp(1.0, 10.0);
@@ -359,6 +397,99 @@ class ConversorUnidades {
           textoCantidad: '${manojos.toInt()} manojo${manojos > 1 ? 's' : ''}',
         );
       }
+    }
+
+    // 2.5. Pescados y mariscos frescos (medallón de atún fresco, atún fresco, salmón, pescado) -> piezas o kg (NUNCA latas)
+    if (normNombre.contains('medallon') ||
+        (normNombre.contains('atun') && (normNombre.contains('fresco') || (!normNombre.contains('agua') && !normNombre.contains('aceite') && !normNombre.contains('lata'))))) {
+      final pzas = cantSegura.ceilToDouble().clamp(1.0, 20.0);
+      return ItemSupermercado(
+        nombre: 'Medallón de atún fresco',
+        cantidad: pzas,
+        unidad: 'pza',
+        textoCantidad: '${pzas.toInt()} pza${pzas > 1 ? 's' : ''}',
+      );
+    }
+
+    // 2.6. Jitomate Saladet / bola fresco -> piezas o kg (¡NUNCA jamás frasco!)
+    if (normNombre.contains('jitomate') &&
+        !normNombre.contains('pure') &&
+        !normNombre.contains('pasta')) {
+      if (normUnidad.contains('kg') || normUnidad.contains('kilo')) {
+        final kg = (cantSegura * 100).round() / 100.0;
+        return ItemSupermercado(
+          nombre: 'Jitomate Saladet',
+          cantidad: kg,
+          unidad: 'kg',
+          textoCantidad: '$kg kg',
+        );
+      } else if (normUnidad.contains('g') || (cantSegura > 15 && !normUnidad.contains('pza'))) {
+        final kg = ((cantSegura / 1000.0) * 100).round() / 100.0;
+        return ItemSupermercado(
+          nombre: 'Jitomate Saladet',
+          cantidad: kg,
+          unidad: 'kg',
+          textoCantidad: '$kg kg',
+        );
+      } else {
+        final pzas = cantSegura.ceilToDouble().clamp(1.0, 30.0);
+        return ItemSupermercado(
+          nombre: 'Jitomate Saladet',
+          cantidad: pzas,
+          unidad: 'pza',
+          textoCantidad: '${pzas.toInt()} pza${pzas > 1 ? 's' : ''}',
+        );
+      }
+    }
+
+    // 2.7. Tomate cherry o baby -> paquete (domo)
+    if (normNombre.contains('cherry') || normNombre.contains('tomate baby')) {
+      final double paquetes = (cantSegura > 10 ? (cantSegura / 250.0) : 1.0).ceilToDouble().clamp(1.0, 10.0);
+      return ItemSupermercado(
+        nombre: 'Tomate cherry',
+        cantidad: paquetes,
+        unidad: 'paquete',
+        textoCantidad: '${paquetes.toInt()} paquete${paquetes > 1 ? 's' : ''} (domo)',
+      );
+    }
+
+    // 2.8. Frutos rojos, berries, frambuesas, zarzamoras -> paquete / domo (¡NUNCA 1 sola pieza!)
+    if (normNombre.contains('frutos rojos') ||
+        normNombre.contains('fruto rojo') ||
+        normNombre.contains('frutos del bosque') ||
+        normNombre.contains('berries') ||
+        normNombre.contains('zarzamora') ||
+        normNombre.contains('frambuesa') ||
+        normNombre.contains('mora azul')) {
+      final double paquetes = (cantSegura > 10 ? (cantSegura / 250.0) : 1.0).ceilToDouble().clamp(1.0, 10.0);
+      return ItemSupermercado(
+        nombre: _capitalizar(nombreLimpio),
+        cantidad: paquetes,
+        unidad: 'paquete',
+        textoCantidad: '${paquetes.toInt()} paquete${paquetes > 1 ? 's' : ''}',
+      );
+    }
+
+    // 2.9. Agua de coco -> Litros (L) o botella
+    if (normNombre.contains('agua de coco')) {
+      double litros = cantSegura;
+      if (normUnidad.contains('ml')) {
+        litros = cantSegura / 1000.0;
+      } else if (normUnidad.contains('taza') || normUnidad.contains('vaso')) {
+        litros = cantSegura * 0.25;
+      } else if (normUnidad.contains('pza') || normUnidad.contains('pieza') || normUnidad.isEmpty) {
+        litros = cantSegura;
+      }
+      final double lRedondeado = (litros * 100).round() / 100.0;
+      final String formattedL = lRedondeado == lRedondeado.toInt()
+          ? '${lRedondeado.toInt()}'
+          : lRedondeado.toStringAsFixed(2);
+      return ItemSupermercado(
+        nombre: 'Agua de coco',
+        cantidad: lRedondeado,
+        unidad: 'L',
+        textoCantidad: '$formattedL L',
+      );
     }
 
     // 3. Especias secas y condimentos (pizca, cdita, cda) -> 1 frasco / sobre
@@ -385,10 +516,12 @@ class ConversorUnidades {
       }
     }
 
-    // 5. Enlatados (atún, elotes, chipotles) -> latas
+    // 5. Enlatados (atún en agua, elotes, chipotles) -> latas
     // Se valida ANTES de líquidos para que "atún en agua" nunca se marque como líquido.
     for (var lata in _enlatados) {
-      if (normNombre.contains(lata)) {
+      if (normNombre.contains(lata) &&
+          !normNombre.contains('fresco') &&
+          !normNombre.contains('medallon')) {
         final double numLatas = cantSegura < 1.0 ? 1.0 : cantSegura.ceilToDouble();
         return ItemSupermercado(
           nombre: _capitalizar(nombreLimpio),
@@ -437,15 +570,15 @@ class ConversorUnidades {
       }
     }
 
-    // 8. Huevos -> piezas
+    // 8. Huevos -> paquete (cartera de 12 o 18 pzas)
     for (var h in _huevos) {
       if (normNombre.contains(h)) {
-        final pzas = cantSegura.ceilToDouble().clamp(1.0, 30.0);
+        final double paquetes = (cantSegura / 12.0).ceilToDouble().clamp(1.0, 10.0);
         return ItemSupermercado(
           nombre: 'Huevo',
-          cantidad: pzas,
-          unidad: 'pza',
-          textoCantidad: '${pzas.toInt()} pzas',
+          cantidad: paquetes,
+          unidad: 'paquete',
+          textoCantidad: '${paquetes.toInt()} paquete${paquetes > 1 ? 's' : ''} (cartera 12-18 pzas)',
         );
       }
     }
@@ -814,6 +947,27 @@ class ConversorUnidades {
     if (norm.contains('chipotle')) {
       return 'Chiles chipotle';
     }
+    if (norm.contains('manzana verde')) {
+      return 'Manzana verde';
+    }
+    if (norm.contains('manzana roja') ||
+        norm.contains('manzana gala') ||
+        norm.contains('manzana golden') ||
+        norm.contains('manzana fuji')) {
+      return 'Manzana roja';
+    }
+    if (norm.contains('esparrago')) {
+      return 'Espárragos';
+    }
+    if (norm.contains('guajillo')) {
+      return 'Chile guajillo';
+    }
+    if (norm.contains('fruto rojo') || norm.contains('frutos rojos') || norm.contains('berries')) {
+      return 'Frutos rojos';
+    }
+    if (norm.contains('agua de coco')) {
+      return 'Agua de coco';
+    }
     if (norm.contains('carne molida de pavo') || norm.contains('molida de pavo')) {
       return 'Carne molida de pavo';
     }
@@ -876,6 +1030,52 @@ class ConversorUnidades {
   static String extraerUnidadSegura(dynamic v, String nombreOUnidadDefecto) {
     final normNom = sinAcentos(nombreOUnidadDefecto);
     final s = sinAcentos(v?.toString() ?? '').trim();
+
+    // 0. Si es Jitomate fresco, ¡NUNCA frasco!
+    if (normNom.contains('jitomate') && !normNom.contains('pure') && !normNom.contains('pasta')) {
+      if (s.contains('kg') || s.contains('kilo')) return 'kg';
+      return 'pza';
+    }
+
+    // 0.1 Si es atún fresco o medallón de atún, ¡NUNCA lata!
+    if (normNom.contains('medallon') ||
+        (normNom.contains('atun') && (normNom.contains('fresco') || (!normNom.contains('agua') && !normNom.contains('aceite') && !normNom.contains('lata'))))) {
+      if (s.contains('kg') || s.contains('kilo')) return 'kg';
+      return 'pza';
+    }
+
+    // 0.2 Líquidos específicos como agua de coco
+    if (normNom.contains('agua de coco')) {
+      return 'L';
+    }
+
+    // 0.3 Espárragos
+    if (normNom.contains('esparrago')) {
+      return 'manojo';
+    }
+
+    // 0.4 Tomate cherry o frutos rojos
+    if (normNom.contains('cherry') ||
+        normNom.contains('frutos rojos') ||
+        normNom.contains('berries') ||
+        normNom.contains('frambuesa') ||
+        normNom.contains('zarzamora')) {
+      return 'paquete';
+    }
+
+    // 0.5 Chiles secos (guajillo, ancho, etc.)
+    if (normNom.contains('guajillo') ||
+        normNom.contains('pasilla') ||
+        normNom.contains('morita') ||
+        normNom.contains('chile seco') ||
+        normNom.contains('chiles secos')) {
+      return 'paquete';
+    }
+
+    // 0.6 Huevo
+    if (normNom.contains('huevo') || normNom.contains('blanquillo')) {
+      return 'paquete';
+    }
 
     if (s.contains('lata')) return 'lata';
     if (s.contains('paquete') || s.contains('bolsa')) return 'paquete';
@@ -1201,6 +1401,193 @@ class ConversorUnidades {
     }
 
     return insertados;
+  }
+
+  /// Determina la categoría del supermercado para organizar la lista de compras:
+  /// Frutas y Verduras, Carnes y Aves, Pescados y Mariscos, Lácteos y Huevos,
+  /// Panadería y Tortillería, Abarrotes y Alacena, Especias y Condimentos, Otros.
+  static String determinarCategoria(String nombre) {
+    final n = sinAcentos(nombre).trim();
+
+    // 1. Pescados y Mariscos (revisar antes de carnes generales)
+    if (n.contains('atun fresco') ||
+        n.contains('medallon de atun') ||
+        n.contains('medallones de atun') ||
+        n.contains('salmon') ||
+        n.contains('pescado') ||
+        n.contains('filete de pescado') ||
+        n.contains('tilapia') ||
+        n.contains('camaron') ||
+        n.contains('camarones') ||
+        n.contains('marisco') ||
+        n.contains('pulpo')) {
+      return 'Pescados y Mariscos';
+    }
+
+    // 2. Carnes y Aves
+    if (n.contains('pollo') ||
+        n.contains('pechuga') ||
+        n.contains('muslo') ||
+        n.contains('pierna') ||
+        n.contains('milanesa') ||
+        n.contains('bistec') ||
+        n.contains('res') ||
+        n.contains('carne') ||
+        n.contains('cerdo') ||
+        n.contains('puerco') ||
+        n.contains('pavo') ||
+        n.contains('arrachera') ||
+        n.contains('molida') ||
+        n.contains('jamon') ||
+        n.contains('tocino') ||
+        n.contains('salchicha')) {
+      return 'Carnes y Aves';
+    }
+
+    // 3. Lácteos y Huevos
+    if (n.contains('huevo') ||
+        n.contains('blanquillo') ||
+        n.contains('leche') ||
+        n.contains('queso') ||
+        n.contains('panela') ||
+        n.contains('oaxaca') ||
+        n.contains('manchego') ||
+        n.contains('yogurt') ||
+        n.contains('yogur') ||
+        n.contains('crema') ||
+        n.contains('mantequilla') ||
+        n.contains('cottage') ||
+        n.contains('requeson')) {
+      return 'Lácteos y Huevos';
+    }
+
+    // 4. Frutas y Verduras
+    if (n.contains('jitomate') ||
+        n.contains('tomate') ||
+        n.contains('cebolla') ||
+        n.contains('ajo') ||
+        n.contains('limon') ||
+        n.contains('aguacate') ||
+        n.contains('esparrago') ||
+        n.contains('cilantro') ||
+        n.contains('perejil') ||
+        n.contains('espinaca') ||
+        n.contains('lechuga') ||
+        n.contains('manzana') ||
+        n.contains('platano') ||
+        n.contains('zanahoria') ||
+        n.contains('papa') ||
+        n.contains('nopal') ||
+        n.contains('chile serrano') ||
+        n.contains('chile jalapeño') ||
+        n.contains('chile jalape') ||
+        n.contains('chile poblano') ||
+        n.contains('chile habanero') ||
+        n.contains('chile verde') ||
+        n.contains('calabacita') ||
+        n.contains('pepino') ||
+        n.contains('pimiento') ||
+        n.contains('frutos rojos') ||
+        n.contains('fresa') ||
+        n.contains('champiñon') ||
+        n.contains('champinon') ||
+        n.contains('setas') ||
+        n.contains('col ') ||
+        n.contains('col blanca') ||
+        n.contains('coliflor') ||
+        n.contains('brocoli') ||
+        n.contains('apio') ||
+        n.contains('betabel') ||
+        n.contains('chayote') ||
+        n.contains('mango') ||
+        n.contains('naranja') ||
+        n.contains('moras') ||
+        n.contains('berries') ||
+        n.contains('frambuesa') ||
+        n.contains('zarzamora') ||
+        n.contains('pera') ||
+        n.contains('uva') ||
+        n.contains('sandia') ||
+        n.contains('melon') ||
+        n.contains('piña') ||
+        n.contains('pina') ||
+        n.contains('guayaba')) {
+      return 'Frutas y Verduras';
+    }
+
+    // 5. Panadería y Tortillería
+    if (n.contains('tortilla') ||
+        n.contains('tostada') ||
+        n.contains('pan ') ||
+        n.contains('pan de') ||
+        n.contains('pan integral') ||
+        n.contains('pan blanco') ||
+        n.contains('pan molido') ||
+        n.contains('totopo') ||
+        n.contains('bolillo') ||
+        n.contains('telera') ||
+        n.contains('galleta')) {
+      return 'Panadería y Tortillería';
+    }
+
+    // 6. Especias y Condimentos
+    if (n.contains('sal ') ||
+        n == 'sal' ||
+        n.contains('pimienta') ||
+        n.contains('oregano') ||
+        n.contains('canela') ||
+        n.contains('paprika') ||
+        n.contains('comino') ||
+        n.contains('clavo') ||
+        n.contains('curcuma') ||
+        n.contains('ajo en polvo') ||
+        n.contains('cebolla en polvo') ||
+        n.contains('polvo para hornear') ||
+        n.contains('bicarbonato') ||
+        n.contains('vainilla') ||
+        n.contains('laurel') ||
+        n.contains('romero seco') ||
+        n.contains('tomillo seco') ||
+        n.contains('consome') ||
+        n.contains('caldo de pollo en polvo')) {
+      return 'Especias y Condimentos';
+    }
+
+    // 7. Abarrotes y Alacena
+    if (n.contains('arroz') ||
+        n.contains('frijol') ||
+        n.contains('lenteja') ||
+        n.contains('garbanzo') ||
+        n.contains('avena') ||
+        n.contains('pasta') ||
+        n.contains('espagueti') ||
+        n.contains('fideo') ||
+        n.contains('quinoa') ||
+        n.contains('harina') ||
+        n.contains('atun') ||
+        n.contains('sardina') ||
+        n.contains('elote') ||
+        n.contains('chipotle') ||
+        n.contains('guajillo') ||
+        n.contains('chile seco') ||
+        n.contains('agua de coco') ||
+        n.contains('aceite') ||
+        n.contains('vinagre') ||
+        n.contains('miel') ||
+        n.contains('mayonesa') ||
+        n.contains('mostaza') ||
+        n.contains('salsa') ||
+        n.contains('almendra') ||
+        n.contains('nuez') ||
+        n.contains('cacahuate') ||
+        n.contains('chia') ||
+        n.contains('semilla') ||
+        n.contains('amaranto') ||
+        n.contains('chocolate')) {
+      return 'Abarrotes y Alacena';
+    }
+
+    return 'Otros';
   }
 
   static String _capitalizar(String s) {

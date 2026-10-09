@@ -212,6 +212,17 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     );
   }
 
+  static const List<Map<String, dynamic>> _ordenCategorias = [
+    {'nombre': 'Frutas y Verduras', 'icono': Icons.eco_outlined, 'color': Colors.green},
+    {'nombre': 'Carnes y Aves', 'icono': Icons.kebab_dining_outlined, 'color': Colors.red},
+    {'nombre': 'Pescados y Mariscos', 'icono': Icons.set_meal_outlined, 'color': Colors.teal},
+    {'nombre': 'Lácteos y Huevos', 'icono': Icons.egg_outlined, 'color': Colors.amber},
+    {'nombre': 'Panadería y Tortillería', 'icono': Icons.bakery_dining_outlined, 'color': Colors.orange},
+    {'nombre': 'Abarrotes y Alacena', 'icono': Icons.shelves, 'color': Colors.indigo},
+    {'nombre': 'Especias y Condimentos', 'icono': Icons.grain_outlined, 'color': Colors.brown},
+    {'nombre': 'Otros', 'icono': Icons.shopping_basket_outlined, 'color': Colors.blueGrey},
+  ];
+
   Future<void> _compartirListaPorWhatsApp(
     List<Map<String, dynamic>> items,
   ) async {
@@ -234,9 +245,26 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
 
     if (pendientes.isNotEmpty) {
       buffer.writeln('*Por comprar (${pendientes.length}):*');
+
+      final Map<String, List<Map<String, dynamic>>> pendientesPorCat = {};
       for (var p in pendientes) {
-        final cant = p['cantidad'] != null ? ' (${p['cantidad']})' : '';
-        buffer.writeln('  ▫️ ${p['nombre']}$cant');
+        final cat = ConversorUnidades.determinarCategoria(p['nombre'] ?? '');
+        pendientesPorCat.putIfAbsent(cat, () => []).add(p);
+      }
+
+      for (var c in _ordenCategorias) {
+        final nombreCat = c['nombre'] as String;
+        final listCat = pendientesPorCat[nombreCat] ?? [];
+        if (listCat.isNotEmpty) {
+          listCat.sort((a, b) => (a['nombre'] ?? '').toString().toLowerCase().compareTo(
+                (b['nombre'] ?? '').toString().toLowerCase(),
+              ));
+          buffer.writeln('\n📍 *${nombreCat.toUpperCase()}*');
+          for (var p in listCat) {
+            final cant = p['cantidad'] != null ? ' (${p['cantidad']})' : '';
+            buffer.writeln('  ▫️ ${p['nombre']}$cant');
+          }
+        }
       }
       buffer.writeln('');
     }
@@ -1654,71 +1682,9 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       )
                     else
                       Expanded(
-                        child: ListView.builder(
+                        child: ListView(
                           padding: const EdgeInsets.only(bottom: 90, top: 4),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            final bool comprado = item['comprado'] ?? false;
-
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ListTile(
-                                leading: Checkbox(
-                                  value: comprado,
-                                  activeColor: Colors.deepOrange,
-                                  onChanged: (_) =>
-                                      alternarComprado(item['id'], comprado),
-                                ),
-                                title: Text(
-                                  item['nombre'] ?? '',
-                                  style: TextStyle(
-                                    decoration: comprado
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: comprado
-                                        ? Colors.grey
-                                        : Colors.black87,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Cantidad: ${item['cantidad'] ?? 1}',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: comprado
-                                            ? Colors.grey
-                                            : Colors.black54,
-                                      ),
-                                    ),
-                                    _construirBadgePrecioItem(
-                                      item['id'] as int?,
-                                      comprado,
-                                    ),
-                                  ],
-                                ),
-                                // 🗑️ Botón individual para borrar elemento por elemento
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline,
-                                    color: Colors.redAccent,
-                                  ),
-                                  tooltip: 'Eliminar ingrediente',
-                                  onPressed: () => eliminarItem(item['id']),
-                                ),
-                              ),
-                            );
-                          },
+                          children: _construirSeccionesPorCategoria(items),
                         ),
                       ),
                   ],
@@ -1762,6 +1728,148 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _construirSeccionesPorCategoria(List<Map<String, dynamic>> items) {
+    final Map<String, List<Map<String, dynamic>>> itemsPorCategoria = {};
+    for (var c in _ordenCategorias) {
+      itemsPorCategoria[c['nombre'] as String] = [];
+    }
+
+    for (var item in items) {
+      final cat = ConversorUnidades.determinarCategoria(item['nombre'] ?? '');
+      itemsPorCategoria.putIfAbsent(cat, () => []).add(item);
+    }
+
+    final List<Widget> widgets = [];
+
+    for (var catConfig in _ordenCategorias) {
+      final String nombreCat = catConfig['nombre'] as String;
+      final List<Map<String, dynamic>> itemsDeEstaCat =
+          itemsPorCategoria[nombreCat] ?? [];
+
+      if (itemsDeEstaCat.isEmpty) continue;
+
+      // Ordenar alfabéticamente dentro de la categoría
+      itemsDeEstaCat.sort((a, b) {
+        final nomA = (a['nombre'] ?? '').toString().toLowerCase();
+        final nomB = (b['nombre'] ?? '').toString().toLowerCase();
+        return nomA.compareTo(nomB);
+      });
+
+      final IconData iconoCat = catConfig['icono'] as IconData;
+      final Color colorCat = catConfig['color'] as Color;
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: colorCat.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(iconoCat, size: 16, color: colorCat),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                nombreCat,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${itemsDeEstaCat.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      for (var item in itemsDeEstaCat) {
+        widgets.add(_construirItemCard(item));
+      }
+    }
+
+    return widgets;
+  }
+
+  Widget _construirItemCard(Map<String, dynamic> item) {
+    final bool comprado = item['comprado'] ?? false;
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 3.5,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Checkbox(
+          value: comprado,
+          activeColor: Colors.deepOrange,
+          onChanged: (_) =>
+              alternarComprado(item['id'], comprado),
+        ),
+        title: Text(
+          item['nombre'] ?? '',
+          style: TextStyle(
+            decoration: comprado
+                ? TextDecoration.lineThrough
+                : null,
+            color: comprado
+                ? Colors.grey
+                : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 2),
+            Text(
+              'Cantidad: ${item['cantidad'] ?? 1}',
+              style: TextStyle(
+                fontSize: 13,
+                color: comprado
+                    ? Colors.grey
+                    : Colors.black54,
+              ),
+            ),
+            _construirBadgePrecioItem(
+              item['id'] as int?,
+              comprado,
+            ),
+          ],
+        ),
+        // 🗑️ Botón individual para borrar elemento por elemento
+        trailing: IconButton(
+          icon: const Icon(
+            Icons.delete_outline,
+            color: Colors.redAccent,
+          ),
+          tooltip: 'Eliminar ingrediente',
+          onPressed: () => eliminarItem(item['id']),
         ),
       ),
     );
