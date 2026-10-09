@@ -60,6 +60,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   bool _esSuperFavoritoActivo = false;
   List<Map<String, dynamic>> _ultimosItems = [];
   int _ultimoTotalItems = -1;
+  final Set<String> _categoriasColapsadas = {};
 
   @override
   void initState() {
@@ -1744,7 +1745,77 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
       itemsPorCategoria.putIfAbsent(cat, () => []).add(item);
     }
 
+    // Identificar categorías activas con productos
+    final List<String> categoriasPresentes = [];
+    for (var catConfig in _ordenCategorias) {
+      final String nombreCat = catConfig['nombre'] as String;
+      if ((itemsPorCategoria[nombreCat] ?? []).isNotEmpty) {
+        categoriasPresentes.add(nombreCat);
+      }
+    }
+
     final List<Widget> widgets = [];
+
+    // Si hay más de una categoría activa, barra rápida de "Colapsar / Expandir todas"
+    if (categoriasPresentes.length > 1) {
+      final bool todasColapsadas =
+          categoriasPresentes.every((cat) => _categoriasColapsadas.contains(cat));
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${categoriasPresentes.length} categorías • ${items.length} productos',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(6),
+                onTap: () {
+                  setState(() {
+                    if (todasColapsadas) {
+                      _categoriasColapsadas.clear();
+                    } else {
+                      _categoriasColapsadas.addAll(categoriasPresentes);
+                    }
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        todasColapsadas
+                            ? Icons.unfold_more_rounded
+                            : Icons.unfold_less_rounded,
+                        size: 15,
+                        color: Colors.deepOrange,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        todasColapsadas ? 'Expandir todas' : 'Colapsar todas',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.deepOrange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     for (var catConfig in _ordenCategorias) {
       final String nombreCat = catConfig['nombre'] as String;
@@ -1762,52 +1833,102 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
 
       final IconData iconoCat = catConfig['icono'] as IconData;
       final Color colorCat = catConfig['color'] as Color;
+      final bool estaColapsada = _categoriasColapsadas.contains(nombreCat);
+      final int compradosCount =
+          itemsDeEstaCat.where((i) => i['comprado'] == true).length;
+      final int totalCount = itemsDeEstaCat.length;
 
       widgets.add(
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: colorCat.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                setState(() {
+                  if (estaColapsada) {
+                    _categoriasColapsadas.remove(nombreCat);
+                  } else {
+                    _categoriasColapsadas.add(nombreCat);
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: colorCat.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(iconoCat, size: 16, color: colorCat),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              nombreCat,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: compradosCount == totalCount
+                                  ? Colors.green.shade50
+                                  : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              compradosCount > 0
+                                  ? '$compradosCount/$totalCount'
+                                  : '$totalCount',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: compradosCount == totalCount
+                                    ? Colors.green.shade800
+                                    : Colors.grey.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      estaColapsada
+                          ? Icons.expand_more_rounded
+                          : Icons.expand_less_rounded,
+                      size: 22,
+                      color: Colors.grey.shade600,
+                    ),
+                  ],
                 ),
-                child: Icon(iconoCat, size: 16, color: colorCat),
               ),
-              const SizedBox(width: 8),
-              Text(
-                nombreCat,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${itemsDeEstaCat.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );
 
-      for (var item in itemsDeEstaCat) {
-        widgets.add(_construirItemCard(item));
+      if (!estaColapsada) {
+        for (var item in itemsDeEstaCat) {
+          widgets.add(_construirItemCard(item));
+        }
       }
     }
 
