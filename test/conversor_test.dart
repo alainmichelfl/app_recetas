@@ -17,31 +17,45 @@ void main() {
       expect(item.cantidad, 1.0);
     });
 
-    test('3. Distinción de chispas de chocolate y cacao', () {
+    test('3. Consolidación de chispas de chocolate 70% cacao y coincidencia con anaquel', () {
       expect(
         ConversorUnidades.canonicalizarNombre('chispas de chocolate 70% cacao'),
         'Chispas de chocolate 70% cacao',
       );
       expect(
         ConversorUnidades.canonicalizarNombre('chispas de chocolate amargo'),
-        'Chispas de chocolate amargo',
+        'Chispas de chocolate 70% cacao',
       );
       expect(
         ConversorUnidades.canonicalizarNombre('chispas de chocolate'),
-        'Chispas de chocolate',
+        'Chispas de chocolate 70% cacao',
+      );
+      expect(
+        ConversorUnidades.canonicalizarNombre('chocolate amargo'),
+        'Chispas de chocolate 70% cacao',
+      );
+      expect(
+        ConversorUnidades.canonicalizarNombre('chocolate amargo 70%'),
+        'Chispas de chocolate 70% cacao',
       );
 
+      // Coincidencia con catálogo de supermercado (ID 72 y 148) para cotización
       expect(
-        ConversorUnidades.nombresCoinciden('Chispas de chocolate', 'Chispas de chocolate amargo'),
+        ConversorUnidades.nombresCoinciden('Chispas de chocolate 70% cacao', 'Chispas de chocolate amargo'),
+        true,
+      );
+      expect(
+        ConversorUnidades.nombresCoinciden('Chispas de chocolate 70% cacao', 'Chocolate amargo 70%'),
+        true,
+      );
+      // No debe coincidir con chocolate blanco ni chocolate con leche
+      expect(
+        ConversorUnidades.nombresCoinciden('Chispas de chocolate 70% cacao', 'Chocolate blanco'),
         false,
       );
       expect(
-        ConversorUnidades.nombresCoinciden('Chispas de chocolate', 'Chispas de chocolate 70% cacao'),
-        false,
-      );
-      expect(
-        ConversorUnidades.nombresCoinciden('Chispas de chocolate amargo', 'Chispas de chocolate 70% cacao'),
-        false,
+        ConversorUnidades.determinarCategoria('Chispas de chocolate 70% cacao'),
+        'Abarrotes y Alacena',
       );
     });
 

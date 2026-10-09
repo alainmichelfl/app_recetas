@@ -49,21 +49,19 @@ class ConversorUnidades {
       return false;
     }
 
-    // Distinguir explícitamente tipos y variantes de chocolate y chispas
+    // Chocolates y chispas: para repostería y cotización en súper, chispas y chocolate amargo/70% coinciden
     final bool aChoc = cleanA.contains('chispas') || cleanA.contains('chocolate');
     final bool bChoc = cleanB.contains('chispas') || cleanB.contains('chocolate');
     if (aChoc && bChoc) {
-      final bool aEsChispas = cleanA.contains('chispas');
-      final bool bEsChispas = cleanB.contains('chispas');
-      if (aEsChispas != bEsChispas) return false;
+      final bool aBlanco = cleanA.contains('blanco');
+      final bool bBlanco = cleanB.contains('blanco');
+      if (aBlanco != bBlanco) return false;
 
-      final bool aEs70 = cleanA.contains('70%') || cleanA.contains('70 %') || cleanA.contains('cacao');
-      final bool bEs70 = cleanB.contains('70%') || cleanB.contains('70 %') || cleanB.contains('cacao');
-      if (aEs70 != bEs70) return false;
+      final bool aLeche = cleanA.contains('con leche');
+      final bool bLeche = cleanB.contains('con leche');
+      if (aLeche != bLeche) return false;
 
-      final bool aEsAmargo = cleanA.contains('amargo') || cleanA.contains('negro');
-      final bool bEsAmargo = cleanB.contains('amargo') || cleanB.contains('negro');
-      if (aEsAmargo != bEsAmargo) return false;
+      return true;
     }
 
     // Si alguno es corto (<= 4 letras como "agua", "sal", "ajo"), exigir palabra completa
@@ -896,26 +894,10 @@ class ConversorUnidades {
       return 'Medallón de atún fresco';
     }
     // Chispas de chocolate y variantes de chocolate
-    if (norm.contains('chispas de chocolate') || (norm.contains('chispas') && norm.contains('chocolate'))) {
-      if (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao')) {
-        return 'Chispas de chocolate 70% cacao';
-      }
-      if (norm.contains('amargo') || norm.contains('negro') || norm.contains('oscuro')) {
-        return 'Chispas de chocolate amargo';
-      }
-      if (norm.contains('semiamargo') || norm.contains('semi-amargo')) {
-        return 'Chispas de chocolate semiamargo';
-      }
-      return 'Chispas de chocolate';
-    }
-    if (norm.contains('chocolate amargo') || norm.contains('chocolate negro')) {
-      if (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao')) {
-        return 'Chocolate amargo 70% cacao';
-      }
-      return 'Chocolate amargo';
-    }
-    if (norm.contains('chocolate') && (norm.contains('70%') || norm.contains('70 %') || norm.contains('cacao'))) {
-      return 'Chocolate amargo 70% cacao';
+    if (norm.contains('chispas') || norm.contains('chocolate')) {
+      if (norm.contains('blanco')) return 'Chocolate blanco';
+      if (norm.contains('con leche')) return 'Chocolate con leche';
+      return 'Chispas de chocolate 70% cacao';
     }
     if (norm == 'avena' || norm.contains('hojuelas de avena') || norm.contains('avena en hojuelas')) {
       return 'Avena en hojuelas';
@@ -1218,7 +1200,8 @@ class ConversorUnidades {
       if (unidadExistente == 'frasco' || unidadExistente == 'botella') {
         nuevaCant = 1.0;
       } else if (unidadExistente == 'cartón' || key.contains('huevo')) {
-        nuevaCant = ((cantExistenteNum + item.cantidad) <= 3.0 ? 1.0 : 2.0);
+        final double suma = cantExistenteNum + item.cantidad;
+        nuevaCant = suma <= 18.0 ? 1.0 : (suma / 18.0).ceilToDouble().clamp(1.0, 3.0);
       } else if (unidadExistente == 'paquete') {
         nuevaCant = (cantExistenteNum + item.cantidad).clamp(1.0, 5.0).ceilToDouble();
       } else {
@@ -1282,8 +1265,15 @@ class ConversorUnidades {
       final String canNombre = canonicalizarNombre(rawNombre);
       final String key = sinAcentos(canNombre);
 
-      final double cantNum = _extraerNumeroSeguro(rawCant);
-      final String unidad = _extraerUnidadSegura(rawCant, canNombre);
+      double cantNum = _extraerNumeroSeguro(rawCant);
+      String unidad = _extraerUnidadSegura(rawCant, canNombre);
+
+      if (key.contains('huevo') || rawNombre.toLowerCase().contains('huevo')) {
+        // En compras para casa, 1 a 18 huevos siempre es 1 solo cartón (cartera 12-18 pzas).
+        // Si la base guardó 5 (de 5 piezas o 5 cartones erróneos), se normaliza a 1 cartón.
+        cantNum = cantNum <= 18.0 ? 1.0 : (cantNum / 18.0).ceilToDouble().clamp(1.0, 3.0);
+        unidad = 'cartón';
+      }
 
       if (consolidado.containsKey(key)) {
         final prev = consolidado[key]!;
@@ -1293,7 +1283,8 @@ class ConversorUnidades {
         if (prevUnidad == 'frasco' || prevUnidad == 'botella') {
           prev['cantNum'] = 1.0;
         } else if (prevUnidad == 'cartón' || key.contains('huevo')) {
-          prev['cantNum'] = ((prevCant + cantNum) <= 3.0 ? 1.0 : 2.0);
+          final double suma = prevCant + cantNum;
+          prev['cantNum'] = suma <= 18.0 ? 1.0 : (suma / 18.0).ceilToDouble().clamp(1.0, 3.0);
           prev['unidad'] = 'cartón';
         } else if (prevUnidad == 'paquete') {
           final double nueva = (prevCant + cantNum).clamp(1.0, 5.0);
@@ -1320,7 +1311,7 @@ class ConversorUnidades {
       final String u = entry['unidad'] as String;
       String textoCant = '';
       if (u == 'cartón' || entry['nombre'].toString().toLowerCase().contains('huevo')) {
-        final int cInt = c.ceil();
+        final int cInt = c <= 18.0 ? 1 : (c / 18.0).ceil().clamp(1, 3);
         textoCant = '$cInt cartón${cInt > 1 ? 'es' : ''} (cartera 12-18 pzas)';
       } else if (u == 'pza' || u == 'lata' || u == 'cabeza' || u == 'paquete') {
         final int cInt = c.ceil();
