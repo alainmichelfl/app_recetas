@@ -907,6 +907,403 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     }
   }
 
+  /// 👨‍🍳 Complementa el planeador semanal con 1 Clic usando sugerencias autónomas
+  /// del Chef IA, respetando siempre los platillos ya existentes y su libertad creativa culinaria.
+  Future<void> complementarPlaneadorConChefIA1Click() async {
+    if (planeandoIA) return;
+    setState(() => planeandoIA = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final hoyDate = DateTime.now();
+      final List<String> proximos7Dias = [];
+      for (int i = 0; i < 7; i++) {
+        final f = hoyDate.add(Duration(days: i));
+        final fStr =
+            "${f.year}-${f.month.toString().padLeft(2, '0')}-${f.day.toString().padLeft(2, '0')}";
+        proximos7Dias.add(fStr);
+      }
+
+      const mealTypes = ['Desayuno', 'Comida', 'Snack', 'Cena'];
+
+      // Mapear qué turnos ya están planeados
+      final Set<String> slotsOcupados = {};
+      final Set<int> idsEnUso = {};
+
+      for (var item in miPlan) {
+        final fecha = (item['fecha'] ?? '').toString();
+        final tipo = (item['tipo_comida'] ?? '').toString();
+        final idRec = item['id_receta'];
+        if (fecha.isNotEmpty && tipo.isNotEmpty) {
+          slotsOcupados.add('$fecha|$tipo');
+        }
+        if (idRec is int) {
+          idsEnUso.add(idRec);
+        }
+      }
+
+      // Encontrar slots vacíos para los próximos 7 días
+      final List<Map<String, String>> slotsFaltantes = [];
+      for (var f in proximos7Dias) {
+        for (var tipo in mealTypes) {
+          if (!slotsOcupados.contains('$f|$tipo')) {
+            slotsFaltantes.add({'fecha': f, 'tipo_comida': tipo});
+          }
+        }
+      }
+
+      // Si no hay slots vacíos (todos los 28 ya están ocupados)
+      if (slotsFaltantes.isEmpty) {
+        if (!mounted) return;
+        setState(() => planeandoIA = false);
+
+        final bool? deseaRenovar = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Colors.deepOrange),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '¡Semana ya completa!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Tus próximos 7 días ya tienen los 28 platillos asignados.\n\n¿Deseas que el Chef IA renueve creativamente toda tu semana con recetas frescas adaptadas a tu meta ($objetivoActivo)?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Mantener actual'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Renovar con Chef IA 🚀'),
+              ),
+            ],
+          ),
+        );
+
+        if (deseaRenovar == true && mounted) {
+          final dia7Str = proximos7Dias.last;
+          final hoyStr = proximos7Dias.first;
+          await Supabase.instance.client
+              .from('planeador')
+              .delete()
+              .gte('fecha', hoyStr)
+              .lte('fecha', dia7Str);
+          await cargarPlan();
+          await complementarPlaneadorConChefIA1Click();
+          return;
+        }
+        return;
+      }
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '👨‍🍳 Chef IA preparando sugerencias autónomas para ${slotsFaltantes.length} platillos... 🍳✨',
+          ),
+          backgroundColor: Colors.deepOrange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+
+      // 1. Obtener recetas del catálogo en Supabase
+      final resRecetas = await Supabase.instance.client
+          .from('recetas')
+          .select('id_receta, titulo, tipo_comida, descripcion, calorias');
+
+      final List<Map<String, dynamic>> todas = List<Map<String, dynamic>>.from(
+        resRecetas,
+      );
+
+      // Filtrar compatibles según objetivo y restricciones
+      final compatibles = todas
+          .where(
+            (r) => PerfilesNutricionales.recetaCompatible(
+              "${r['titulo']} ${r['descripcion']}",
+              _estilos,
+              alergias: _alergias,
+            ),
+          )
+          .toList();
+
+      // Separar por tipo de comida
+      List<Map<String, dynamic>> dispDesayunos = compatibles
+          .where((r) => r['tipo_comida'] == 'Desayuno')
+          .toList();
+      List<Map<String, dynamic>> dispComidas =
+          compatibles.where((r) => r['tipo_comida'] == 'Comida').toList();
+      List<Map<String, dynamic>> dispSnacks =
+          compatibles.where((r) => r['tipo_comida'] == 'Snack').toList();
+      List<Map<String, dynamic>> dispCenas =
+          compatibles.where((r) => r['tipo_comida'] == 'Cena').toList();
+
+      // Contar faltantes por categoría
+      final int faltanDesayunos = slotsFaltantes
+          .where((s) => s['tipo_comida'] == 'Desayuno')
+          .length;
+      final int faltanComidas =
+          slotsFaltantes.where((s) => s['tipo_comida'] == 'Comida').length;
+      final int faltanSnacks =
+          slotsFaltantes.where((s) => s['tipo_comida'] == 'Snack').length;
+      final int faltanCenas =
+          slotsFaltantes.where((s) => s['tipo_comida'] == 'Cena').length;
+
+      // Calcular recetas no repetidas disponibles
+      final int libresDesayuno = dispDesayunos
+          .where((r) => !idsEnUso.contains(r['id_receta']))
+          .length;
+      final int libresComida =
+          dispComidas.where((r) => !idsEnUso.contains(r['id_receta'])).length;
+      final int libresCena =
+          dispCenas.where((r) => !idsEnUso.contains(r['id_receta'])).length;
+      final int libresSnack =
+          dispSnacks.where((r) => !idsEnUso.contains(r['id_receta'])).length;
+
+      // Detectar necesidad de recetas creativas autónomas para evitar repeticiones
+      int genDesayuno = (faltanDesayunos - libresDesayuno).clamp(0, 2);
+      int genComida = (faltanComidas - libresComida).clamp(0, 2);
+      int genCena = (faltanCenas - libresCena).clamp(0, 2);
+      int genSnack = (faltanSnacks - libresSnack).clamp(0, 2);
+
+      // Si hay al menos 6 espacios a complementar, permitir al Chef IA crear 1 receta con libertad creativa
+      int totalAGenerar = genDesayuno + genComida + genCena + genSnack;
+      if (totalAGenerar == 0 && slotsFaltantes.length >= 6) {
+        genComida = 1;
+        totalAGenerar = 1;
+      }
+
+      int recetasNuevasCreadas = 0;
+
+      if (totalAGenerar > 0) {
+        try {
+          final nuevas = await _generarRecetasAutonomasChefIA(
+            objetivo: objetivoActivo,
+            nDesayunos: genDesayuno,
+            nComidas: genComida,
+            nCenas: genCena,
+            nSnacks: genSnack,
+          );
+
+          recetasNuevasCreadas = nuevas.length;
+
+          for (var r in nuevas) {
+            final tipo = r['tipo_comida']?.toString() ?? 'Comida';
+            if (tipo == 'Desayuno') {
+              dispDesayunos.add(r);
+            } else if (tipo == 'Comida') {
+              dispComidas.add(r);
+            } else if (tipo == 'Cena') {
+              dispCenas.add(r);
+            } else if (tipo == 'Snack') {
+              dispSnacks.add(r);
+            }
+          }
+        } catch (e) {
+          debugPrint('Chef IA generó error pero continuará con el catálogo: $e');
+        }
+      }
+
+      // Fallback seguro si alguna lista quedó vacía
+      if (dispDesayunos.isEmpty) {
+        dispDesayunos = List.from(compatibles.isNotEmpty ? compatibles : todas);
+      }
+      if (dispComidas.isEmpty) {
+        dispComidas = List.from(compatibles.isNotEmpty ? compatibles : todas);
+      }
+      if (dispCenas.isEmpty) {
+        dispCenas = List.from(compatibles.isNotEmpty ? compatibles : todas);
+      }
+      if (dispSnacks.isEmpty) {
+        dispSnacks = List.from(compatibles.isNotEmpty ? compatibles : todas);
+      }
+
+      dispDesayunos.shuffle();
+      dispComidas.shuffle();
+      dispCenas.shuffle();
+      dispSnacks.shuffle();
+
+      final Map<String, int> indicesPorTipo = {
+        'Desayuno': 0,
+        'Comida': 0,
+        'Snack': 0,
+        'Cena': 0,
+      };
+
+      final Map<String, List<Map<String, dynamic>>> listasPorTipo = {
+        'Desayuno': dispDesayunos,
+        'Comida': dispComidas,
+        'Snack': dispSnacks,
+        'Cena': dispCenas,
+      };
+
+      // Asignar a cada slot faltante respetando la rotación
+      for (var slot in slotsFaltantes) {
+        final fecha = slot['fecha']!;
+        final tipo = slot['tipo_comida']!;
+        final lista = listasPorTipo[tipo] ?? dispComidas;
+
+        if (lista.isEmpty) continue;
+
+        // Intentar seleccionar una receta que no se haya usado todavía
+        Map<String, dynamic>? seleccion;
+        for (var candidata in lista) {
+          final id = candidata['id_receta'];
+          if (id is int && !idsEnUso.contains(id)) {
+            seleccion = candidata;
+            idsEnUso.add(id);
+            break;
+          }
+        }
+
+        if (seleccion == null) {
+          final idx = indicesPorTipo[tipo] ?? 0;
+          seleccion = lista[idx % lista.length];
+          indicesPorTipo[tipo] = idx + 1;
+        }
+
+        final int idElegido = seleccion['id_receta'] as int;
+
+        await Supabase.instance.client.from('planeador').insert({
+          'fecha': fecha,
+          'tipo_comida': tipo,
+          'id_receta': idElegido,
+          'costo_personalizado': 0.0,
+        });
+      }
+
+      await cargarPlan();
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            recetasNuevasCreadas > 0
+                ? '🎉 ¡Semana complementada! Chef IA asignó ${slotsFaltantes.length} comidas ($recetasNuevasCreadas creadas con total libertad creativa y guardadas en Mis Recetas) 👨‍🍳✨'
+                : '🎉 ¡Semana complementada con éxito! Chef IA asignó autónomamente ${slotsFaltantes.length} comidas a tus espacios vacíos 📅✨',
+          ),
+          backgroundColor: Colors.teal,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error en 1-click complementación del Chef IA: $e');
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Error al complementar planeador: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => planeandoIA = false);
+    }
+  }
+
+  /// 👨‍🍳 Genera recetas con plena autonomía y libertad creativa del Chef IA
+  Future<List<Map<String, dynamic>>> _generarRecetasAutonomasChefIA({
+    required String objetivo,
+    required int nDesayunos,
+    required int nComidas,
+    required int nCenas,
+    required int nSnacks,
+  }) async {
+    final totalAPedir = nDesayunos + nComidas + nCenas + nSnacks;
+    if (totalAPedir == 0) return [];
+
+    final peticiones = <String>[];
+    if (nDesayunos > 0) peticiones.add('$nDesayunos para "Desayuno"');
+    if (nComidas > 0) peticiones.add('$nComidas para "Comida"');
+    if (nCenas > 0) peticiones.add('$nCenas para "Cena"');
+    if (nSnacks > 0) peticiones.add('$nSnacks para "Snack"');
+
+    final model = GenerativeModel(
+      model: 'gemini-3.8-flash',
+      apiKey: ConfigApi.geminiKey,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        temperature: 0.8, // Libertad creativa y diversidad culinaria
+      ),
+    );
+
+    final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
+    final alergiasStr = _alergias.trim().isNotEmpty
+        ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
+        : '';
+
+    final prompt = '''
+    Eres el Chef Ejecutivo y Nutriólogo Principal de la app "Jitomate y Cebolla".
+    Tienes PLENA AUTONOMÍA CULINARIA y TOTAL LIBERTAD CREATIVA para proponer recetas apetitosas, auténticas y balanceadas.
+    El usuario necesita complementar su planeador semanal con platillos frescos e inspiradores.
+
+    Crea EXACTAMENTE $totalAPedir recetas deliciosas distribuidas así:
+    ${peticiones.map((p) => '- $p').join('\n')}
+
+    Directrices clave:
+    1. LIBERTAD CREATIVA: Explora sabores vibrantes (cocina mexicana moderna, mediterránea, bowls saludables, salsas caseras ligeras y texturas ricas).
+    2. NUTRICIÓN: Alineado al objetivo calórico: $objetivo
+    $estilosStr
+    $alergiasStr
+
+    REGLAS ESTRICTAS DE SUPERMERCADO Y MEDIDAS:
+    - NO uses gramos (g) ni mililitros (ml) en los ingredientes.
+    - Usa SIEMPRE fracciones de Kilo (kg), Litro (L), o "piezas", "paquete", "lata", "frasco".
+    - Excluye agua de grifo o cubos de hielo.
+
+    Responde ÚNICAMENTE con un arreglo JSON de $totalAPedir objetos con esta estructura exacta:
+    [
+      {
+        "titulo": "Nombre creativo y antojable del platillo",
+        "descripcion": "Descripción concisa resaltando el sabor",
+        "tipo_comida": "Desayuno",
+        "calorias": 420,
+        "macros": "Proteína: 28g | Carbos: 35g | Grasas: 12g",
+        "instrucciones": "1. Paso uno.\\n2. Paso dos.",
+        "ingredientes": [
+          { "nombre_estandar": "pechuga de pollo", "cantidad": 0.35, "unidad": "kg" }
+        ]
+      }
+    ]
+    ''';
+
+    final response = await model.generateContent([Content.text(prompt)]);
+    String jsonStr = (response.text ?? '[]')
+        .replaceAll('```json', '')
+        .replaceAll('```', '')
+        .trim();
+
+    final List<dynamic> recetasGeneradas = jsonDecode(jsonStr);
+    final List<Map<String, dynamic>> recetasGuardadas = [];
+
+    for (var r in recetasGeneradas) {
+      final recetaMap = Map<String, dynamic>.from(r as Map);
+      final guardada = await _guardarRecetaIAEnSupabase(recetaMap);
+      if (guardada != null) {
+        recetasGuardadas.add(guardada);
+      }
+    }
+
+    return recetasGuardadas;
+  }
+
   Future<void> _mostrarAvisoChefIACrearaRecetas(
     String objetivo, {
     required String razon,
@@ -1797,9 +2194,19 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 50,
                   child: ElevatedButton.icon(
-                    onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: planeandoIA
+                        ? null
+                        : complementarPlaneadorConChefIA1Click,
                     icon: planeandoIA
                         ? const SizedBox(
                             width: 20,
@@ -1809,14 +2216,15 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(Icons.auto_awesome),
+                        : const Icon(Icons.auto_awesome_rounded),
                     label: Text(
                       planeandoIA
-                          ? 'Planeando tu semana...'
-                          : '¡Autocompletar mi semana! ✨',
+                          ? 'Chef IA planeando tu semana...'
+                          : 'Complementar con Chef IA (1 Clic) 👨‍🍳✨',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
                       ),
                     ),
                   ),
@@ -1826,36 +2234,78 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: exportarTodaLaSemana,
+                        onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
                         icon: const Icon(
-                          Icons.calendar_month,
-                          size: 18,
-                          color: Colors.teal,
+                          Icons.tune,
+                          size: 16,
+                          color: Colors.deepOrange,
                         ),
                         label: const Text(
-                          'Exportar Todo',
-                          style: TextStyle(color: Colors.teal, fontSize: 13),
+                          'Personalizar',
+                          style: TextStyle(
+                            color: Colors.deepOrange,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.teal),
+                          side: BorderSide(color: Colors.deepOrange.shade300),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: exportarTodaLaSemana,
+                        icon: const Icon(
+                          Icons.calendar_month,
+                          size: 16,
+                          color: Colors.teal,
+                        ),
+                        label: const Text(
+                          'Exportar',
+                          style: TextStyle(
+                            color: Colors.teal,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.teal),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: borrarTodoElPlan,
                         icon: const Icon(
                           Icons.delete_sweep,
-                          size: 18,
+                          size: 16,
                           color: Colors.red,
                         ),
                         label: const Text(
-                          'Reiniciar Plan',
-                          style: TextStyle(color: Colors.red, fontSize: 13),
+                          'Reiniciar',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
@@ -1916,11 +2366,37 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     ),
                   )
                 : miPlan.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Tu calendario está vacío.\n¡Presiona el botón mágico para empezar! ✨',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.restaurant_menu_rounded,
+                            size: 60,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Tu planeador está listo',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Toca "Complementar con Chef IA (1 Clic)" para que el chef sugiera tus comidas de la semana con total creatividad y balance.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView(
