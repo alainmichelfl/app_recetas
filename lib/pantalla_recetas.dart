@@ -34,6 +34,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     'Snack',
   ];
 
+  // 🧊 Búsqueda por ingredientes disponibles ("¿Qué cocino con lo que tengo?")
+  final Set<String> _ingredientesSeleccionados = {};
+  List<String> _ingredientesDespensa = [];
+
   @override
   void initState() {
     super.initState();
@@ -72,10 +76,26 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     }
   }
 
+  int _contarCoincidenciasIngredientes(Map<String, dynamic> receta) {
+    if (_ingredientesSeleccionados.isEmpty) return 0;
+    final texto = ConversorUnidades.sinAcentos(
+      "${receta['titulo'] ?? ''} ${receta['descripcion'] ?? ''} ${receta['instrucciones'] ?? ''}",
+    ).toLowerCase();
+
+    int cuenta = 0;
+    for (var ing in _ingredientesSeleccionados) {
+      final ingLimpio = ConversorUnidades.sinAcentos(ing.trim().toLowerCase());
+      if (ingLimpio.isNotEmpty && texto.contains(ingLimpio)) {
+        cuenta++;
+      }
+    }
+    return cuenta;
+  }
+
   void _filtrarRecetas() {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
-      recetasFiltradas = todasLasRecetas.where((receta) {
+      final base = todasLasRecetas.where((receta) {
         final titulo = receta['titulo']?.toString().toLowerCase() ?? '';
         final descripcion =
             receta['descripcion']?.toString().toLowerCase() ?? '';
@@ -87,9 +107,353 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         final coincideCategoria =
             categoriaSeleccionada == 'Todos' || tipo == categoriaSeleccionada;
 
-        return coincideTexto && coincideCategoria;
+        if (!coincideTexto || !coincideCategoria) return false;
+
+        if (_ingredientesSeleccionados.isNotEmpty) {
+          final coincidencias = _contarCoincidenciasIngredientes(receta);
+          return coincidencias > 0;
+        }
+
+        return true;
       }).toList();
+
+      if (_ingredientesSeleccionados.isNotEmpty) {
+        base.sort((a, b) {
+          final cA = _contarCoincidenciasIngredientes(a);
+          final cB = _contarCoincidenciasIngredientes(b);
+          return cB.compareTo(cA); // Primero las que tienen más ingredientes que tienes
+        });
+      }
+
+      recetasFiltradas = base;
     });
+  }
+
+  // 🧊 MODAL INTERACTIVO: "¿QUÉ COCINO CON LO QUE TENGO?"
+  Future<void> _abrirModalQueCocinoConLoQueTengo() async {
+    if (_ingredientesDespensa.isEmpty) {
+      try {
+        final data = await Supabase.instance.client
+            .from('despensa_usuario')
+            .select('nombre');
+        final List items = data as List;
+        final list = items
+            .map((e) => (e['nombre'] ?? '').toString().trim())
+            .where((n) => n.isNotEmpty)
+            .toSet()
+            .toList();
+        list.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        _ingredientesDespensa = list;
+      } catch (e) {
+        debugPrint('Error al leer despensa: $e');
+      }
+    }
+
+    final sugerenciasComunes = [
+      'Pollo',
+      'Huevo',
+      'Atún',
+      'Jitomate',
+      'Cebolla',
+      'Aguacate',
+      'Avena',
+      'Arroz',
+      'Frijoles',
+      'Queso',
+      'Papa',
+      'Espinaca',
+      'Limón',
+      'Pasta',
+      'Tortillas',
+      'Carne de res',
+    ];
+
+    final customCtrl = TextEditingController();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 45,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      children: [
+                        Icon(Icons.kitchen_rounded,
+                            color: Colors.deepOrange, size: 24),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '¿Qué cocino con lo que tengo? 🧊',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Marca los ingredientes que tienes a la mano y te mostraremos qué recetas puedes preparar de inmediato:',
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Botón para usar toda la despensa registrada
+                    if (_ingredientesDespensa.isNotEmpty) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.teal),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.inventory_2,
+                              color: Colors.teal, size: 18),
+                          label: Text(
+                            'Usar mi despensa (${_ingredientesDespensa.length} insumos)',
+                            style: const TextStyle(
+                              color: Colors.teal,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            setModalState(() {
+                              _ingredientesSeleccionados
+                                  .addAll(_ingredientesDespensa);
+                            });
+                            setState(() => _filtrarRecetas());
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Input para agregar cualquier ingrediente extra
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: customCtrl,
+                            decoration: InputDecoration(
+                              hintText: 'Escribir otro ingrediente...',
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onSubmitted: (val) {
+                              final txt = val.trim();
+                              if (txt.isNotEmpty) {
+                                setModalState(() {
+                                  _ingredientesSeleccionados.add(txt);
+                                });
+                                customCtrl.clear();
+                                setState(() => _filtrarRecetas());
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.deepOrange,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: const Icon(Icons.add, size: 20),
+                          onPressed: () {
+                            final txt = customCtrl.text.trim();
+                            if (txt.isNotEmpty) {
+                              setModalState(() {
+                                _ingredientesSeleccionados.add(txt);
+                              });
+                              customCtrl.clear();
+                              setState(() => _filtrarRecetas());
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Ingredientes seleccionados actualmente
+                    if (_ingredientesSeleccionados.isNotEmpty) ...[
+                      const Text(
+                        'Ingredientes seleccionados:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: _ingredientesSeleccionados.map((ing) {
+                          return Chip(
+                            backgroundColor: Colors.teal.shade50,
+                            side: BorderSide(color: Colors.teal.shade300),
+                            label: Text(
+                              ing,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal.shade900,
+                              ),
+                            ),
+                            deleteIcon: const Icon(Icons.close, size: 14),
+                            deleteIconColor: Colors.teal.shade800,
+                            onDeleted: () {
+                              setModalState(() {
+                                _ingredientesSeleccionados.remove(ing);
+                              });
+                              setState(() => _filtrarRecetas());
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Sugerencias comunes rápidas
+                    const Text(
+                      'Básicos comunes para marcar:',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: sugerenciasComunes.map((sug) {
+                        final bool activa =
+                            _ingredientesSeleccionados.contains(sug);
+                        return FilterChip(
+                          selected: activa,
+                          selectedColor: Colors.teal.shade100,
+                          backgroundColor: Colors.grey.shade100,
+                          label: Text(sug),
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight:
+                                activa ? FontWeight.bold : FontWeight.normal,
+                            color: activa ? Colors.teal.shade900 : Colors.black87,
+                          ),
+                          onSelected: (val) {
+                            setModalState(() {
+                              if (val) {
+                                _ingredientesSeleccionados.add(sug);
+                              } else {
+                                _ingredientesSeleccionados.remove(sug);
+                              }
+                            });
+                            setState(() => _filtrarRecetas());
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Botones de acción inferior
+                    Row(
+                      children: [
+                        if (_ingredientesSeleccionados.isNotEmpty)
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              onPressed: () {
+                                setModalState(() {
+                                  _ingredientesSeleccionados.clear();
+                                });
+                                setState(() => _filtrarRecetas());
+                              },
+                              child: const Text('Limpiar'),
+                            ),
+                          ),
+                        if (_ingredientesSeleccionados.isNotEmpty)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepOrange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              setState(() => _filtrarRecetas());
+                            },
+                            child: Text(
+                              _ingredientesSeleccionados.isEmpty
+                                  ? 'Cerrar'
+                                  : 'Ver recetas (${recetasFiltradas.length}) 🍳',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   // 📅 AGREGAR RECETA DIRECTO AL PLANEADOR SEMANAL
@@ -890,7 +1254,82 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: _abrirModalQueCocinoConLoQueTengo,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _ingredientesSeleccionados.isNotEmpty
+                          ? Colors.teal.shade50
+                          : Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _ingredientesSeleccionados.isNotEmpty
+                            ? Colors.teal.shade300
+                            : Colors.orange.shade300,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _ingredientesSeleccionados.isNotEmpty
+                              ? Icons.kitchen_rounded
+                              : Icons.restaurant_menu_rounded,
+                          color: _ingredientesSeleccionados.isNotEmpty
+                              ? Colors.teal.shade700
+                              : Colors.orange.shade800,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _ingredientesSeleccionados.isNotEmpty
+                                ? 'Filtrando con ${_ingredientesSeleccionados.length} ingredientes (${_ingredientesSeleccionados.take(3).join(', ')}${_ingredientesSeleccionados.length > 3 ? "..." : ""})'
+                                : '¿Qué cocino con lo que tengo? 🧊',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: _ingredientesSeleccionados.isNotEmpty
+                                  ? Colors.teal.shade800
+                                  : Colors.orange.shade900,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (_ingredientesSeleccionados.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _ingredientesSeleccionados.clear();
+                                _filtrarRecetas();
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.teal.shade800,
+                              ),
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.tune,
+                            size: 16,
+                            color: Colors.orange.shade800,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 SizedBox(
                   height: 40,
                   child: ListView(
@@ -1050,6 +1489,49 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       ),
                                     ),
                                   ),
+                                  if (_ingredientesSeleccionados.isNotEmpty)
+                                    Builder(
+                                      builder: (context) {
+                                        final count =
+                                            _contarCoincidenciasIngredientes(
+                                          receta,
+                                        );
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.teal.shade50,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.teal.shade300,
+                                              width: 0.8,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.kitchen_rounded,
+                                                size: 11,
+                                                color: Colors.teal.shade800,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Tienes $count ingrediente${count > 1 ? "s" : ""}',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.teal.shade800,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   if (fueCocinada)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
