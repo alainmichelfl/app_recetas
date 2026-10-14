@@ -64,9 +64,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
       } else if (fragment.contains('type=signup') || fragment.contains('access_token')) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Correo verificado con éxito! Bienvenido a Jitomate y Cebolla 🎉'),
+            content: Text('¡Muchas gracias por registrarte y autenticarte! Tu cuenta está lista 🎉🍅🧅'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
+            duration: Duration(seconds: 5),
           ),
         );
       }
@@ -301,9 +301,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '¡Revisa tu correo! ✉️',
+              '¡Muchas gracias por registrarte! 🍅🧅',
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 21),
             ),
           ],
         ),
@@ -312,7 +312,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hemos enviado un enlace de confirmación a:',
+              'Nos alegra tenerte aquí. Para completar tu autenticación, hemos enviado un enlace de activación a:',
               style: TextStyle(color: Colors.grey.shade700, fontSize: 14.5),
             ),
             const SizedBox(height: 6),

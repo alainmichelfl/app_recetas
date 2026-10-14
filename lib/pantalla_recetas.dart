@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'conversor_unidades.dart';
@@ -43,12 +45,160 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     super.initState();
     cargarRecetas();
     _searchController.addListener(_filtrarRecetas);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _verificarYMostrarAgradecimiento();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _verificarYMostrarAgradecimiento() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'agradecimiento_registro_mostrado_${user.id}';
+    final yaMostrado = prefs.getBool(key) ?? false;
+
+    bool debeMostrar = !yaMostrado;
+    if (kIsWeb) {
+      final fragment = Uri.base.fragment;
+      final query = Uri.base.queryParameters;
+      if (fragment.contains('type=signup') || query['type'] == 'signup') {
+        debeMostrar = true;
+      }
+    }
+
+    if (debeMostrar && mounted) {
+      await prefs.setBool(key, true);
+      _mostrarDialogoAgradecimiento();
+    }
+  }
+
+  void _mostrarDialogoAgradecimiento() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: const Text('🎉', style: TextStyle(fontSize: 42)),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              '¡Gracias por registrarte y autenticarte! 🍅🧅',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 21,
+                color: Color(0xFFD32F2F),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¡Tu cuenta ya está activa y verificada!',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Nos emociona darte la bienvenida a Jitomate y Cebolla. Todo está listo para que disfrutes de:',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.3),
+            ),
+            const SizedBox(height: 14),
+            _construirBeneficioItem(
+              Icons.restaurant_menu_outlined,
+              Colors.redAccent,
+              'Recetas deliciosas y saludables',
+              'Con macronutrientes, calorías y modo cocina paso a paso.',
+            ),
+            const SizedBox(height: 10),
+            _construirBeneficioItem(
+              Icons.auto_awesome,
+              Colors.deepPurpleAccent,
+              'Chef IA Inteligente',
+              'Completa tus menús semanales en un solo clic respetando tus gustos.',
+            ),
+            const SizedBox(height: 10),
+            _construirBeneficioItem(
+              Icons.savings_outlined,
+              Colors.green,
+              'Ahorro en el supermercado',
+              'Cotiza tu carrito en vivo en Walmart, Soriana, La Comer y Central de Abasto.',
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text(
+                '¡Comenzar a cocinar! 🚀',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirBeneficioItem(IconData icono, Color color, String titulo, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icono, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titulo,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+              ),
+              Text(
+                desc,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> cargarRecetas() async {
