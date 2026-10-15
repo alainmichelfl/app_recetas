@@ -1,13 +1,20 @@
 {
-    "name": "app_recetas",
-    "short_name": "app_recetas",
-    "start_url": ".",
+    "name": "Jitomate y Cebolla - Tu Asistente Culinario",
+    "short_name": "Jitomate y Cebolla",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#D32F2F",
+    "description": "Tu asistente culinario y financiero: planeador de comidas con IA, recetas paso a paso, cotizador en vivo en supermercados y control de compras.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": [
+        "food",
+        "lifestyle",
+        "shopping",
+        "finance"
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

@@ -24,6 +24,22 @@ Si ya te habías registrado, ¡tienes que entrar a ver todo lo nuevo que añadim
 
 ---
 
+### 📲 ¿Cómo instalarla en tu celular en 10 segundos? (¡Sin App Store ni descargas pesadas!):
+
+🍎 En iPhone / iPad (Safari):
+1. Abre el enlace en Safari: https://alainmichelfl.github.io/app_recetas/
+2. Toca el botón de Compartir en la parte inferior (el cuadrito con la flechita hacia arriba ⎋).
+3. Selecciona "Agregar a pantalla de inicio" ➕.
+¡Listo! Te aparecerá el icono oficial como una app nativa en tu pantalla principal.
+
+🤖 En Android (Chrome):
+1. Abre el enlace en Chrome: https://alainmichelfl.github.io/app_recetas/
+2. Toca los 3 puntitos arriba a la derecha (⋮).
+3. Selecciona "Instalar aplicación" o "Agregar a la pantalla principal" 📲.
+¡Y listo! Se abre en pantalla completa sin barras de navegador.
+
+---
+
 👉 Pruébala gratis aquí desde tu celular o computadora:  
 🔗 https://alainmichelfl.github.io/app_recetas/
 

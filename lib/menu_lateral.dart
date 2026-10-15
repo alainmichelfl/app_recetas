@@ -526,6 +526,52 @@ class MenuLateral extends StatelessWidget {
                     colorIcono: Colors.blueGrey,
                     pantalla: () => const PantallaPreferencias(),
                   ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.install_mobile,
+                        color: Colors.deepOrange,
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Instalar en tu Celular',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 15,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'PWA 📲',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepOrange,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _mostrarModalInstalacionPwa(context);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -568,6 +614,215 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _mostrarModalInstalacionPwa(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+        ),
+        padding: const EdgeInsets.all(22),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.install_mobile,
+                      color: Color(0xFFD32F2F),
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Instalar en tu Celular',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          'Acceso directo en pantalla completa (Sin tiendas)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Tarjeta iPhone / Safari
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.apple, color: Colors.black87, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'En iPhone / iPad (Safari)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _construirPasoInstalacion(
+                      numero: '1',
+                      texto: 'Abre esta página en Safari y toca el botón Compartir (el cuadrito con flecha hacia arriba ⎋).',
+                    ),
+                    const SizedBox(height: 8),
+                    _construirPasoInstalacion(
+                      numero: '2',
+                      texto: 'Desliza hacia abajo en el menú y selecciona "Agregar a pantalla de inicio" (+).',
+                    ),
+                    const SizedBox(height: 8),
+                    _construirPasoInstalacion(
+                      numero: '3',
+                      texto: 'Presiona "Agregar" arriba a la derecha. ¡Listo! Ya tienes el icono oficial en tu pantalla.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Tarjeta Android / Chrome
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.teal.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.android, color: Colors.green.shade800, size: 22),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'En Android (Chrome)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _construirPasoInstalacion(
+                      numero: '1',
+                      texto: 'Toca los tres puntos (⋮) en la esquina superior derecha de Chrome.',
+                    ),
+                    const SizedBox(height: 8),
+                    _construirPasoInstalacion(
+                      numero: '2',
+                      texto: 'Selecciona "Instalar aplicación" o "Agregar a la pantalla principal".',
+                    ),
+                    const SizedBox(height: 8),
+                    _construirPasoInstalacion(
+                      numero: '3',
+                      texto: 'Confirma presionando "Instalar". ¡Se abrirá en pantalla completa como app nativa!',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD32F2F),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    '¡Entendido, gracias! 👍',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _construirPasoInstalacion({required String numero, required String texto}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.orange.shade800,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            numero,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            texto,
+            style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.3),
+          ),
+        ),
+      ],
     );
   }
 }
