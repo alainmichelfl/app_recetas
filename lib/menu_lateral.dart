@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pantalla_recetas.dart';
+import 'servicio_recetas.dart';
 import 'pantalla_planeador.dart';
 import 'pantalla_calendario.dart';
 import 'pantalla_despensa.dart';
@@ -30,8 +31,8 @@ class MenuLateral extends StatelessWidget {
     // Si ya estamos en la misma ruta, no recargar
     if (rutaActual == rutaDestino) return;
 
-    if (rutaDestino == 'recetas') {
-      // Si volvemos al catálogo principal, limpiar el stack para mantenerlo en la base
+    if (rutaDestino == 'recetas' || rutaDestino == 'recetas_mias') {
+      // Si volvemos al catálogo principal o mis creaciones, limpiar el stack para mantenerlo en la base
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => constructorPantalla()),
@@ -178,6 +179,85 @@ class MenuLateral extends StatelessWidget {
               ? Icon(Icons.circle, size: 7, color: colorIcono)
               : null),
       onTap: () => _navegar(context, ruta, pantalla),
+    );
+  }
+
+  Widget _construirMenuRecetasConSubmenu(BuildContext context) {
+    final bool esGrupoActivo = rutaActual == 'recetas' ||
+        rutaActual == 'recetas_mias' ||
+        rutaActual == 'caninas';
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: esGrupoActivo ? Colors.orange.withValues(alpha: 0.05) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: esGrupoActivo,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: esGrupoActivo ? Colors.orange.shade800 : Colors.orange.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.menu_book_rounded,
+              color: esGrupoActivo ? Colors.white : Colors.orange.shade800,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            'Recetario',
+            style: TextStyle(
+              fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
+              color: esGrupoActivo ? Colors.orange.shade900 : Colors.black87,
+              fontSize: 15,
+            ),
+          ),
+          children: [
+            _construirSubItem(
+              context: context,
+              ruta: 'recetas',
+              titulo: 'Catálogo Oficial',
+              subtitulo: 'Recetas curadas por el chef',
+              icono: Icons.star_rounded,
+              colorIcono: Colors.orange.shade800,
+              pantalla: () => const PantallaRecetas(
+                filtroInicial: FiltroAudienciaReceta.oficiales,
+                rutaMenu: 'recetas',
+              ),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'recetas_mias',
+              titulo: 'Mis Creaciones',
+              subtitulo: 'Tus recetas y las del Chef IA',
+              icono: Icons.person_pin_circle_outlined,
+              colorIcono: Colors.teal.shade800,
+              pantalla: () => const PantallaRecetas(
+                filtroInicial: FiltroAudienciaReceta.misRecetas,
+                rutaMenu: 'recetas_mias',
+              ),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'caninas',
+              titulo: 'Recetas Caninas 🐾',
+              subtitulo: 'Nutrición casera para perritos',
+              icono: Icons.pets,
+              colorIcono: Colors.brown,
+              pantalla: () => const PantallaRecetasCaninas(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -370,14 +450,7 @@ class MenuLateral extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'recetas',
-                    titulo: 'Mis Recetas',
-                    icono: Icons.menu_book,
-                    colorIcono: Colors.orange.shade800,
-                    pantalla: () => const PantallaRecetas(),
-                  ),
+                  _construirMenuRecetasConSubmenu(context),
                   _construirMenuPlaneadorConSubmenu(context),
                   _construirItem(
                     context: context,
@@ -410,14 +483,6 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.auto_awesome,
                     colorIcono: Colors.amber.shade800,
                     pantalla: () => const PantallaChef(),
-                  ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'caninas',
-                    titulo: 'Recetas Caninas',
-                    icono: Icons.pets,
-                    colorIcono: Colors.brown,
-                    pantalla: () => const PantallaRecetasCaninas(),
                   ),
 
                   const Padding(

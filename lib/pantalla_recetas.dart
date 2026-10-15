@@ -16,7 +16,14 @@ import 'servicio_recetas.dart';
 import 'pantalla_carga_masiva_recetas.dart';
 
 class PantallaRecetas extends StatefulWidget {
-  const PantallaRecetas({super.key});
+  final FiltroAudienciaReceta? filtroInicial;
+  final String? rutaMenu;
+
+  const PantallaRecetas({
+    super.key,
+    this.filtroInicial,
+    this.rutaMenu,
+  });
 
   @override
   State<PantallaRecetas> createState() => _PantallaRecetasState();
@@ -48,6 +55,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   @override
   void initState() {
     super.initState();
+    if (widget.filtroInicial != null) {
+      _filtroAudiencia = widget.filtroInicial!;
+    }
     cargarRecetas();
     _searchController.addListener(_filtrarRecetas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -220,11 +230,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       if (!mounted) return;
       setState(() {
         todasLasRecetas = List<Map<String, dynamic>>.from(respuesta);
-        recetasFiltradas = todasLasRecetas;
         _idsCocinadas = ids;
         _titulosCocinados = tits;
         cargando = false;
       });
+      _filtrarRecetas();
     } catch (e) {
       debugPrint('Error al cargar recetas: $e');
       if (mounted) setState(() => cargando = false);
@@ -1412,9 +1422,22 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
 
   @override
   Widget build(BuildContext context) {
+    final String rutaActualMenu = widget.rutaMenu ??
+        (widget.filtroInicial == FiltroAudienciaReceta.misRecetas
+            ? 'recetas_mias'
+            : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                ? 'recetas_oficiales'
+                : 'recetas'));
+
+    final String tituloAppBar = widget.filtroInicial == FiltroAudienciaReceta.misRecetas
+        ? 'Mis Creaciones 👨‍🍳'
+        : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+            ? 'Catálogo Oficial 🌟'
+            : 'Mis Recetas 📖');
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      drawer: const MenuLateral(rutaActual: 'recetas'),
+      drawer: MenuLateral(rutaActual: rutaActualMenu),
       appBar: AppBar(
         leading: Builder(
           builder: (ctx) => IconButton(
@@ -1423,9 +1446,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mis Recetas 📖',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          tituloAppBar,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.orange[800],
         foregroundColor: Colors.white,

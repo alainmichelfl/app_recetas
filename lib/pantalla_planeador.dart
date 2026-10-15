@@ -2573,31 +2573,92 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     hasScrollBody: false,
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.restaurant_menu_rounded,
-                              size: 60,
-                              color: Colors.grey.shade400,
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade50,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.calendar_month_rounded,
+                                size: 52,
+                                color: Colors.teal.shade700,
+                              ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             const Text(
-                              'Tu planeador está listo',
+                              '¡Tu planeador está listo para organizarse!',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Text(
-                              'Toca "Complementar con Chef IA (1 Clic)" para que el chef sugiera tus comidas de la semana con total creatividad y balance.',
+                              'Aún no tienes platillos programados para esta semana. El Chef IA puede generar un menú balanceado y adaptado a tu estilo de vida en segundos.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.grey.shade600,
                                 fontSize: 13.5,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 340),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepOrange,
+                                    foregroundColor: Colors.white,
+                                    elevation: 3,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  onPressed: planeandoIA
+                                      ? null
+                                      : complementarPlaneadorConChefIA1Click,
+                                  icon: planeandoIA
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+                                  label: Text(
+                                    planeandoIA
+                                        ? 'Chef IA planeando tu semana...'
+                                        : 'Planear mi Semana con 1 Clic 🪄',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextButton.icon(
+                              onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
+                              icon: const Icon(Icons.tune, size: 16),
+                              label: const Text(
+                                'Personalizar objetivo nutricional y cocinas',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
