@@ -1,0 +1,32 @@
+¡Hola! 👋🍽️ 
+
+Te escribo para compartirte algo en lo que he estado trabajando con mucho cariño: Jitomate y Cebolla 🍅🧅, una aplicación web diseñada para resolver de raíz dos grandes dolores del día a día: ¿Qué voy a cocinar hoy? y ¿Cómo gastar menos en el súper? 🛒💡
+
+Si ya te habías registrado, ¡tienes que entrar a ver todo lo nuevo que añadimos hoy! Y si aún no te registras o te faltó confirmar tu correo, ¡este es el mejor momento para hacerlo! 😉
+
+---
+
+### ✨ ¿Qué puedes hacer en la app?
+1. 🧊 "¿Qué cocino con lo que tengo?": Selecciona los ingredientes de tu refrigerador y la app te dice exactamente qué platillos deliciosos puedes preparar sin salir a comprar de más.
+2. 🤖 Chef IA en 1 clic: Te arma el menú completo de tu semana (desayunos, comidas, snacks y cenas) balanceado con calorías y macros.
+3. 💵 Cotizador Inteligente de Supermercados: Compara en tiempo real cuánto te cuesta tu lista de compras en Walmart, Soriana, La Comer y la Central de Abasto, ahorrándote cientos de pesos cada semana.
+
+---
+
+### 🚀 Novedades recién salidas del horno:
+* 📖 Nuevo Recetario Segmentado: Accede directo a tus creaciones personales, al catálogo oficial curado y a las recetas caninas 🐾 para consentir a tus perritos con comida natural.
+* 🪄 Planear mi Semana con 1 Clic: Si tu planeador está vacío, toca un solo botón y el Chef IA estructurará tus comidas balanceadas de lunes a domingo.
+* 🎴 Cocinas del mundo estilo Tinder: Elige qué gastronomías te gustan (Mexicana 🇲🇽, Italiana 🇮🇹, Japonesa 🇯🇵, Thai 🇹🇭, etc.) deslizando tarjetas a la derecha o izquierda.
+* 📅 Calendario Mensual de Comidas: Un nuevo submenú en el menú principal para ver todo tu mes calendarizado por colores.
+* 🍳 Planeador Colapsable: Ahora puedes minimizar o expandir desayunos, comidas o snacks para ver solo lo que necesitas.
+* 📈 Transferencia a Mis Finanzas: Ahora puedes pasar tu mejor cotización directo a tus finanzas como compra registrada ¡sin necesidad de escanear tickets físicos!
+* 🧾 Escáner de Tickets con Inteligencia Artificial: Tómale foto a tu ticket del súper y la app registra tus compras y tu capital automáticamente.
+
+---
+
+👉 Pruébala gratis aquí desde tu celular o computadora:  
+🔗 https://alainmichelfl.github.io/app_recetas/
+
+(Tip: Al registrarte, revisa tu correo y tu carpeta de Spam para activar tu cuenta con el enlace de confirmación).
+
+Me encantaría que la pruebes y me des tu opinión sincera. ¡Cualquier comentario me ayuda muchísimo a seguirla mejorando! 🙌✨
