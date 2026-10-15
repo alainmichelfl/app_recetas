@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'config_api.dart';
 import 'perfiles_nutricionales.dart';
+import 'tipos_cocina.dart';
 import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
 
@@ -26,6 +27,7 @@ class _PantallaChefState extends State<PantallaChef> {
 
   String _tipoComidaSeleccionado = 'Comida';
   String _objetivoSeleccionado = 'Mantenimiento 2,000 kcal';
+  String _tipoCocinaSeleccionado = TiposCocina.mexicana;
   String _alergias = '';
   List<String> _estilos = [PerfilesNutricionales.libre];
 
@@ -54,6 +56,12 @@ class _PantallaChefState extends State<PantallaChef> {
       setState(() {
         _alergias = prefs.alergias;
         _estilos = prefs.estilos;
+        if (prefs.tiposCocina.isNotEmpty &&
+            prefs.tiposCocina.first != TiposCocina.todas) {
+          _tipoCocinaSeleccionado = prefs.tiposCocina.first;
+        } else {
+          _tipoCocinaSeleccionado = TiposCocina.mexicana;
+        }
         if (prefs.estilos.contains(PerfilesNutricionales.keto)) {
           _objetivoSeleccionado = 'Keto 1,700 kcal';
         } else if (prefs.objetivo == PerfilesNutricionales.deficit) {
@@ -73,6 +81,7 @@ class _PantallaChefState extends State<PantallaChef> {
     String ingredientesBase,
     String tipoComida,
     String objetivoSalud,
+    String tipoCocina,
     bool esPerruno,
   ) {
     if (esPerruno) {
@@ -121,8 +130,13 @@ class _PantallaChefState extends State<PantallaChef> {
     }
 
     final String instruccionIngredientes = ingredientesBase.isNotEmpty
-        ? '- Ingredientes principales a usar (prioriza estos pero puedes agregar básicos): $ingredientesBase'
+        ? '- Ingredientes principales o antojo del usuario (prioriza estos y combínalos con básicos): $ingredientesBase'
         : '- Ingredientes: ¡Tienes libertad creativa total! Inventa una receta deliciosa y original desde cero.';
+
+    final String instruccionCocina =
+        (tipoCocina.isNotEmpty && tipoCocina != TiposCocina.todas)
+            ? '- GASTRONOMÍA / ESTILO DE COCINA OBLIGATORIO: Cocina $tipoCocina (${TiposCocina.iconos[tipoCocina] ?? ""}). La receta DEBE ser 100% representativa de la tradición culinaria $tipoCocina (${TiposCocina.descripciones[tipoCocina] ?? ""}), usando técnicas, sazón y sabores típicos.'
+            : '- GASTRONOMÍA: Cocina libre, internacional o fusión según los ingredientes y antojos provistos.';
 
     final String instruccionAlergias = _alergias.trim().isNotEmpty
         ? '- ALERGIAS Y RESTRICCIONES (PROHIBIDO USAR): ${_alergias.trim()}.'
@@ -137,6 +151,7 @@ class _PantallaChefState extends State<PantallaChef> {
     
     Parámetros obligatorios:
     $instruccionIngredientes
+    $instruccionCocina
     $instruccionAlergias
     $instruccionEstilos
     - Tipo de comida: $tipoComida
@@ -195,6 +210,7 @@ class _PantallaChefState extends State<PantallaChef> {
         _ingredientesCtrl.text.trim(),
         _tipoComidaSeleccionado,
         _objetivoSeleccionado,
+        _tipoCocinaSeleccionado,
         _modoPerruno,
       );
 
@@ -310,6 +326,22 @@ class _PantallaChefState extends State<PantallaChef> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (!_modoPerruno) ...[
+                            const SizedBox(width: 8),
+                            Chip(
+                              avatar: Text(
+                                TiposCocina.iconos[_tipoCocinaSeleccionado] ??
+                                    '🍽️',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              label: Text(_tipoCocinaSeleccionado),
+                              backgroundColor: Colors.orange.shade50,
+                              labelStyle: TextStyle(
+                                color: Colors.deepOrange.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -419,6 +451,11 @@ class _PantallaChefState extends State<PantallaChef> {
       sb.writeln('CALORÍAS: $calorias kcal');
       if (macros.isNotEmpty) sb.writeln('MACROS: $macros');
       sb.writeln('TIPO: $tipo');
+      if (!_modoPerruno && _tipoCocinaSeleccionado.isNotEmpty) {
+        sb.writeln(
+          'COCINA: ${TiposCocina.iconos[_tipoCocinaSeleccionado] ?? ""} $_tipoCocinaSeleccionado',
+        );
+      }
       sb.writeln('\n📝 INGREDIENTES:');
       for (var ing in ingredientes) {
         sb.writeln('- ${ing['cantidad']} ${ing['unidad']} ${ing['nombre_estandar']}');
@@ -511,6 +548,251 @@ class _PantallaChefState extends State<PantallaChef> {
     super.dispose();
   }
 
+  LinearGradient _obtenerGradienteCocina(String tipo) {
+    switch (tipo) {
+      case TiposCocina.mexicana:
+        return LinearGradient(
+          colors: [Colors.green.shade800, Colors.red.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.italiana:
+        return LinearGradient(
+          colors: [Colors.green.shade700, Colors.red.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.japonesa:
+        return LinearGradient(
+          colors: [Colors.red.shade900, Colors.grey.shade900],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.thai:
+        return LinearGradient(
+          colors: [Colors.deepOrange.shade600, Colors.amber.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.francesa:
+        return LinearGradient(
+          colors: [Colors.blue.shade900, Colors.red.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.espanola:
+        return LinearGradient(
+          colors: [Colors.amber.shade800, Colors.red.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.mediterranea:
+        return LinearGradient(
+          colors: [Colors.teal.shade700, Colors.blue.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.china:
+        return LinearGradient(
+          colors: [Colors.red.shade900, Colors.amber.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.india:
+        return LinearGradient(
+          colors: [Colors.orange.shade800, Colors.deepPurple.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.americana:
+        return LinearGradient(
+          colors: [Colors.indigo.shade800, Colors.red.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case TiposCocina.todas:
+      default:
+        return LinearGradient(
+          colors: [Colors.blueGrey.shade800, Colors.teal.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+    }
+  }
+
+  Widget _construirSelectorTarjetasCocina(Color colorTema) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.public, color: Colors.deepOrange, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Tipo de Cocina / Gastronomía 🎴',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${TiposCocina.iconos[_tipoCocinaSeleccionado] ?? "🍽️"} $_tipoCocinaSeleccionado',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: colorTema,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Desliza y selecciona la gastronomía que se te antoja para inspirar al Chef IA:',
+          style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 145,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: TiposCocina.lista.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final cocina = TiposCocina.lista[index];
+              final bool isSelected = _tipoCocinaSeleccionado == cocina;
+              final String icono = TiposCocina.iconos[cocina] ?? '🍽️';
+              final String desc = TiposCocina.descripciones[cocina] ?? '';
+              final String ejemplo =
+                  (TiposCocina.platillosEmblematicos[cocina]?.take(2).join(', ')) ??
+                      '';
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _tipoCocinaSeleccionado = cocina);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 140,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: _obtenerGradienteCocina(cocina),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.25),
+                      width: isSelected ? 2.5 : 1.0,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  icono,
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                              if (isSelected)
+                                Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: colorTema,
+                                    size: 18,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Text(
+                            cocina,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            ejemplo.isNotEmpty ? ejemplo : desc,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 10.5,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                      if (!isSelected)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color colorPremium = Colors.red.shade800;
@@ -597,7 +879,7 @@ class _PantallaChefState extends State<PantallaChef> {
               Text(
                 _modoPerruno
                     ? '¿Qué ingredientes seguros tienes para tu perrito?'
-                    : '¿Qué tienes en tu despensa?',
+                    : '¿Qué tienes en tu despensa o qué se te antoja?',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -608,7 +890,7 @@ class _PantallaChefState extends State<PantallaChef> {
               Text(
                 _modoPerruno
                     ? 'Ingresa pollo, avena, zanahoria, o déjalo vacío para sugerencia veterinaria.'
-                    : 'Ingresa ingredientes, o deja el campo vacío para que la IA te sorprenda.',
+                    : 'Ingresa ingredientes disponibles, el antojo del día, o déjalo vacío para que el Chef IA te sorprenda.',
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -620,7 +902,7 @@ class _PantallaChefState extends State<PantallaChef> {
                 decoration: InputDecoration(
                   labelText: _modoPerruno
                       ? 'Ej. Pollo hervido, zanahoria (Opcional)'
-                      : 'Ej. Pechuga de pollo, espinacas (Opcional)',
+                      : 'Ej. Pechuga de pollo, espinacas, o algo picante y caldoso (Opcional)',
                   floatingLabelStyle: TextStyle(
                     color: colorPremium,
                     fontWeight: FontWeight.bold,
@@ -638,7 +920,7 @@ class _PantallaChefState extends State<PantallaChef> {
               ),
               const SizedBox(height: 24),
 
-              // Ocultamos tipos de comida y objetivos si está en modo perruno para simplificar
+              // Ocultamos tipos de comida, objetivos y gastronomía si está en modo perruno
               if (!_modoPerruno) ...[
                 const Text(
                   'Tipo de Platillo',
@@ -722,7 +1004,11 @@ class _PantallaChefState extends State<PantallaChef> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
+
+                // 🎴 BARRA DE TARJETAS DE TIPO DE COCINA / GASTRONOMÍA
+                _construirSelectorTarjetasCocina(colorPremium),
+                const SizedBox(height: 32),
               ] else ...[
                 const SizedBox(height: 20),
               ],
@@ -744,7 +1030,9 @@ class _PantallaChefState extends State<PantallaChef> {
                       ? 'Cocinando...'
                       : (_modoPerruno
                             ? 'Cocinar Snack Perruno 🐾'
-                            : 'Cocinar Receta con IA'),
+                            : (_tipoCocinaSeleccionado == TiposCocina.todas
+                                ? 'Cocinar Receta con IA 👨‍🍳'
+                                : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
