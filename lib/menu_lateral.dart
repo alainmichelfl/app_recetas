@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pantalla_recetas.dart';
 import 'pantalla_planeador.dart';
+import 'pantalla_calendario.dart';
 import 'pantalla_despensa.dart';
 import 'pantalla_carrito.dart';
 import 'pantalla_cotizador.dart';
@@ -250,6 +251,15 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.calendar_month,
                     colorIcono: Colors.teal,
                     pantalla: () => const PantallaPlaneador(),
+                  ),
+                  _construirItem(
+                    context: context,
+                    ruta: 'calendario',
+                    titulo: 'Calendario de Comidas',
+                    icono: Icons.calendar_today,
+                    colorIcono: Colors.teal.shade700,
+                    badge: 'Nuevo ✨',
+                    pantalla: () => const PantallaCalendario(),
                   ),
                   _construirItem(
                     context: context,

@@ -11,7 +11,9 @@ import 'pantalla_chef.dart';
 import 'pantalla_despensa.dart';
 import 'pantalla_carrito.dart';
 import 'pantalla_preferencias.dart';
+import 'pantalla_calendario.dart';
 import 'perfiles_nutricionales.dart';
+import 'tipos_cocina.dart';
 import 'pantalla_detalle_receta.dart';
 import 'servicio_preferencias.dart';
 import 'servicio_despensa.dart';
@@ -45,6 +47,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
   bool planeandoIA = false;
   String objetivoActivo = PerfilesNutricionales.mantenimiento;
   List<String> _estilos = [PerfilesNutricionales.libre];
+  List<String> _tiposCocina = [TiposCocina.todas];
   String _alergias = '';
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
@@ -70,6 +73,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       setState(() {
         _estilos = prefs.estilos;
         _alergias = prefs.alergias;
+        _tiposCocina = prefs.tiposCocina;
         objetivoActivo = objetivo;
       });
     } catch (e) {
@@ -341,6 +345,25 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     ),
                   ),
                 ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade100,
+                  border: Border.all(color: Colors.amber.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _tiposCocina.contains(TiposCocina.todas)
+                      ? '🌎 Cocina: Variada'
+                      : '🌮 ${_tiposCocina.map((t) => "${TiposCocina.iconos[t] ?? ""} $t").join(", ")}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.brown.shade900,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           const Divider(height: 18),
@@ -531,6 +554,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
   void _mostrarSelectorDeObjetivo() {
     String seleccionTemporal = objetivoActivo;
+    List<String> cocinasTemporales = List<String>.from(_tiposCocina);
 
     showModalBottomSheet(
       context: context,
@@ -540,153 +564,231 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
               padding: const EdgeInsets.all(22),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 45,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(10),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 45,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  const Row(
-                    children: [
-                      Icon(Icons.auto_awesome, color: Colors.teal, size: 24),
-                      SizedBox(width: 10),
-                      Text(
-                        'Objetivo Nutricional para la Semana',
+                    const SizedBox(height: 15),
+                    const Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.teal, size: 24),
+                        SizedBox(width: 10),
+                        Text(
+                          'Personalizar tu Semana',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Objetivo Nutricional:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'La IA seleccionará los platillos de tus 7 días alineados a esta meta:',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    ),
+                    const SizedBox(height: 10),
+                    ...kDescripcionesObjetivo.keys.map((meta) {
+                      final bool elegida = seleccionTemporal == meta;
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: elegida ? Colors.teal : Colors.grey.shade200,
+                            width: elegida ? 2 : 1,
+                          ),
+                        ),
+                        color: elegida ? Colors.teal.shade50 : Colors.white,
+                        child: ListTile(
+                          dense: true,
+                          title: Text(
+                            meta,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: elegida
+                                  ? Colors.teal.shade900
+                                  : Colors.black87,
+                            ),
+                          ),
+                          subtitle: Text(
+                            kDescripcionesObjetivo[meta] ?? '',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: elegida
+                                  ? Colors.teal.shade800
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                          trailing: elegida
+                              ? const Icon(Icons.check_circle, color: Colors.teal)
+                              : const Icon(
+                                  Icons.circle_outlined,
+                                  color: Colors.grey,
+                                ),
+                          onTap: () {
+                            setStateModal(() => seleccionTemporal = meta);
+                          },
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 14),
+                    const Divider(height: 1),
+                    const SizedBox(height: 14),
+                    const Row(
+                      children: [
+                        Icon(Icons.restaurant, color: Colors.deepOrange, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Tipo de Cocina de la Semana',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Selecciona tus favoritas (Mexicana, Japonesa, Thai, Italiana, Francesa...). El Chef IA las usará de inspiración:',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6.0,
+                      runSpacing: 6.0,
+                      children: TiposCocina.lista.map((tipo) {
+                        final bool seleccionado = cocinasTemporales.contains(tipo);
+                        final icono = TiposCocina.iconos[tipo] ?? '🍽️';
+                        return FilterChip(
+                          avatar: Text(icono, style: const TextStyle(fontSize: 12)),
+                          label: Text(tipo, style: const TextStyle(fontSize: 12)),
+                          selected: seleccionado,
+                          showCheckmark: false,
+                          selectedColor: Colors.deepOrange,
+                          backgroundColor: Colors.grey.shade100,
+                          labelStyle: TextStyle(
+                            color: seleccionado ? Colors.white : Colors.black87,
+                            fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          onSelected: (bool selected) {
+                            setStateModal(() {
+                              final actuales = List<String>.from(cocinasTemporales);
+                              if (tipo == TiposCocina.todas) {
+                                cocinasTemporales = [TiposCocina.todas];
+                                return;
+                              }
+                              if (selected) {
+                                actuales.add(tipo);
+                              } else {
+                                actuales.remove(tipo);
+                              }
+                              cocinasTemporales = TiposCocina.normalizar(actuales);
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check),
+                      label: const Text(
+                        'Planear 7 Días con este Perfil 🚀',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'La IA seleccionará los platillos de tus 7 días alineados a esta meta:',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 15),
-                  ...kDescripcionesObjetivo.keys.map((meta) {
-                    final bool elegida = seleccionTemporal == meta;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: elegida ? Colors.teal : Colors.grey.shade200,
-                          width: elegida ? 2 : 1,
-                        ),
-                      ),
-                      color: elegida ? Colors.teal.shade50 : Colors.white,
-                      child: ListTile(
-                        dense: true,
-                        title: Text(
-                          meta,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: elegida
-                                ? Colors.teal.shade900
-                                : Colors.black87,
-                          ),
-                        ),
-                        subtitle: Text(
-                          kDescripcionesObjetivo[meta] ?? '',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: elegida
-                                ? Colors.teal.shade800
-                                : Colors.grey.shade600,
-                          ),
-                        ),
-                        trailing: elegida
-                            ? const Icon(Icons.check_circle, color: Colors.teal)
-                            : const Icon(
-                                Icons.circle_outlined,
-                                color: Colors.grey,
-                              ),
-                        onTap: () {
-                          setStateModal(() => seleccionTemporal = meta);
-                        },
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 15),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        setState(() {
+                          objetivoActivo = seleccionTemporal;
+                          _tiposCocina = cocinasTemporales;
+                        });
+
+                        try {
+                          final prefsActuales =
+                              await ServicioPreferencias.obtenerPreferencias();
+                          final objetivoParaGuardar =
+                              seleccionTemporal == 'Keto' ||
+                                      seleccionTemporal == 'Libre'
+                                  ? prefsActuales.objetivo
+                                  : seleccionTemporal;
+                          final estilosParaGuardar = seleccionTemporal == 'Keto'
+                              ? (prefsActuales.estilos
+                                      .contains(PerfilesNutricionales.keto)
+                                  ? prefsActuales.estilos
+                                  : [
+                                      ...prefsActuales.estilos.where(
+                                          (e) => e != PerfilesNutricionales.libre),
+                                      PerfilesNutricionales.keto
+                                    ])
+                              : (seleccionTemporal == 'Libre'
+                                  ? [PerfilesNutricionales.libre]
+                                  : prefsActuales.estilos);
+
+                          await ServicioPreferencias.guardarPreferencias(
+                            PreferenciasUsuario(
+                              objetivo: objetivoParaGuardar,
+                              estilos: estilosParaGuardar,
+                              tiposCocina: cocinasTemporales,
+                              alergias: prefsActuales.alergias,
+                              superFavorito: prefsActuales.superFavorito,
+                              porciones: prefsActuales.porciones,
+                              presupuestoSemanal: prefsActuales.presupuestoSemanal,
+                              notificaciones: prefsActuales.notificaciones,
+                            ),
+                          );
+                          _cargarObjetivoDesdePreferencias();
+                        } catch (e) {
+                          debugPrint(
+                              'Error al sincronizar objetivo con preferencias: $e');
+                        }
+
+                        autocompletarSemanaConObjetivo(seleccionTemporal);
+                      },
                     ),
-                    icon: const Icon(Icons.check),
-                    label: const Text(
-                      'Planear 7 Días con este Objetivo 🚀',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      setState(() => objetivoActivo = seleccionTemporal);
-
-                      try {
-                        final prefsActuales =
-                            await ServicioPreferencias.obtenerPreferencias();
-                        final objetivoParaGuardar =
-                            seleccionTemporal == 'Keto' ||
-                                    seleccionTemporal == 'Libre'
-                                ? prefsActuales.objetivo
-                                : seleccionTemporal;
-                        final estilosParaGuardar = seleccionTemporal == 'Keto'
-                            ? (prefsActuales.estilos
-                                    .contains(PerfilesNutricionales.keto)
-                                ? prefsActuales.estilos
-                                : [
-                                    ...prefsActuales.estilos.where(
-                                        (e) => e != PerfilesNutricionales.libre),
-                                    PerfilesNutricionales.keto
-                                  ])
-                            : (seleccionTemporal == 'Libre'
-                                ? [PerfilesNutricionales.libre]
-                                : prefsActuales.estilos);
-
-                        await ServicioPreferencias.guardarPreferencias(
-                          PreferenciasUsuario(
-                            objetivo: objetivoParaGuardar,
-                            estilos: estilosParaGuardar,
-                            alergias: prefsActuales.alergias,
-                            superFavorito: prefsActuales.superFavorito,
-                            porciones: prefsActuales.porciones,
-                            presupuestoSemanal: prefsActuales.presupuestoSemanal,
-                            notificaciones: prefsActuales.notificaciones,
-                          ),
-                        );
-                        _cargarObjetivoDesdePreferencias();
-                      } catch (e) {
-                        debugPrint(
-                            'Error al sincronizar objetivo con preferencias: $e');
-                      }
-
-                      autocompletarSemanaConObjetivo(seleccionTemporal);
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -1245,6 +1347,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     );
 
     final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
+    final tiposCocinaPrompt = TiposCocina.promptChefIA(_tiposCocina);
     final alergiasStr = _alergias.trim().isNotEmpty
         ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
         : '';
@@ -1258,7 +1361,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     ${peticiones.map((p) => '- $p').join('\n')}
 
     Directrices clave:
-    1. LIBERTAD CREATIVA: Explora sabores vibrantes (cocina mexicana moderna, mediterránea, bowls saludables, salsas caseras ligeras y texturas ricas).
+    1. TIPO DE COCINA E INSPIRACIÓN: $tiposCocinaPrompt
     2. NUTRICIÓN: Alineado al objetivo calórico: $objetivo
     $estilosStr
     $alergiasStr
@@ -1932,6 +2035,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       );
 
       final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
+      final tiposCocinaPrompt = TiposCocina.promptChefIA(_tiposCocina);
       final alergiasStr = _alergias.trim().isNotEmpty
           ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
           : '';
@@ -1941,6 +2045,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       Crea EXACTAMENTE 1 receta deliciosa, creativa y diferente a "$tituloActual" para la categoría "$tipoComida".
 
       Parámetros obligatorios:
+      - Tipo de cocina e inspiración: $tiposCocinaPrompt
       - Objetivo calórico: $objetivoActivo
       $estilosStr
       $alergiasStr
@@ -2157,6 +2262,14 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'Calendario de Comidas',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PantallaCalendario()),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.kitchen),
             tooltip: 'Mi Despensa',
             onPressed: () => Navigator.push(
@@ -2182,263 +2295,292 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-            color: Colors.white,
-            child: Column(
-              children: [
-                // 🍏 Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento
-                _construirTarjetaCumplimiento(),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange,
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: planeandoIA
-                        ? null
-                        : complementarPlaneadorConChefIA1Click,
-                    icon: planeandoIA
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+      body: cargando
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            )
+          : CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // 🍏 1. Encabezado retráctil que se desplaza hacia arriba con el scroll
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        // Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento
+                        _construirTarjetaCumplimiento(),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepOrange,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
-                          )
-                        : const Icon(Icons.auto_awesome_rounded),
-                    label: Text(
-                      planeandoIA
-                          ? 'Chef IA planeando tu semana...'
-                          : 'Complementar con Chef IA (1 Clic) 👨‍🍳✨',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
-                        icon: const Icon(
-                          Icons.tune,
-                          size: 16,
-                          color: Colors.deepOrange,
-                        ),
-                        label: const Text(
-                          'Personalizar',
-                          style: TextStyle(
-                            color: Colors.deepOrange,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.deepOrange.shade300),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: exportarTodaLaSemana,
-                        icon: const Icon(
-                          Icons.calendar_month,
-                          size: 16,
-                          color: Colors.teal,
-                        ),
-                        label: const Text(
-                          'Exportar',
-                          style: TextStyle(
-                            color: Colors.teal,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.teal),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: borrarTodoElPlan,
-                        icon: const Icon(
-                          Icons.delete_sweep,
-                          size: 16,
-                          color: Colors.red,
-                        ),
-                        label: const Text(
-                          'Reiniciar',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // 💡 Banner de Recordatorio de Despensa
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.kitchen_outlined,
-                        color: Colors.amber.shade800,
-                        size: 26,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Consejo de Ahorro 💡',
-                              style: TextStyle(
+                            onPressed: planeandoIA
+                                ? null
+                                : complementarPlaneadorConChefIA1Click,
+                            icon: planeandoIA
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.auto_awesome_rounded),
+                            label: Text(
+                              planeandoIA
+                                  ? 'Chef IA planeando tu semana...'
+                                  : 'Complementar con Chef IA (1 Clic) 👨‍🍳✨',
+                              style: const TextStyle(
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
+                                icon: const Icon(
+                                  Icons.tune,
+                                  size: 16,
+                                  color: Colors.deepOrange,
+                                ),
+                                label: const Text(
+                                  'Personalizar',
+                                  style: TextStyle(
+                                    color: Colors.deepOrange,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: Colors.deepOrange.shade300),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PantallaCalendario(),
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                                label: const Text(
+                                  'Calendario',
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.teal),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: exportarTodaLaSemana,
+                                icon: const Icon(
+                                  Icons.file_upload_outlined,
+                                  size: 16,
+                                  color: Colors.blueGrey,
+                                ),
+                                label: const Text(
+                                  'Exportar',
+                                  style: TextStyle(
+                                    color: Colors.blueGrey,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.blueGrey),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: borrarTodoElPlan,
+                              tooltip: 'Reiniciar plan',
+                              icon: const Icon(
+                                Icons.delete_sweep,
+                                size: 20,
+                                color: Colors.red,
+                              ),
+                              style: IconButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // 💡 Banner de Recordatorio de Despensa
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber.shade300),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.kitchen_outlined,
+                                color: Colors.amber.shade800,
+                                size: 26,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Consejo de Ahorro 💡',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Revisa tu despensa antes de autollenar tu semana para evitar comprar duplicados.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: Divider(height: 1)),
+                if (miPlan.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.restaurant_menu_rounded,
+                              size: 60,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Tu planeador está listo',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 6),
                             Text(
-                              'Revisa tu despensa antes de autollenar tu semana para evitar comprar duplicados.',
+                              'Toca "Complementar con Chef IA (1 Clic)" para que el chef sugiera tus comidas de la semana con total creatividad y balance.',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade800,
+                                color: Colors.grey.shade600,
+                                fontSize: 13.5,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.all(15),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (desayunos.isNotEmpty) ...[
+                          _crearSeccionCategoria(
+                            '🍳 Desayunos',
+                            desayunos,
+                            Colors.orange,
+                          ),
+                          const SizedBox(height: 15),
+                        ],
+                        if (comidas.isNotEmpty) ...[
+                          _crearSeccionCategoria(
+                            '🍲 Comidas',
+                            comidas,
+                            Colors.green,
+                          ),
+                          const SizedBox(height: 15),
+                        ],
+                        if (snacks.isNotEmpty) ...[
+                          _crearSeccionCategoria(
+                            '🍎 Snacks',
+                            snacks,
+                            Colors.redAccent,
+                          ),
+                          const SizedBox(height: 15),
+                        ],
+                        if (cenas.isNotEmpty) ...[
+                          _crearSeccionCategoria(
+                            '🌙 Cenas',
+                            cenas,
+                            Colors.indigo,
+                          ),
+                          const SizedBox(height: 15),
+                        ],
+                      ]),
+                    ),
                   ),
-                ),
               ],
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: cargando
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  )
-                : miPlan.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.restaurant_menu_rounded,
-                            size: 60,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Tu planeador está listo',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Toca "Complementar con Chef IA (1 Clic)" para que el chef sugiera tus comidas de la semana con total creatividad y balance.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(15),
-                    children: [
-                      if (desayunos.isNotEmpty) ...[
-                        _crearSeccionCategoria(
-                          '🍳 Desayunos',
-                          desayunos,
-                          Colors.orange,
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-                      if (comidas.isNotEmpty) ...[
-                        _crearSeccionCategoria(
-                          '🍲 Comidas',
-                          comidas,
-                          Colors.green,
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-                      if (snacks.isNotEmpty) ...[
-                        _crearSeccionCategoria(
-                          '🍎 Snacks',
-                          snacks,
-                          Colors.redAccent,
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-                      if (cenas.isNotEmpty) ...[
-                        _crearSeccionCategoria(
-                          '🌙 Cenas',
-                          cenas,
-                          Colors.indigo,
-                        ),
-                        const SizedBox(height: 15),
-                      ],
-                    ],
-                  ),
-          ),
-        ],
-      ),
     );
   }
 

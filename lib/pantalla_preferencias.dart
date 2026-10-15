@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'perfiles_nutricionales.dart';
+import 'tipos_cocina.dart';
 import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
 
@@ -15,6 +16,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   // Variables de estado para las preferencias
   String objetivoSeleccionado = PerfilesNutricionales.mantenimiento;
   List<String> estilosSeleccionados = [PerfilesNutricionales.libre];
+  List<String> tiposCocinaSeleccionados = [TiposCocina.todas];
   double presupuestoSemanal = 1500;
   int porcionesDefecto = 2;
   String superFavorito = 'Walmart';
@@ -26,6 +28,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   // 🍎 OBJETIVOS Y ESTILOS (fuente única compartida con Planeador, Salud y Chef)
   final List<String> opcionesObjetivo = PerfilesNutricionales.objetivos;
   final List<String> opcionesEstilo = PerfilesNutricionales.estilos;
+  final List<String> opcionesTiposCocina = TiposCocina.lista;
 
   // 🛒 SUPERMERCADOS EN FORMATO DE BOTÓN
   final List<String> opcionesSuper = [
@@ -62,6 +65,24 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
     });
   }
 
+  /// "Variada / Todas" es exclusivo: al elegir otro tipo de cocina se quita,
+  /// y si no queda ninguno vuelve a "Variada / Todas".
+  void _alternarTipoCocina(String tipo, bool activo) {
+    setState(() {
+      final actuales = List<String>.from(tiposCocinaSeleccionados);
+      if (tipo == TiposCocina.todas) {
+        tiposCocinaSeleccionados = [TiposCocina.todas];
+        return;
+      }
+      if (activo) {
+        actuales.add(tipo);
+      } else {
+        actuales.remove(tipo);
+      }
+      tiposCocinaSeleccionados = TiposCocina.normalizar(actuales);
+    });
+  }
+
   Future<void> _cargarPreferencias() async {
     setState(() => cargando = true);
     try {
@@ -70,6 +91,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
       setState(() {
         objetivoSeleccionado = prefs.objetivo;
         estilosSeleccionados = PerfilesNutricionales.normalizar(prefs.estilos);
+        tiposCocinaSeleccionados = TiposCocina.normalizar(prefs.tiposCocina);
         alergiasController.text = prefs.alergias;
         superFavorito = opcionesSuper.contains(prefs.superFavorito)
             ? prefs.superFavorito
@@ -92,6 +114,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
       final prefs = PreferenciasUsuario(
         objetivo: objetivoSeleccionado,
         estilos: estilosSeleccionados,
+        tiposCocina: tiposCocinaSeleccionados,
         alergias: alergiasController.text.trim(),
         superFavorito: superFavorito,
         porciones: porcionesDefecto,
@@ -340,7 +363,113 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 💡 2. HOGAR Y COMPRAS (SUPERMERCADOS COMO BOTONES)
+                  // 💡 2. COCINAS DEL MUNDO FAVORITAS
+                  const Text(
+                    '🌮 Tipos de Cocina Favoritos',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Gastronomías del Mundo',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Elige tus estilos preferidos (Mexicana, Japonesa, Thai, Francesa, Italiana, etc.). Tu Planeador y el Chef IA los tomarán como inspiración principal.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: opcionesTiposCocina.map((tipo) {
+                              final bool seleccionado =
+                                  tiposCocinaSeleccionados.contains(tipo);
+                              final icono = TiposCocina.iconos[tipo] ?? '🍽️';
+                              return FilterChip(
+                                avatar: Text(
+                                  icono,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                label: Text(tipo),
+                                selected: seleccionado,
+                                showCheckmark: false,
+                                selectedColor: colorPrincipal,
+                                backgroundColor: Colors.grey.shade200,
+                                labelStyle: TextStyle(
+                                  color: seleccionado
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: seleccionado
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                onSelected: (bool selected) =>
+                                    _alternarTipoCocina(tipo, selected),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.teal.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.lightbulb_outline,
+                                  size: 20,
+                                  color: Colors.teal.shade800,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    tiposCocinaSeleccionados.contains(TiposCocina.todas)
+                                        ? 'Selección actual: Variada / Todas (El Chef IA sugerirá recetas diversas del mundo).'
+                                        : 'Selección actual: ${tiposCocinaSeleccionados.join(", ")} (El Chef IA y Planeador priorizarán estas cocinas).',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.teal.shade900,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 💡 3. HOGAR Y COMPRAS (SUPERMERCADOS COMO BOTONES)
                   const Text(
                     '🛒 Hogar y Compras',
                     style: TextStyle(
