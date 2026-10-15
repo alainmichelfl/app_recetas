@@ -109,6 +109,140 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
+  Widget _construirSubItem({
+    required BuildContext context,
+    required String ruta,
+    required String titulo,
+    required IconData icono,
+    required Color colorIcono,
+    required Widget Function() pantalla,
+    String? subtitulo,
+    String? badge,
+  }) {
+    final bool esActiva = rutaActual == ruta;
+
+    return ListTile(
+      dense: true,
+      selected: esActiva,
+      selectedTileColor: colorIcono.withValues(alpha: 0.12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+      leading: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: esActiva ? colorIcono : colorIcono.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icono,
+          color: esActiva ? Colors.white : colorIcono,
+          size: 16,
+        ),
+      ),
+      title: Text(
+        titulo,
+        style: TextStyle(
+          fontWeight: esActiva ? FontWeight.bold : FontWeight.w600,
+          color: esActiva ? colorIcono : Colors.black87,
+          fontSize: 13.5,
+        ),
+      ),
+      subtitle: subtitulo != null
+          ? Text(
+              subtitulo,
+              style: TextStyle(
+                fontSize: 11,
+                color: esActiva ? colorIcono.withValues(alpha: 0.85) : Colors.grey.shade600,
+              ),
+            )
+          : null,
+      trailing: badge != null
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: colorIcono.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                badge,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: colorIcono,
+                ),
+              ),
+            )
+          : (esActiva
+              ? Icon(Icons.circle, size: 7, color: colorIcono)
+              : null),
+      onTap: () => _navegar(context, ruta, pantalla),
+    );
+  }
+
+  Widget _construirMenuPlaneadorConSubmenu(BuildContext context) {
+    final bool esGrupoActivo = rutaActual == 'planeador' || rutaActual == 'calendario';
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: esGrupoActivo ? Colors.teal.withValues(alpha: 0.05) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: esGrupoActivo,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: esGrupoActivo ? Colors.teal : Colors.teal.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.calendar_month,
+              color: esGrupoActivo ? Colors.white : Colors.teal,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            'Mi Planeador',
+            style: TextStyle(
+              fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
+              color: esGrupoActivo ? Colors.teal.shade800 : Colors.black87,
+              fontSize: 15,
+            ),
+          ),
+          children: [
+            _construirSubItem(
+              context: context,
+              ruta: 'planeador',
+              titulo: 'Planeador por Tiempos',
+              subtitulo: 'Desayuno, Comida, Cena',
+              icono: Icons.view_list_rounded,
+              colorIcono: Colors.teal,
+              pantalla: () => const PantallaPlaneador(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'calendario',
+              titulo: 'Calendario de Comidas',
+              subtitulo: 'Vista por días y fechas',
+              icono: Icons.calendar_today,
+              colorIcono: Colors.teal.shade700,
+              badge: 'Nuevo ✨',
+              pantalla: () => const PantallaCalendario(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
@@ -244,23 +378,7 @@ class MenuLateral extends StatelessWidget {
                     colorIcono: Colors.orange.shade800,
                     pantalla: () => const PantallaRecetas(),
                   ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'planeador',
-                    titulo: 'Mi Planeador',
-                    icono: Icons.calendar_month,
-                    colorIcono: Colors.teal,
-                    pantalla: () => const PantallaPlaneador(),
-                  ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'calendario',
-                    titulo: 'Calendario de Comidas',
-                    icono: Icons.calendar_today,
-                    colorIcono: Colors.teal.shade700,
-                    badge: 'Nuevo ✨',
-                    pantalla: () => const PantallaCalendario(),
-                  ),
+                  _construirMenuPlaneadorConSubmenu(context),
                   _construirItem(
                     context: context,
                     ruta: 'despensa',

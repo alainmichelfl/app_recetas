@@ -73,5 +73,26 @@ void main() {
       expect(ConversorUnidades.determinarCategoria('Rábanos'), 'Frutas y Verduras');
       expect(ConversorUnidades.determinarCategoria('Rábano'), 'Frutas y Verduras');
     });
+
+    test('5. Consolidación de extracto de vainilla, escencia, estracto y esencia', () {
+      expect(ConversorUnidades.canonicalizarNombre('extracto de vainilla'), 'Extracto de vainilla');
+      expect(ConversorUnidades.canonicalizarNombre('estracto de vainilla'), 'Extracto de vainilla');
+      expect(ConversorUnidades.canonicalizarNombre('esencia de vainilla'), 'Extracto de vainilla');
+      expect(ConversorUnidades.canonicalizarNombre('escencia de vainilla'), 'Extracto de vainilla');
+      expect(ConversorUnidades.canonicalizarNombre('vainilla'), 'Extracto de vainilla');
+
+      expect(
+        ConversorUnidades.nombresCoinciden('estracto de vainilla', 'escencia de vainilla'),
+        true,
+      );
+      expect(
+        ConversorUnidades.nombresCoinciden('extracto de vainilla', 'esencia de vainilla'),
+        true,
+      );
+      expect(
+        ConversorUnidades.determinarCategoria('Extracto de vainilla'),
+        'Especias y Condimentos',
+      );
+    });
   });
 }

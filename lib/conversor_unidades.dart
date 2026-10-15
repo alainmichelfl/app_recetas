@@ -64,6 +64,11 @@ class ConversorUnidades {
       return true;
     }
 
+    // Vainilla: extracto, esencia, escencia, estracto, vainilla
+    final bool aVainilla = cleanA.contains('vainilla');
+    final bool bVainilla = cleanB.contains('vainilla');
+    if (aVainilla && bVainilla) return true;
+
     // Si alguno es corto (<= 4 letras como "agua", "sal", "ajo"), exigir palabra completa
     if (cleanA.length <= 4 || cleanB.length <= 4) {
       final regA = RegExp(r'\b' + RegExp.escape(cleanA) + r'\b');
@@ -156,6 +161,9 @@ class ConversorUnidades {
     'salsa maggi',
     'vainilla',
     'extracto de vainilla',
+    'estracto de vainilla',
+    'esencia de vainilla',
+    'escencia de vainilla',
     'miel',
     'miel de abeja',
     'miel de agave',
@@ -910,6 +918,9 @@ class ConversorUnidades {
     }
     if (norm == 'canela' || norm.contains('canela')) {
       return 'Canela en polvo';
+    }
+    if (norm.contains('vainilla')) {
+      return 'Extracto de vainilla';
     }
     if (norm == 'aceite' || norm.contains('aceite vegetal') || norm.contains('aceite de canola') || norm.contains('aceite en spray')) {
       return 'Aceite vegetal';

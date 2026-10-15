@@ -2324,7 +2324,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             tooltip: 'Calendario de Comidas',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const PantallaCalendario()),
+              MaterialPageRoute(builder: (context) => PantallaCalendario(planesIniciales: miPlan)),
             ),
           ),
           IconButton(
@@ -2443,7 +2443,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 onPressed: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const PantallaCalendario(),
+                                    builder: (_) => PantallaCalendario(planesIniciales: miPlan),
                                   ),
                                 ),
                                 icon: const Icon(

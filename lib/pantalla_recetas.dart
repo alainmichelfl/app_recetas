@@ -11,6 +11,7 @@ import 'pantalla_recetas_caninas.dart';
 import 'servicio_ia.dart';
 import 'servicio_historial_cocina.dart';
 import 'menu_lateral.dart';
+import 'servicio_admin.dart';
 
 class PantallaRecetas extends StatefulWidget {
   const PantallaRecetas({super.key});
@@ -682,6 +683,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   }
 
   void _confirmarSaneamientoConIA() {
+    if (!ServicioAdmin.esAdmin()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acción reservada al administrador')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -856,6 +864,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   }
 
   void _confirmarMigracionRelacional() {
+    if (!ServicioAdmin.esAdmin()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acción reservada al administrador')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -1336,9 +1351,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               );
             },
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (val) {
+          if (ServicioAdmin.esAdmin())
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: 'Herramientas de Administrador',
+              onSelected: (val) {
               if (val == 'sanitizar') {
                 _confirmarSaneamientoConIA();
               } else if (val == 'migrar_relacional') {

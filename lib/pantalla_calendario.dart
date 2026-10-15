@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 
@@ -14,8 +13,13 @@ import 'servicio_despensa.dart';
 /// revisar ingredientes, marcar platillos como cocinados y exportar a su calendario.
 class PantallaCalendario extends StatefulWidget {
   final DateTime? fechaInicial;
+  final List<dynamic>? planesIniciales;
 
-  const PantallaCalendario({super.key, this.fechaInicial});
+  const PantallaCalendario({
+    super.key,
+    this.fechaInicial,
+    this.planesIniciales,
+  });
 
   @override
   State<PantallaCalendario> createState() => _PantallaCalendarioState();
@@ -26,6 +30,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
   late DateTime _diaSeleccionado;
 
   bool _cargando = true;
+  String? _errorCarga;
   List<dynamic> _todosLosPlanes = [];
   Map<String, List<Map<String, dynamic>>> _planesPorFecha = {};
 
@@ -38,8 +43,40 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     final hoy = DateTime.now();
     _diaSeleccionado = widget.fechaInicial ?? DateTime(hoy.year, hoy.month, hoy.day);
     _mesVisualizado = DateTime(_diaSeleccionado.year, _diaSeleccionado.month, 1);
-    _cargarDatos();
+
+    if (widget.planesIniciales != null && widget.planesIniciales!.isNotEmpty) {
+      _procesarPlanes(widget.planesIniciales!);
+      _cargando = false;
+      _cargarDatos(silencioso: true);
+    } else {
+      _cargarDatos();
+    }
   }
+
+  static const List<String> _meses = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
+
+  static const List<String> _diasSemana = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ];
 
   String _formatoFechaClave(DateTime dt) {
     final y = dt.year.toString().padLeft(4, '0');
@@ -48,47 +85,84 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     return '$y-$m-$d';
   }
 
-  Future<void> _cargarDatos() async {
-    setState(() => _cargando = true);
+  String _formatoMesAno(DateTime dt) {
+    final mes = _meses[dt.month - 1];
+    return '$mes ${dt.year}';
+  }
+
+  String _formatoDiaCompleto(DateTime dt) {
+    final diaSemana = _diasSemana[dt.weekday - 1];
+    final mes = _meses[dt.month - 1];
+    return '$diaSemana ${dt.day} de $mes';
+  }
+
+  static Map<String, dynamic> _obtenerRecetaSegura(dynamic raw) {
+    if (raw == null) return {};
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (raw is List && raw.isNotEmpty && raw.first is Map) {
+      return Map<String, dynamic>.from(raw.first);
+    }
+    return {};
+  }
+
+  static String _normalizarClaveFecha(dynamic raw) {
+    if (raw == null) return '';
+    final s = raw.toString().trim();
+    if (s.isEmpty) return '';
+    if (s.contains('T')) return s.split('T')[0].trim();
+    if (s.contains(' ')) return s.split(' ')[0].trim();
+    return s;
+  }
+
+  void _procesarPlanes(List<dynamic> planes) {
+    final Map<String, List<Map<String, dynamic>>> agrupados = {};
+    for (final raw in planes) {
+      if (raw is! Map) continue;
+      final item = Map<String, dynamic>.from(raw);
+      final rawFecha = item['fecha'];
+      final f = _normalizarClaveFecha(rawFecha);
+      if (f.isNotEmpty) {
+        agrupados.putIfAbsent(f, () => []).add(item);
+      }
+    }
+    _todosLosPlanes = planes;
+    _planesPorFecha = agrupados;
+  }
+
+  Future<void> _cargarDatos({bool silencioso = false}) async {
+    if (!silencioso) {
+      setState(() {
+        _cargando = true;
+        _errorCarga = null;
+      });
+    }
     try {
       final ids = await ServicioHistorialCocina.obtenerIdsCocinadas();
       final tits = await ServicioHistorialCocina.obtenerTitulosCocinadas();
 
-      // Cargar planes de 3 meses para navegación fluida
-      final inicioRango = DateTime(_mesVisualizado.year, _mesVisualizado.month - 1, 1);
-      final finRango = DateTime(_mesVisualizado.year, _mesVisualizado.month + 2, 0);
-
-      final inicioStr = _formatoFechaClave(inicioRango);
-      final finStr = _formatoFechaClave(finRango);
-
       final respuesta = await Supabase.instance.client
           .from('planeador')
           .select(
-            'id_planeador, fecha, tipo_comida, id_receta, recetas(titulo, imagen_url, instrucciones, descripcion, calorias, macros)',
+            'id_planeador, fecha, tipo_comida, id_receta, recetas(titulo, imagen_url, instrucciones, descripcion, calorias)',
           )
-          .gte('fecha', inicioStr)
-          .lte('fecha', finStr)
           .order('fecha', ascending: true);
-
-      final Map<String, List<Map<String, dynamic>>> agrupados = {};
-      for (final item in respuesta) {
-        final f = (item['fecha'] ?? '').toString();
-        if (f.isNotEmpty) {
-          agrupados.putIfAbsent(f, () => []).add(Map<String, dynamic>.from(item));
-        }
-      }
 
       if (!mounted) return;
       setState(() {
-        _todosLosPlanes = respuesta;
-        _planesPorFecha = agrupados;
+        _procesarPlanes(respuesta);
         _idsCocinadas = ids;
         _titulosCocinados = tits;
         _cargando = false;
+        _errorCarga = null;
       });
     } catch (e) {
       debugPrint('Error al cargar datos en calendario: $e');
-      if (mounted) setState(() => _cargando = false);
+      if (mounted) {
+        setState(() {
+          _errorCarga = e.toString();
+          _cargando = false;
+        });
+      }
     }
   }
 
@@ -232,12 +306,12 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
 
   void _exportarAlCalendarioNativo(Map<String, dynamic> item) {
     try {
-      final receta = item['recetas'] as Map<String, dynamic>? ?? {};
+      final receta = _obtenerRecetaSegura(item['recetas']);
       final titulo = (receta['titulo'] ?? 'Receta').toString();
       final tipo = (item['tipo_comida'] ?? 'Comida').toString();
       final fechaStr = (item['fecha'] ?? '').toString();
 
-      final fecha = DateTime.parse(fechaStr);
+      final fecha = DateTime.tryParse(fechaStr) ?? DateTime.now();
       int hora = 14;
       if (tipo == 'Desayuno') hora = 9;
       if (tipo == 'Cena') hora = 20;
@@ -272,21 +346,23 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     final fechaSeleccionadaClave = _formatoFechaClave(_diaSeleccionado);
     final comidasDia = _planesPorFecha[fechaSeleccionadaClave] ?? [];
 
-    // Formateadores en español
-    final formatoMes = DateFormat('MMMM yyyy', 'es_MX');
-    final formatoDiaCompleto = DateFormat("EEEE d 'de' MMMM", 'es_MX');
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       drawer: const MenuLateral(rutaActual: 'calendario'),
       appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Menú principal',
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Regresar',
+                onPressed: () => Navigator.pop(context),
+              )
+            : Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  tooltip: 'Menú principal',
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              ),
         title: const Text(
           'Calendario de Comidas 📅',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -295,6 +371,14 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          if (Navigator.canPop(context))
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menú principal',
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.today),
             tooltip: 'Ir a Hoy',
@@ -316,8 +400,42 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
           ? const Center(
               child: CircularProgressIndicator(color: Colors.teal),
             )
-          : RefreshIndicator(
-              onRefresh: _cargarDatos,
+          : _errorCarga != null && _todosLosPlanes.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.calendar_month, size: 54, color: Colors.teal),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'No se pudieron cargar los datos del calendario',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorCarga!,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => _cargarDatos(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _cargarDatos,
               color: Colors.teal,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -326,7 +444,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 🗓️ 1. BARRA DE CONTROL DEL MES
-                    _construirBarraControlMes(formatoMes),
+                    _construirBarraControlMes(),
                     const SizedBox(height: 12),
 
                     // 📆 2. CUADRÍCULA DE CALENDARIO MENSUAL
@@ -346,7 +464,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                formatoDiaCompleto.format(_diaSeleccionado).toUpperCase(),
+                                _formatoDiaCompleto(_diaSeleccionado).toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -399,10 +517,8 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     );
   }
 
-  Widget _construirBarraControlMes(DateFormat formatoMes) {
-    final nombreMes = formatoMes.format(_mesVisualizado);
-    final capitalizado =
-        nombreMes.isNotEmpty ? nombreMes[0].toUpperCase() + nombreMes.substring(1) : nombreMes;
+  Widget _construirBarraControlMes() {
+    final capitalizado = _formatoMesAno(_mesVisualizado);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -702,9 +818,9 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
   }
 
   Widget _construirTarjetaComidaDia(Map<String, dynamic> item) {
-    final receta = item['recetas'] as Map<String, dynamic>? ?? {};
-    final idPlaneador = item['id_planeador'] as int? ?? 0;
-    final idReceta = item['id_receta'] as int? ?? 0;
+    final receta = _obtenerRecetaSegura(item['recetas']);
+    final idPlaneador = int.tryParse(item['id_planeador']?.toString() ?? '0') ?? 0;
+    final idReceta = int.tryParse(item['id_receta']?.toString() ?? '0') ?? 0;
     final tipoComida = (item['tipo_comida'] ?? 'Comida').toString();
     final titulo = (receta['titulo'] ?? 'Receta sin título').toString();
     final calorias = int.tryParse(receta['calorias']?.toString() ?? '0') ?? 0;
