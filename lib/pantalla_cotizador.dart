@@ -7,6 +7,7 @@ import 'pantalla_carrito.dart';
 import 'pantalla_finanzas.dart';
 import 'menu_lateral.dart';
 import 'servicio_historial_cocina.dart';
+import 'servicio_preferencias.dart';
 
 class PantallaCotizador extends StatefulWidget {
   final int? idReceta;
@@ -735,6 +736,385 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
     );
   }
 
+  void _transferirMejorPrecioAFinanzas(String superMasBarato, double mejorPrecio) {
+    if (mejorPrecio <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay productos con precio cotizado para transferir.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final nombreSuper = superMasBarato.isNotEmpty ? superMasBarato : 'Mejor supermercado';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrange.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.deepOrange,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Transferir a Mis Finanzas 📈',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Mejor opción: $nombreSuper — \$${mejorPrecio.toStringAsFixed(2)} MXN',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Cómo deseas registrar esta cotización?',
+                style: TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+
+              // OPCIÓN 1: REGISTRAR COMO COMPRA REAL (SUMAR A FINANZAS Y DESPENSA)
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _registrarCompraEnFinanzasYDespensa(nombreSuper, mejorPrecio);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.deepOrange, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepOrange.withValues(alpha: 0.06),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.deepOrange.shade100,
+                        child: const Icon(
+                          Icons.shopping_bag,
+                          color: Colors.deepOrange,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Registrar como compra realizada 🛒✅',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepOrange,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Guarda los productos y precios en tu despensa. Se suma automáticamente a tu historial de gastos y capital (sin escanear ticket).',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Colors.grey.shade700,
+                                height: 1.25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.deepOrange,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // OPCIÓN 2: SOLO METRICAS / COTIZACIÓN DE REFERENCIA
+              InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  _irAFinanzasComoCotizacion(nombreSuper, mejorPrecio);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.grey.shade200,
+                        child: Icon(
+                          Icons.analytics_outlined,
+                          color: Colors.grey.shade800,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Establecer solo como cotización activa 📊',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Configura $nombreSuper como tu súper de referencia y actualiza el termómetro semanal sin registrar compras todavía.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: Colors.grey.shade600,
+                                height: 1.25,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  double _parsearCantidad(dynamic valor) {
+    if (valor == null) return 1.0;
+    if (valor is num) return valor.toDouble();
+    final match = RegExp(r'[0-9]+(\.[0-9]+)?').firstMatch(valor.toString());
+    if (match != null) {
+      return double.tryParse(match.group(0)!) ?? 1.0;
+    }
+    return 1.0;
+  }
+
+  Future<void> _registrarCompraEnFinanzasYDespensa(
+    String nombreSuper,
+    double totalCotizado,
+  ) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: Colors.deepOrange),
+                SizedBox(height: 16),
+                Text(
+                  'Registrando compra en Finanzas... 🧾✨',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final String hoy = DateTime.now().toIso8601String().split('T').first;
+      final List<Map<String, dynamic>> itemsParaInsertar = [];
+
+      for (var item in ingredientesDinamicos) {
+        if (item['incluir'] == true) {
+          final subtotal = calcularSubtotalItem(item, nombreSuper);
+          final cant = _parsearCantidad(item['cantidad']);
+          final double cantFinal = cant > 0 ? cant : 1.0;
+          final double precioUnitario =
+              subtotal > 0 ? (subtotal / cantFinal) : 0.0;
+
+          itemsParaInsertar.add({
+            'nombre': item['nombre'],
+            'cantidad': cantFinal,
+            'precio': precioUnitario > 0
+                ? (double.parse(precioUnitario.toStringAsFixed(2)))
+                : null,
+            'categoria': 'Compra $nombreSuper',
+            'fecha_ingreso': hoy,
+          });
+        }
+      }
+
+      if (itemsParaInsertar.isNotEmpty) {
+        await Supabase.instance.client
+            .from('despensa_usuario')
+            .insert(itemsParaInsertar);
+      }
+
+      // Actualizar preferencia de supermercado favorito
+      final prefs = await ServicioPreferencias.obtenerPreferencias();
+      final actualizadas = PreferenciasUsuario(
+        objetivo: prefs.objetivo,
+        estilos: prefs.estilos,
+        alergias: prefs.alergias,
+        superFavorito: nombreSuper,
+        porciones: prefs.porciones,
+        presupuestoSemanal: prefs.presupuestoSemanal,
+        notificaciones: prefs.notificaciones,
+      );
+      await ServicioPreferencias.guardarPreferencias(actualizadas);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cierra loader
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '¡${itemsParaInsertar.length} artículos de $nombreSuper registrados y sumados en tus finanzas! 🛒✅',
+          ),
+          backgroundColor: Colors.green.shade800,
+        ),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PantallaFinanzas(
+            presupuestoSuperExterno: totalCotizado,
+            supermercadoElegido: nombreSuper,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cierra loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al transferir a finanzas: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _irAFinanzasComoCotizacion(
+    String nombreSuper,
+    double totalCotizado,
+  ) async {
+    try {
+      final prefs = await ServicioPreferencias.obtenerPreferencias();
+      final actualizadas = PreferenciasUsuario(
+        objetivo: prefs.objetivo,
+        estilos: prefs.estilos,
+        alergias: prefs.alergias,
+        superFavorito: nombreSuper,
+        porciones: prefs.porciones,
+        presupuestoSemanal: prefs.presupuestoSemanal,
+        notificaciones: prefs.notificaciones,
+      );
+      await ServicioPreferencias.guardarPreferencias(actualizadas);
+    } catch (e) {
+      debugPrint('Error al guardar preferencia de super: $e');
+    }
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PantallaFinanzas(
+          presupuestoSuperExterno: totalCotizado,
+          supermercadoElegido: nombreSuper,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, double> totales = {};
@@ -823,9 +1203,9 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (recetaActualId == -1) ...[
-                      SizedBox(
+                      Container(
                         width: double.infinity,
-                        height: 55,
+                        constraints: const BoxConstraints(minHeight: 52),
                         child: ElevatedButton.icon(
                           onPressed: () {
                             double mejorPrecio = double.infinity;
@@ -838,30 +1218,35 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                               }
                             }
                             if (mejorPrecio == double.infinity) mejorPrecio = 0.0;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PantallaFinanzas(
-                                  presupuestoSuperExterno: mejorPrecio,
-                                  supermercadoElegido: mejorSuper,
-                                ),
-                              ),
-                            );
+                            final superFinal = superMasBarato.isNotEmpty ? superMasBarato : mejorSuper;
+                            _transferirMejorPrecioAFinanzas(superFinal, mejorPrecio);
                           },
                           icon: const Icon(
                             Icons.account_balance_wallet,
                             color: Colors.white,
                           ),
-                          label: Text(
-                            'Transferir mejor precio ($superMasBarato) a Finanzas',
-                            style: const TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                          label: Flexible(
+                            child: Text(
+                              superMasBarato.isNotEmpty
+                                  ? 'Transferir mejor precio ($superMasBarato) a Finanzas'
+                                  : 'Transferir mejor precio a Finanzas',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              softWrap: true,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                height: 1.2,
+                              ),
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepOrange,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

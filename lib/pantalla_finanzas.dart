@@ -39,6 +39,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   int _comidasPlaneadas = 0;
   double _costoPorPlatillo = 0.0;
   double _ahorroVsRestaurantes = 0.0;
+  double _gastoSemanalRegistrado = 0.0;
 
   // Desglose por departamento
   Map<String, double> _gastoPorDepartamento = {};
@@ -77,18 +78,41 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       _presupuestoSemanal = prefs.presupuestoSemanal > 0
           ? prefs.presupuestoSemanal
           : 1500.0;
-      _superFavorito = prefs.superFavorito.isNotEmpty &&
-              prefs.superFavorito.toLowerCase() != 'ninguno'
-          ? prefs.superFavorito
-          : 'Walmart';
+
+      // Si se proporcionó un supermercado elegido explícito (desde Cotizador o Carrito),
+      // priorizarlo y sincronizarlo en preferencias para que se mantenga guardado
+      final String superObjetivo;
+      if (widget.supermercadoElegido != null &&
+          widget.supermercadoElegido!.trim().isNotEmpty) {
+        superObjetivo = widget.supermercadoElegido!.trim();
+        _superFavorito = superObjetivo;
+        if (prefs.superFavorito.toLowerCase() != superObjetivo.toLowerCase()) {
+          final actualizadas = PreferenciasUsuario(
+            objetivo: prefs.objetivo,
+            estilos: prefs.estilos,
+            alergias: prefs.alergias,
+            superFavorito: superObjetivo,
+            porciones: prefs.porciones,
+            presupuestoSemanal: prefs.presupuestoSemanal,
+            notificaciones: prefs.notificaciones,
+          );
+          await ServicioPreferencias.guardarPreferencias(actualizadas);
+        }
+      } else {
+        superObjetivo = prefs.superFavorito.isNotEmpty &&
+                prefs.superFavorito.toLowerCase() != 'ninguno'
+            ? prefs.superFavorito
+            : 'Walmart';
+        _superFavorito = superObjetivo;
+      }
 
       // 2. Cotización actual de la lista de compras
       final cotizaciones =
           await ServicioCotizador.cotizarListaCompleta(supabase);
 
       if (cotizaciones.isNotEmpty) {
-        // Encontrar favorito o el más relevante
-        final favLower = _superFavorito.toLowerCase();
+        // Encontrar favorito o el más relevante coincidente con el supermercado objetivo
+        final favLower = superObjetivo.toLowerCase();
         final matchFav = cotizaciones.where((c) {
           final n = c.nombreSupermercado.toLowerCase();
           return n.contains(favLower) || favLower.contains(n);
@@ -101,7 +125,12 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                 orElse: () => cotizaciones.first,
               );
 
-        _costoSemanaActual = _cotizacionElegida?.total ?? 0.0;
+        if (widget.presupuestoSuperExterno != null &&
+            widget.presupuestoSuperExterno! > 0) {
+          _costoSemanaActual = widget.presupuestoSuperExterno!;
+        } else {
+          _costoSemanaActual = _cotizacionElegida?.total ?? 0.0;
+        }
 
         // Encontrar Central de Abasto
         final matchCentral = cotizaciones.where((c) {
@@ -160,7 +189,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       // 5. Datos de despensa e inventario
       final despensaData = await supabase
           .from('despensa_usuario')
-          .select('nombre, cantidad, precio, fecha_ingreso')
+          .select('id_item, nombre, cantidad, precio, categoria, fecha_ingreso')
           .order('fecha_ingreso', ascending: false);
 
       final List itemsDespensa = despensaData as List;
@@ -168,6 +197,8 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       int itemsCount = 0;
       double maxValor = -1.0;
       String mayorNombre = 'Sin datos';
+      double gastoSemanal = 0.0;
+      final hace7Dias = DateTime.now().subtract(const Duration(days: 7));
 
       for (var item in itemsDespensa) {
         final double cant = _parsearNumero(item['cantidad']);
@@ -184,11 +215,19 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           final String nom = item['nombre'] ?? 'Artículo';
           mayorNombre = '$nom (\$${valorItem.toStringAsFixed(2)})';
         }
+
+        // Sumar compras reales y tickets registrados en la última semana
+        final fechaStr = item['fecha_ingreso']?.toString() ?? '';
+        final fechaItem = DateTime.tryParse(fechaStr);
+        if (precio > 0 && fechaItem != null && fechaItem.isAfter(hace7Dias)) {
+          gastoSemanal += (precio * (cant > 0 ? cant : 1.0));
+        }
       }
 
       _capitalDespensa = capital;
       _totalItemsDespensa = itemsCount;
       _articuloMayorValor = mayorNombre;
+      _gastoSemanalRegistrado = gastoSemanal;
       _ultimosIngresos = itemsDespensa.cast<Map<String, dynamic>>();
 
       if (mounted) setState(() => _cargando = false);
@@ -366,6 +405,182 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     }
   }
 
+  Future<void> _confirmarLimpiarFinanzas() async {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.orange.shade800, size: 28),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '¿Limpiar información?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Esta acción te permite reiniciar los registros de compras, tickets escaneados y gastos de tu despensa.',
+              style: TextStyle(fontSize: 13.5, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.history_toggle_off,
+                      color: Colors.amber.shade900, size: 22),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '⚠️ ¿Estás seguro de que deseas eliminar estos datos o prefieres mantener tu histórico para seguir monitoreando tus gastos y ahorros?',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Selecciona qué deseas hacer:',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.deepOrange,
+                side: const BorderSide(color: Colors.deepOrange),
+                minimumSize: const Size(double.infinity, 42),
+                alignment: Alignment.centerLeft,
+              ),
+              icon: const Icon(Icons.receipt_long, size: 18),
+              label: const Text(
+                'Limpiar solo tickets y compras registradas',
+                style: TextStyle(fontSize: 12.5),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _ejecutarLimpieza(soloTicketsYCompras: true);
+              },
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+                side: BorderSide(color: Colors.red.shade300),
+                minimumSize: const Size(double.infinity, 42),
+                alignment: Alignment.centerLeft,
+              ),
+              icon: const Icon(Icons.delete_forever, size: 18),
+              label: const Text(
+                'Limpiar todo (tickets y despensa completa)',
+                style: TextStyle(fontSize: 12.5),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _ejecutarLimpieza(soloTicketsYCompras: false);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.check, size: 18),
+            onPressed: () => Navigator.pop(ctx),
+            label: const Text('Mantener histórico'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ejecutarLimpieza({required bool soloTicketsYCompras}) async {
+    setState(() => _cargando = true);
+    try {
+      final resp = await supabase
+          .from('despensa_usuario')
+          .select('id_item, precio, categoria');
+      final List items = resp as List;
+      final List<dynamic> idsEliminar = [];
+
+      for (var it in items) {
+        final id = it['id_item'];
+        if (id == null) continue;
+        if (soloTicketsYCompras) {
+          final cat = (it['categoria'] ?? '').toString();
+          final p = _parsearNumero(it['precio']);
+          if (cat.contains('Ticket') || cat.contains('Compra') || p > 0) {
+            idsEliminar.add(id);
+          }
+        } else {
+          idsEliminar.add(id);
+        }
+      }
+
+      if (idsEliminar.isNotEmpty) {
+        await supabase
+            .from('despensa_usuario')
+            .delete()
+            .inFilter('id_item', idsEliminar);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              soloTicketsYCompras
+                  ? '¡Se limpiaron ${idsEliminar.length} registros de tickets y compras! 🧹'
+                  : '¡Se limpiaron ${idsEliminar.length} artículos. Despensa y finanzas en cero! 🧹✨',
+            ),
+            backgroundColor: Colors.green.shade800,
+          ),
+        );
+      }
+      _cargarTodoFinanzas();
+    } catch (e) {
+      debugPrint('Error al limpiar finanzas: $e');
+      if (mounted) {
+        setState(() => _cargando = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al limpiar registros: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color colorTema = Colors.deepOrange;
@@ -388,6 +603,11 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
         backgroundColor: colorTema,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: 'Limpiar información o histórico',
+            onPressed: _confirmarLimpiarFinanzas,
+          ),
           IconButton(
             icon: const Icon(Icons.tune),
             tooltip: 'Ajustar Presupuesto',
@@ -615,6 +835,32 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               ],
             ),
           ),
+          if (_gastoSemanalRegistrado > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.receipt_long, size: 16, color: Colors.blueGrey),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Gasto real registrado esta semana: \$${_gastoSemanalRegistrado.toStringAsFixed(2)} MXN',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1233,6 +1479,29 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                 ),
               );
             }),
+          if (_ultimosIngresos.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Center(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade200),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: _confirmarLimpiarFinanzas,
+                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                label: const Text(
+                  'Limpiar información o histórico',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
