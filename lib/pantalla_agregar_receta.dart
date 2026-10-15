@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'conversor_unidades.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
+import 'servicio_ia.dart';
 
 class PantallaAgregarReceta extends StatefulWidget {
   const PantallaAgregarReceta({super.key});
@@ -15,10 +16,13 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
   final _tituloController = TextEditingController();
   final _instruccionesController = TextEditingController();
   final _imagenUrlController = TextEditingController();
+  final _caloriasController = TextEditingController();
+  final _macrosController = TextEditingController();
   String _tipoComida = 'Comida';
   bool _esOficial = false;
   bool _compartirComunidad = false;
   bool _guardando = false;
+  bool _calculandoNutricion = false;
 
   final Color verdeCilantro = const Color(0xFF2E7D32);
 
@@ -34,13 +38,80 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
     _tituloController.dispose();
     _instruccionesController.dispose();
     _imagenUrlController.dispose();
+    _caloriasController.dispose();
+    _macrosController.dispose();
     super.dispose();
+  }
+
+  Future<void> _calcularNutricionConIA() async {
+    final titulo = _tituloController.text.trim();
+    final texto = _instruccionesController.text.trim();
+
+    if (texto.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor escribe primero los ingredientes o instrucciones para calcular.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _calculandoNutricion = true);
+
+    try {
+      final res = await ServicioIA.estimarCaloriasYMacros(
+        titulo: titulo.isEmpty ? 'Platillo Casero' : titulo,
+        textoReceta: texto,
+      );
+
+      if (res != null) {
+        setState(() {
+          if (res['calorias'] != null) {
+            _caloriasController.text = res['calorias'].toString();
+          }
+          if (res['macros'] != null) {
+            _macrosController.text = res['macros'].toString();
+          }
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Calorías y macros calculados con éxito con IA! 🥗✨'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo estimar la información nutricional. Intenta de nuevo.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al calcular nutrición: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _calculandoNutricion = false);
+    }
   }
 
   Future<void> _guardarReceta() async {
     final titulo = _tituloController.text.trim();
     final instrucciones = _instruccionesController.text.trim();
     final imagenUrl = _imagenUrlController.text.trim();
+    final int? calorias = int.tryParse(_caloriasController.text.trim());
+    final String macros = _macrosController.text.trim();
 
     if (titulo.isEmpty || instrucciones.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,11 +126,19 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
     setState(() => _guardando = true);
 
     try {
+      final sb = StringBuffer();
+      if (calorias != null) sb.writeln('CALORÍAS: $calorias kcal');
+      if (macros.isNotEmpty) sb.writeln('MACROS: $macros');
+      sb.writeln(instrucciones);
+      final String descCompleta = sb.toString().trim();
+
       final res = await ServicioRecetas.insertarReceta(
         titulo: titulo,
-        descripcion: instrucciones,
+        descripcion: descCompleta,
         instrucciones: instrucciones,
         tipoComida: _tipoComida,
+        calorias: calorias,
+        macros: macros.isNotEmpty ? macros : null,
         imagenUrl: imagenUrl.isEmpty ? null : imagenUrl,
         esOficial: _esOficial,
         esPublica: _esOficial ? true : _compartirComunidad,
@@ -192,6 +271,94 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
+              ),
+            ),
+            const SizedBox(height: 15),
+
+            // Sección de Información Nutricional (Calorías y Macros)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.local_fire_department, color: Colors.orange.shade800, size: 22),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Información Nutricional',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: _calculandoNutricion ? null : _calcularNutricionConIA,
+                        icon: _calculandoNutricion
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.auto_awesome, size: 16, color: Colors.teal),
+                        label: Text(
+                          _calculandoNutricion ? 'Calculando...' : 'Calcular con IA ✨',
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: _caloriasController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Calorías (kcal)',
+                            hintText: 'Ej. 420',
+                            prefixIcon: const Icon(Icons.fitness_center),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: _macrosController,
+                          decoration: InputDecoration(
+                            labelText: 'Macros',
+                            hintText: 'P: 25g | C: 35g | G: 12g',
+                            prefixIcon: const Icon(Icons.pie_chart_outline),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

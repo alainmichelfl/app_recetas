@@ -178,6 +178,50 @@ class ServicioIA {
     return respuesta.trim();
   }
 
+  // 🥗 ESTIMADOR NUTRICIONAL (CALORÍAS Y MACROS)
+  static Future<Map<String, dynamic>?> estimarCaloriasYMacros({
+    required String titulo,
+    required String textoReceta,
+  }) async {
+    final prompt = '''
+    Eres un nutriólogo profesional y chef ejecutivo.
+    Calcula de forma realista y precisa las calorías y macronutrientes por porción individual de la siguiente receta:
+    Título: "$titulo"
+    Ingredientes e Instrucciones:
+    $textoReceta
+
+    Responde ÚNICAMENTE con un objeto JSON con este formato exacto:
+    {
+      "calorias": 420,
+      "macros": "Proteína: 25g | Carbos: 35g | Grasas: 12g"
+    }
+    ''';
+
+    final Map<String, dynamic> cuerpo = {
+      "contents": [
+        {
+          "parts": [
+            {"text": prompt},
+          ],
+        },
+      ],
+    };
+
+    final resp = await _hacerPeticion(cuerpo, forzarJson: true);
+    if (resp == null || resp.contains('❌ Error')) return null;
+
+    try {
+      final start = resp.indexOf('{');
+      final end = resp.lastIndexOf('}');
+      if (start == -1 || end == -1) return null;
+      final jsonLimpio = resp.substring(start, end + 1);
+      return jsonDecode(jsonLimpio) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error al decodificar estimación nutricional: $e');
+      return null;
+    }
+  }
+
   // 📸 ESCÁNER DE RECETAS POR FOTO
   static Future<Map<String, dynamic>?> escanearRecetaDeFoto(
     Uint8List imageBytes,
