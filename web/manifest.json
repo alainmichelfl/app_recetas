@@ -1,6 +1,6 @@
 {
-    "name": "Jitomate y Cebolla - Tu Asistente Culinario",
-    "short_name": "Jitomate y Cebolla",
+    "name": "App Jitomate y Cebolla",
+    "short_name": "App Jitomate y Cebolla",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
