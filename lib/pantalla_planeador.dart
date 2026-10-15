@@ -14,6 +14,7 @@ import 'pantalla_preferencias.dart';
 import 'pantalla_calendario.dart';
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
+import 'widget_deslizador_cocinas.dart';
 import 'pantalla_detalle_receta.dart';
 import 'servicio_preferencias.dart';
 import 'servicio_despensa.dart';
@@ -663,22 +664,79 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     const SizedBox(height: 14),
                     const Divider(height: 1),
                     const SizedBox(height: 14),
-                    const Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.restaurant, color: Colors.deepOrange, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Tipo de Cocina de la Semana',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                        const Row(
+                          children: [
+                            Icon(Icons.restaurant, color: Colors.deepOrange, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Tipo de Cocina',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (dCtx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                title: const Row(
+                                  children: [
+                                    Icon(Icons.style, color: Colors.deepOrange),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Deslizar Cocinas 🎴',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ],
+                                ),
+                                content: SizedBox(
+                                  width: 360,
+                                  child: WidgetDeslizadorCocinas(
+                                    seleccionInicial: cocinasTemporales,
+                                    onSeleccionCambiada: (nuevas) {
+                                      setStateModal(() {
+                                        cocinasTemporales = nuevas;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                actions: [
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepOrange,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    onPressed: () => Navigator.pop(dCtx),
+                                    child: const Text('Aplicar Cocinas ✅'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.style, size: 16, color: Colors.deepOrange),
+                          label: const Text(
+                            'Deslizar tarjetas 🎴',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.deepOrange,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Selecciona tus favoritas (Mexicana, Japonesa, Thai, Italiana, Francesa...). El Chef IA las usará de inspiración:',
+                      'Toca los chips o usa "Deslizar tarjetas 🎴" para calificar tus favoritas:',
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 10),

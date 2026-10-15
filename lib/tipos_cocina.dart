@@ -29,6 +29,20 @@ class TiposCocina {
     americana,
   ];
 
+  /// Lista de gastronomías para la baraja interactiva deslizable (excluye 'Variada / Todas')
+  static const List<String> listaDeslizables = [
+    mexicana,
+    italiana,
+    japonesa,
+    thai,
+    francesa,
+    espanola,
+    mediterranea,
+    china,
+    india,
+    americana,
+  ];
+
   static const Map<String, String> iconos = {
     todas: '🌎',
     mexicana: '🇲🇽',
@@ -55,6 +69,20 @@ class TiposCocina {
     china: 'Wok, salteados, jengibre, cebollín, arroz frito y equilibrio agridulce.',
     india: 'Currys aromáticos, especias garam masala, lentejas (dal), cúrcuma y naan.',
     americana: 'Bowls, BBQ saludable, hamburguesas caseras, ensaladas y clásicos.',
+  };
+
+  static const Map<String, List<String>> platillosEmblematicos = {
+    mexicana: ['Tacos al pastor', 'Chilaquiles verdes', 'Tinga de pollo', 'Guacamole'],
+    italiana: ['Pasta al pesto', 'Risotto de hongos', 'Lasaña horneada', 'Pizza margarita'],
+    japonesa: ['Ramen tradicional', 'Pollo teriyaki', 'Bowls de salmón', 'Edamames'],
+    thai: ['Pad Thai', 'Curry verde con coco', 'Fideos salteados', 'Pollo cacahuate'],
+    francesa: ['Quiche Lorraine', 'Ratatouille provenzal', 'Crepas ligeras', 'Sopa de cebolla'],
+    espanola: ['Paella mixta', 'Tapas ibéricas', 'Tortilla de patatas', 'Gazpacho andaluz'],
+    mediterranea: ['Hummus con pita', 'Ensalada griega con feta', 'Falafel crujiente', 'Tzatziki'],
+    china: ['Arroz frito cantonés', 'Chow mein de pollo', 'Dumplings al vapor', 'Salteado al wok'],
+    india: ['Pollo Tikka Masala', 'Curry de garbanzos', 'Pan Naan calientito', 'Arroz Biryani'],
+    americana: ['Hamburguesas artesanales', 'BBQ bowls', 'Costillitas horneadas', 'Mac & Cheese'],
+    todas: ['Variedad gourmet', 'Fusión internacional', 'Platillos balanceados'],
   };
 
   static const Map<String, List<String>> palabrasClave = {

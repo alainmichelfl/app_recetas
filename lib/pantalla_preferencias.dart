@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
+import 'widget_deslizador_cocinas.dart';
 import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
 
@@ -17,6 +18,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   String objetivoSeleccionado = PerfilesNutricionales.mantenimiento;
   List<String> estilosSeleccionados = [PerfilesNutricionales.libre];
   List<String> tiposCocinaSeleccionados = [TiposCocina.todas];
+  bool _modoTarjetasDeslizables = true;
   double presupuestoSemanal = 1500;
   int porcionesDefecto = 2;
   String superFavorito = 'Walmart';
@@ -383,55 +385,147 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Gastronomías del Mundo',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Gastronomías del Mundo',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              // Selector de vista: Tarjetas vs Chips
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    InkWell(
+                                      onTap: () => setState(() => _modoTarjetasDeslizables = true),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: _modoTarjetasDeslizables ? colorPrincipal : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.style,
+                                              size: 14,
+                                              color: _modoTarjetasDeslizables ? Colors.white : Colors.black87,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Tarjetas 🎴',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: _modoTarjetasDeslizables ? Colors.white : Colors.black87,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () => setState(() => _modoTarjetasDeslizables = false),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: !_modoTarjetasDeslizables ? colorPrincipal : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.apps,
+                                              size: 14,
+                                              color: !_modoTarjetasDeslizables ? Colors.white : Colors.black87,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Chips',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: !_modoTarjetasDeslizables ? Colors.white : Colors.black87,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Text(
-                            'Elige tus estilos preferidos (Mexicana, Japonesa, Thai, Francesa, Italiana, etc.). Tu Planeador y el Chef IA los tomarán como inspiración principal.',
+                            _modoTarjetasDeslizables
+                                ? '👉 Desliza la tarjeta a la derecha si te gusta, o 👈 a la izquierda para pasar.'
+                                : 'Toca los estilos que quieras incluir en tu menú semanal y para el Chef IA.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
                             ),
                           ),
                           const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children: opcionesTiposCocina.map((tipo) {
-                              final bool seleccionado =
-                                  tiposCocinaSeleccionados.contains(tipo);
-                              final icono = TiposCocina.iconos[tipo] ?? '🍽️';
-                              return FilterChip(
-                                avatar: Text(
-                                  icono,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                label: Text(tipo),
-                                selected: seleccionado,
-                                showCheckmark: false,
-                                selectedColor: colorPrincipal,
-                                backgroundColor: Colors.grey.shade200,
-                                labelStyle: TextStyle(
-                                  color: seleccionado
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontWeight: seleccionado
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                onSelected: (bool selected) =>
-                                    _alternarTipoCocina(tipo, selected),
-                              );
-                            }).toList(),
-                          ),
+                          if (_modoTarjetasDeslizables)
+                            WidgetDeslizadorCocinas(
+                              seleccionInicial: tiposCocinaSeleccionados,
+                              onSeleccionCambiada: (nuevas) {
+                                setState(() {
+                                  tiposCocinaSeleccionados = nuevas;
+                                });
+                              },
+                            )
+                          else
+                            Wrap(
+                              spacing: 8.0,
+                              runSpacing: 8.0,
+                              children: opcionesTiposCocina.map((tipo) {
+                                final bool seleccionado =
+                                    tiposCocinaSeleccionados.contains(tipo);
+                                final icono = TiposCocina.iconos[tipo] ?? '🍽️';
+                                return FilterChip(
+                                  avatar: Text(
+                                    icono,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  label: Text(tipo),
+                                  selected: seleccionado,
+                                  showCheckmark: false,
+                                  selectedColor: colorPrincipal,
+                                  backgroundColor: Colors.grey.shade200,
+                                  labelStyle: TextStyle(
+                                    color: seleccionado
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    fontWeight: seleccionado
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  onSelected: (bool selected) =>
+                                      _alternarTipoCocina(tipo, selected),
+                                );
+                              }).toList(),
+                            ),
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.all(12),
