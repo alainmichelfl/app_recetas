@@ -4,7 +4,7 @@
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
-    "background_color": "#FFFFFF",
+    "background_color": "#121214",
     "theme_color": "#D32F2F",
     "description": "Tu asistente culinario y financiero: planeador de comidas con IA, recetas paso a paso, cotizador en vivo en supermercados y control de compras.",
     "orientation": "portrait-primary",
