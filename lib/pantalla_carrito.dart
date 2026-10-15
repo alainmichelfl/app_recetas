@@ -1119,6 +1119,8 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     ...cotizaciones.map((c) {
                       final bool esMejorOpcion =
                           c == cotizaciones.first && c.total > 0;
+                      final itemsPendientes =
+                          c.desglose.where((d) => !d.comprado).toList();
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         elevation: esMejorOpcion ? 2 : 1,
@@ -1220,7 +1222,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                             ),
                             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
                             children: [
-                              if (c.desglose.isNotEmpty) ...[
+                              if (itemsPendientes.isNotEmpty) ...[
                                 const Divider(height: 1),
                                 const SizedBox(height: 8),
                                 Container(
@@ -1232,13 +1234,13 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                                   ),
                                   child: ListView.separated(
                                     shrinkWrap: true,
-                                    itemCount: c.desglose.length,
+                                    itemCount: itemsPendientes.length,
                                     separatorBuilder: (_, _) => Divider(
                                       height: 1,
                                       color: Colors.grey.shade200,
                                     ),
                                     itemBuilder: (_, i) {
-                                      final d = c.desglose[i];
+                                      final d = itemsPendientes[i];
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 10,

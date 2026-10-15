@@ -46,7 +46,7 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
     return porcionesActuales / (porcionesBase > 0 ? porcionesBase : 1);
   }
 
-  final List<String> listaSupermercados = [
+  List<String> listaSupermercados = [
     'Walmart',
     'Soriana',
     'La Comer',
@@ -164,20 +164,61 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
       if (recetaActualId == -1) {
         porcionesBase = 1;
         porcionesActuales = 1;
-        final resCompras = await supabase
-            .from('lista_compras')
-            .select('id, nombre, cantidad')
-            .eq('comprado', false);
-        for (var fila in resCompras) {
-          final String nomRaw = (fila['nombre'] ?? '').toString().trim();
-          final String cantRaw = (fila['cantidad'] ?? '1').toString().trim();
-          final parsed = ConversorUnidades.parsearLineaIngrediente('$cantRaw $nomRaw');
-          itemsTemp.add({
-            'id_ingrediente': null,
-            'nombre': parsed.nombre.isNotEmpty ? parsed.nombre : nomRaw,
-            'cantidad': parsed.cantidad,
-            'unidad': parsed.unidad,
+
+        final cotizaciones =
+            await ServicioCotizador.cotizarListaCompleta(supabase);
+
+        if (cotizaciones.isNotEmpty) {
+          listaSupermercados =
+              cotizaciones.map((c) => c.nombreSupermercado).toList();
+
+          final primerSuper = cotizaciones.first;
+          final List<Map<String, dynamic>> itemsConsolidados = [];
+
+          for (int i = 0; i < primerSuper.desglose.length; i++) {
+            final itemRef = primerSuper.desglose[i];
+            final Map<String, double> subtotalesPorSuper = {};
+            final Map<String, double> preciosUnitariosPorSuper = {};
+
+            for (var c in cotizaciones) {
+              final d = c.desglose.firstWhere(
+                (elem) =>
+                    elem.idItem != null && elem.idItem == itemRef.idItem,
+                orElse: () =>
+                    (i < c.desglose.length ? c.desglose[i] : itemRef),
+              );
+              subtotalesPorSuper[c.nombreSupermercado] = d.subtotal;
+              preciosUnitariosPorSuper[c.nombreSupermercado] =
+                  d.precioUnitario;
+            }
+
+            itemsConsolidados.add({
+              'id_item': itemRef.idItem,
+              'nombre': itemRef.nombre,
+              'cantidad': itemRef.cantidadTexto,
+              'unidad': '',
+              'precios': preciosUnitariosPorSuper,
+              'subtotales': subtotalesPorSuper,
+              'incluir': !itemRef.comprado,
+              'comprado': itemRef.comprado,
+            });
+          }
+
+          if (!mounted) return;
+          setState(() {
+            ingredientesDinamicos = itemsConsolidados;
+            seleccionandoReceta = false;
+            cargando = false;
           });
+          return;
+        } else {
+          if (!mounted) return;
+          setState(() {
+            ingredientesDinamicos = [];
+            seleccionandoReceta = false;
+            cargando = false;
+          });
+          return;
         }
       } else {
         if (recetaActualId != null && recetaActualId! > 0) {
@@ -406,6 +447,25 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
   }
 
   double calcularSubtotalItem(Map<String, dynamic> item, String supermercado) {
+    if (recetaActualId == -1) {
+      final Map subtotales =
+          item['subtotales'] is Map ? item['subtotales'] as Map : {};
+      final targetKey = supermercado.trim().toLowerCase();
+      for (var entry in subtotales.entries) {
+        if (entry.key.toString().trim().toLowerCase() == targetKey) {
+          if (entry.value is num) return (entry.value as num).toDouble();
+        }
+      }
+      final Map precios =
+          item['precios'] is Map ? item['precios'] as Map : {};
+      for (var entry in precios.entries) {
+        if (entry.key.toString().trim().toLowerCase() == targetKey) {
+          if (entry.value is num) return (entry.value as num).toDouble();
+        }
+      }
+      return 0.0;
+    }
+
     final String nombre = (item['nombre'] ?? '').toString();
     final double cantBase = (item['cantidad'] is num)
         ? (item['cantidad'] as num).toDouble()
@@ -1722,12 +1782,15 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                           ? (item['cantidad'] as num).toDouble()
                           : 1.0;
                       final double cantCalculada = cant * multiplicadorActual;
-                      final String presentacionComercial =
-                          ConversorUnidades.normalizarParaSupermercado(
-                            item['nombre'],
-                            cantCalculada,
-                            item['unidad'] ?? 'pza',
-                          ).textoCantidad;
+                      final String presentacionComercial = recetaActualId == -1
+                          ? (item['cantidad']?.toString().isNotEmpty == true
+                              ? item['cantidad'].toString()
+                              : '1 pza')
+                          : ConversorUnidades.normalizarParaSupermercado(
+                              item['nombre'],
+                              cantCalculada,
+                              item['unidad'] ?? 'pza',
+                            ).textoCantidad;
 
                       final double precioRef = calcularSubtotalItem(
                         item,

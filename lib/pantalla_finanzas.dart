@@ -29,6 +29,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   PreferenciasUsuario? _preferencias;
 
   // Presupuesto y Cotización
+  double? _presupuestoExternoActivo;
   double _presupuestoSemanal = 1500.0;
   String _superFavorito = 'Walmart';
   CotizacionSupermercado? _cotizacionElegida;
@@ -54,6 +55,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   @override
   void initState() {
     super.initState();
+    _presupuestoExternoActivo = widget.presupuestoSuperExterno;
     _cargarTodoFinanzas();
   }
 
@@ -125,9 +127,9 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                 orElse: () => cotizaciones.first,
               );
 
-        if (widget.presupuestoSuperExterno != null &&
-            widget.presupuestoSuperExterno! > 0) {
-          _costoSemanaActual = widget.presupuestoSuperExterno!;
+        if (_presupuestoExternoActivo != null &&
+            _presupuestoExternoActivo! > 0) {
+          _costoSemanaActual = _presupuestoExternoActivo!;
         } else {
           _costoSemanaActual = _cotizacionElegida?.total ?? 0.0;
         }
@@ -154,8 +156,15 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
 
         _gastoPorDepartamento = gastosDepto;
         _totalGastoDepartamentos = sumDeptos > 0 ? sumDeptos : _costoSemanaActual;
-      } else if (widget.presupuestoSuperExterno != null) {
-        _costoSemanaActual = widget.presupuestoSuperExterno!;
+      } else if (_presupuestoExternoActivo != null &&
+          _presupuestoExternoActivo! > 0) {
+        _costoSemanaActual = _presupuestoExternoActivo!;
+      } else {
+        _costoSemanaActual = 0.0;
+        _cotizacionElegida = null;
+        _cotizacionCentralAbasto = null;
+        _gastoPorDepartamento = {};
+        _totalGastoDepartamentos = 0.0;
       }
 
       // 4. Analizar comidas del planeador semanal para calcular Costo por Platillo y ROI
@@ -177,14 +186,14 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       final int divisorComidas = comidasSemana > 0 ? comidasSemana : 14;
       _costoPorPlatillo = _costoSemanaActual > 0
           ? (_costoSemanaActual / divisorComidas)
-          : 45.0;
+          : 0.0;
 
       // En México el costo promedio de comer en restaurante/fonda/delivery es de ~$150 MXN
       const double costoRestauranteRef = 150.0;
       final double gastoRestaurantes = divisorComidas * costoRestauranteRef;
       _ahorroVsRestaurantes = (_costoSemanaActual > 0)
           ? (gastoRestaurantes - _costoSemanaActual)
-          : (divisorComidas * (costoRestauranteRef - 45.0));
+          : 0.0;
 
       // 5. Datos de despensa e inventario
       final despensaData = await supabase
@@ -495,7 +504,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               ),
               icon: const Icon(Icons.delete_forever, size: 18),
               label: const Text(
-                'Limpiar todo (tickets y despensa completa)',
+                'Limpiar todo a ceros (tickets, despensa y compras)',
                 style: TextStyle(fontSize: 12.5),
               ),
               onPressed: () {
@@ -526,30 +535,54 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   Future<void> _ejecutarLimpieza({required bool soloTicketsYCompras}) async {
     setState(() => _cargando = true);
     try {
-      final resp = await supabase
-          .from('despensa_usuario')
-          .select('id_item, precio');
-      final List items = resp as List;
-      final List<dynamic> idsEliminar = [];
+      _presupuestoExternoActivo = null;
 
-      for (var it in items) {
-        final id = it['id_item'];
-        if (id == null) continue;
-        if (soloTicketsYCompras) {
+      if (soloTicketsYCompras) {
+        final resp = await supabase
+            .from('despensa_usuario')
+            .select('id_item, precio');
+        final List items = resp as List;
+        final List<dynamic> idsEliminar = [];
+
+        for (var it in items) {
+          final id = it['id_item'];
+          if (id == null) continue;
           final p = _parsearNumero(it['precio']);
           if (p > 0) {
             idsEliminar.add(id);
           }
-        } else {
-          idsEliminar.add(id);
         }
-      }
 
-      if (idsEliminar.isNotEmpty) {
+        if (idsEliminar.isNotEmpty) {
+          await supabase
+              .from('despensa_usuario')
+              .delete()
+              .inFilter('id_item', idsEliminar);
+        }
+      } else {
+        // Limpiar todo: despensa completa y lista de compras
         await supabase
             .from('despensa_usuario')
             .delete()
-            .inFilter('id_item', idsEliminar);
+            .neq('id_item', -999999);
+
+        await supabase
+            .from('lista_compras')
+            .delete()
+            .neq('id', -999999);
+
+        _costoSemanaActual = 0.0;
+        _cotizacionElegida = null;
+        _cotizacionCentralAbasto = null;
+        _gastoPorDepartamento = {};
+        _totalGastoDepartamentos = 0.0;
+        _capitalDespensa = 0.0;
+        _totalItemsDespensa = 0;
+        _articuloMayorValor = 'Sin datos';
+        _gastoSemanalRegistrado = 0.0;
+        _ultimosIngresos = [];
+        _costoPorPlatillo = 0.0;
+        _ahorroVsRestaurantes = 0.0;
       }
 
       if (mounted) {
@@ -557,14 +590,14 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           SnackBar(
             content: Text(
               soloTicketsYCompras
-                  ? '¡Se limpiaron ${idsEliminar.length} registros de tickets y compras! 🧹'
-                  : '¡Se limpiaron ${idsEliminar.length} artículos. Despensa y finanzas en cero! 🧹✨',
+                  ? '¡Se limpiaron los tickets y compras registradas! 🧹'
+                  : '¡Finanzas, despensa y compras limpiadas en ceros! 🧹✨',
             ),
             backgroundColor: Colors.green.shade800,
           ),
         );
       }
-      _cargarTodoFinanzas();
+      await _cargarTodoFinanzas();
     } catch (e) {
       debugPrint('Error al limpiar finanzas: $e');
       if (mounted) {
@@ -674,8 +707,9 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     final double saldoRestante = _presupuestoSemanal - _costoSemanaActual;
 
     Color colorEstado = Colors.green.shade700;
-    String estadoTexto =
-        'Vas \$${saldoRestante.abs().toStringAsFixed(2)} MXN por debajo de tu presupuesto 🟢';
+    String estadoTexto = _costoSemanaActual <= 0
+        ? 'Sin compras activas. Presupuesto completo disponible: \$${_presupuestoSemanal.toStringAsFixed(2)} MXN 🟢'
+        : 'Vas \$${saldoRestante.abs().toStringAsFixed(2)} MXN por debajo de tu presupuesto 🟢';
     IconData iconoEstado = Icons.check_circle_outline;
 
     if (porcentajeUso > 100.0) {
@@ -996,11 +1030,11 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   Widget _construirComparativaAhorroSuper() {
     final double totalFav = _cotizacionElegida?.total ?? 0.0;
     final double totalCentral = _cotizacionCentralAbasto?.total ?? 0.0;
-    final double ahorro = (totalFav > totalCentral && totalCentral > 0)
+    final double ahorro = (totalFav > 0 && totalFav > totalCentral && totalCentral > 0)
         ? (totalFav - totalCentral)
-        : (totalFav * 0.22); // Estimación 22% promedio si no hay fila exacta
+        : (totalFav > 0 ? (totalFav * 0.22) : 0.0);
     final double porcentajeAhorro =
-        totalFav > 0 ? (ahorro / totalFav) * 100.0 : 22.0;
+        totalFav > 0 ? (ahorro / totalFav) * 100.0 : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1100,7 +1134,9 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           ),
           const SizedBox(height: 10),
           Text(
-            '💡 Surtir frutas, verduras y granos en Central de Abasto te ahorraría aproximadamente \$${ahorro.toStringAsFixed(2)} MXN en tu lista.',
+            totalFav > 0
+                ? '💡 Surtir frutas, verduras y granos en Central de Abasto te ahorraría aproximadamente \$${ahorro.toStringAsFixed(2)} MXN en tu lista.'
+                : '💡 Agrega productos a tu lista de compras para calcular el comparativo de ahorro entre supermercados y Central de Abasto.',
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF5D4037),

@@ -7,6 +7,7 @@ class ItemCotizadoDetalle {
   final String cantidadTexto;
   final double precioUnitario;
   final double subtotal;
+  final bool comprado;
 
   const ItemCotizadoDetalle({
     this.idItem,
@@ -14,6 +15,7 @@ class ItemCotizadoDetalle {
     required this.cantidadTexto,
     required this.precioUnitario,
     required this.subtotal,
+    this.comprado = false,
   });
 }
 
@@ -207,6 +209,7 @@ class ServicioCotizador {
             cantidadTexto: (item['cantidad'] ?? '1').toString(),
             precioUnitario: costoUnitario,
             subtotal: subtotal,
+            comprado: item['comprado'] == true,
           ),
         );
       }
