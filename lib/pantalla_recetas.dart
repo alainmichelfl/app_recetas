@@ -12,6 +12,8 @@ import 'servicio_ia.dart';
 import 'servicio_historial_cocina.dart';
 import 'menu_lateral.dart';
 import 'servicio_admin.dart';
+import 'servicio_recetas.dart';
+import 'pantalla_carga_masiva_recetas.dart';
 
 class PantallaRecetas extends StatefulWidget {
   const PantallaRecetas({super.key});
@@ -26,6 +28,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
   bool cargando = true;
+
+  FiltroAudienciaReceta _filtroAudiencia = FiltroAudienciaReceta.todas;
 
   final TextEditingController _searchController = TextEditingController();
   String categoriaSeleccionada = 'Todos';
@@ -259,6 +263,25 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             categoriaSeleccionada == 'Todos' || tipo == categoriaSeleccionada;
 
         if (!coincideTexto || !coincideCategoria) return false;
+
+        // Filtro por Audiencia (Oficiales vs Mis Recetas vs Comunidad vs Todas)
+        final bool coincideAudiencia;
+        switch (_filtroAudiencia) {
+          case FiltroAudienciaReceta.oficiales:
+            coincideAudiencia = ServicioRecetas.esOficial(receta);
+            break;
+          case FiltroAudienciaReceta.misRecetas:
+            coincideAudiencia = ServicioRecetas.esMiReceta(receta);
+            break;
+          case FiltroAudienciaReceta.comunidad:
+            coincideAudiencia = ServicioRecetas.esComunidad(receta);
+            break;
+          case FiltroAudienciaReceta.todas:
+            coincideAudiencia = true;
+            break;
+        }
+
+        if (!coincideAudiencia) return false;
 
         if (_ingredientesSeleccionados.isNotEmpty) {
           final coincidencias = _contarCoincidenciasIngredientes(receta);
@@ -1307,6 +1330,86 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     );
   }
 
+  Widget _construirChipAudiencia({
+    required String etiqueta,
+    required FiltroAudienciaReceta filtro,
+    required Color colorActivo,
+    required Color fondoActivo,
+  }) {
+    final bool seleccionado = _filtroAudiencia == filtro;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text(etiqueta),
+        selected: seleccionado,
+        selectedColor: fondoActivo,
+        backgroundColor: Colors.grey[100],
+        checkmarkColor: colorActivo,
+        side: BorderSide(
+          color: seleccionado ? colorActivo : Colors.grey.shade300,
+          width: seleccionado ? 1.4 : 0.8,
+        ),
+        labelStyle: TextStyle(
+          color: seleccionado ? colorActivo : Colors.black87,
+          fontWeight: seleccionado ? FontWeight.bold : FontWeight.w500,
+          fontSize: 12,
+        ),
+        onSelected: (bool valor) {
+          setState(() {
+            _filtroAudiencia = valor ? filtro : FiltroAudienciaReceta.todas;
+            _filtrarRecetas();
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _confirmarEliminarReceta(int idReceta, String titulo) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Eliminar Receta'),
+          ],
+        ),
+        content: Text('¿Estás seguro de eliminar "$titulo"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      final ok = await ServicioRecetas.eliminarReceta(idReceta);
+      if (ok) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Receta "$titulo" eliminada correctamente.'),
+              backgroundColor: Colors.black87,
+            ),
+          );
+        }
+        cargarRecetas();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1360,9 +1463,28 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 _confirmarSaneamientoConIA();
               } else if (val == 'migrar_relacional') {
                 _confirmarMigracionRelacional();
+              } else if (val == 'carga_mensual') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PantallaCargaMasivaRecetas(),
+                  ),
+                ).then((guardado) {
+                  if (guardado == true) cargarRecetas();
+                });
               }
             },
             itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'carga_mensual',
+                child: Row(
+                  children: [
+                    Icon(Icons.rocket_launch, color: Colors.deepOrange),
+                    SizedBox(width: 10),
+                    Text('Carga Masiva Mensual (20 IA) 🚀'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'sanitizar',
                 child: Row(
@@ -1497,8 +1619,42 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // 🌟 Filtro de Audiencia y Origen (Oficiales, Mis Recetas, Comunidad, Todas)
                 SizedBox(
-                  height: 40,
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _construirChipAudiencia(
+                        etiqueta: '🌟 Oficiales',
+                        filtro: FiltroAudienciaReceta.oficiales,
+                        colorActivo: Colors.red.shade800,
+                        fondoActivo: Colors.red.shade50,
+                      ),
+                      _construirChipAudiencia(
+                        etiqueta: '👨‍🍳 Mis Recetas',
+                        filtro: FiltroAudienciaReceta.misRecetas,
+                        colorActivo: Colors.teal.shade800,
+                        fondoActivo: Colors.teal.shade50,
+                      ),
+                      _construirChipAudiencia(
+                        etiqueta: '🌎 Comunidad',
+                        filtro: FiltroAudienciaReceta.comunidad,
+                        colorActivo: Colors.indigo.shade800,
+                        fondoActivo: Colors.indigo.shade50,
+                      ),
+                      _construirChipAudiencia(
+                        etiqueta: 'Todas',
+                        filtro: FiltroAudienciaReceta.todas,
+                        colorActivo: Colors.grey.shade900,
+                        fondoActivo: Colors.grey.shade200,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 38,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: categorias.map((cat) {
@@ -1656,6 +1812,88 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       ),
                                     ),
                                   ),
+                                  // Distintivo de Origen / Oficial / Personal / Comunidad
+                                  if (ServicioRecetas.esOficial(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.red.shade200, width: 0.8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.star, size: 10, color: Colors.red.shade800),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'Oficial',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else if (ServicioRecetas.esMiReceta(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.teal.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.teal.shade300, width: 0.8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.person, size: 10, color: Colors.teal.shade800),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'Mi Receta',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.teal.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else if (ServicioRecetas.esComunidad(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.indigo.shade50,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.indigo.shade200, width: 0.8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.groups, size: 10, color: Colors.indigo.shade800),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'Comunidad',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.indigo.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   if (_ingredientesSeleccionados.isNotEmpty)
                                     Builder(
                                       builder: (context) {
@@ -1771,6 +2009,71 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 onPressed: () =>
                                     _programarEnPlaneador(id, titulo, tipo),
                               ),
+                              if (ServicioRecetas.puedeModificar(receta))
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  tooltip: 'Opciones de receta',
+                                  onSelected: (accion) async {
+                                    if (accion == 'eliminar') {
+                                      _confirmarEliminarReceta(idInt, titulo);
+                                    } else if (accion == 'toggle_publica') {
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      final bool esPub = receta['es_publica'] == true;
+                                      final exito = await ServicioRecetas.cambiarVisibilidadPublica(
+                                        idReceta: idInt,
+                                        nuevaVisibilidad: !esPub,
+                                      );
+                                      if (exito && mounted) {
+                                        setState(() {
+                                          receta['es_publica'] = !esPub;
+                                        });
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(!esPub
+                                                ? '¡Receta compartida con la comunidad! 🌎'
+                                                : 'Receta guardada como privada 🔒'),
+                                            backgroundColor: Colors.teal,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  itemBuilder: (ctx) => [
+                                    if (ServicioRecetas.esMiReceta(receta))
+                                      PopupMenuItem(
+                                        value: 'toggle_publica',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              receta['es_publica'] == true
+                                                  ? Icons.lock_outline
+                                                  : Icons.public,
+                                              size: 18,
+                                              color: Colors.indigo,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(receta['es_publica'] == true
+                                                ? 'Hacer Privada 🔒'
+                                                : 'Compartir en Comunidad 🌎'),
+                                          ],
+                                        ),
+                                      ),
+                                    const PopupMenuItem(
+                                      value: 'eliminar',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                          SizedBox(width: 8),
+                                          Text('Eliminar Receta', style: TextStyle(color: Colors.red)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               const Icon(
                                 Icons.arrow_forward_ios,
                                 size: 16,

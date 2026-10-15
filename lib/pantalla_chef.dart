@@ -7,6 +7,8 @@ import 'config_api.dart';
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
 import 'servicio_preferencias.dart';
+import 'servicio_recetas.dart';
+import 'servicio_admin.dart';
 import 'menu_lateral.dart';
 
 class PantallaChef extends StatefulWidget {
@@ -465,19 +467,19 @@ class _PantallaChefState extends State<PantallaChef> {
 
       final String descCompleta = sb.toString().trim();
 
-      final resReceta = await supabase
-          .from('recetas')
-          .insert({
-            'titulo': recetaGenerada['titulo'],
-            'descripcion': descCompleta.isNotEmpty ? descCompleta : recetaGenerada['descripcion'],
-            'tipo_comida': recetaGenerada['tipo_comida'],
-            'calorias': recetaGenerada['calorias'],
-            'macros': recetaGenerada['macros'],
-            'instrucciones': recetaGenerada['instrucciones'],
-            'imagen_url': 'https://via.placeholder.com/300',
-          })
-          .select('id_receta')
-          .single();
+      final resReceta = await ServicioRecetas.insertarReceta(
+        titulo: recetaGenerada['titulo'] ?? 'Receta Chef IA',
+        descripcion: descCompleta.isNotEmpty ? descCompleta : (recetaGenerada['descripcion'] ?? ''),
+        instrucciones: recetaGenerada['instrucciones'] ?? '',
+        tipoComida: recetaGenerada['tipo_comida'] ?? 'Comida',
+        calorias: recetaGenerada['calorias'] is num
+            ? (recetaGenerada['calorias'] as num).toInt()
+            : int.tryParse(recetaGenerada['calorias']?.toString() ?? '450'),
+        macros: recetaGenerada['macros']?.toString(),
+        imagenUrl: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
+        esOficial: ServicioAdmin.esAdmin(),
+        esPublica: ServicioAdmin.esAdmin(),
+      );
 
       final int idRecetaNueva = resReceta['id_receta'];
 

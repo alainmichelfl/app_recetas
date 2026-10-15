@@ -19,6 +19,8 @@ import 'pantalla_detalle_receta.dart';
 import 'servicio_preferencias.dart';
 import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
+import 'servicio_recetas.dart';
+import 'servicio_admin.dart';
 import 'menu_lateral.dart';
 
 // Constante global de primer nivel para evitar errores de null en Hot Reload
@@ -1691,24 +1693,22 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
       final String descCompleta = sb.toString().trim();
 
-      final resReceta = await Supabase.instance.client
-          .from('recetas')
-          .insert({
-            'titulo': recetaMap['titulo'],
-            'descripcion': descCompleta.isNotEmpty
-                ? descCompleta
-                : recetaMap['descripcion'],
-            'tipo_comida': recetaMap['tipo_comida'],
-            'calorias': recetaMap['calorias'] is num
-                ? (recetaMap['calorias'] as num).toInt()
-                : int.tryParse(recetaMap['calorias']?.toString() ?? '450') ?? 450,
-            'macros': recetaMap['macros']?.toString() ?? '',
-            'instrucciones': recetaMap['instrucciones']?.toString() ?? '',
-            'imagen_url':
-                'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
-          })
-          .select('id_receta, titulo, tipo_comida, descripcion, calorias')
-          .single();
+      final resReceta = await ServicioRecetas.insertarReceta(
+        titulo: recetaMap['titulo'] ?? 'Receta Sugerida',
+        descripcion: descCompleta.isNotEmpty
+            ? descCompleta
+            : (recetaMap['descripcion'] ?? ''),
+        tipoComida: recetaMap['tipo_comida'] ?? 'Comida',
+        calorias: recetaMap['calorias'] is num
+            ? (recetaMap['calorias'] as num).toInt()
+            : int.tryParse(recetaMap['calorias']?.toString() ?? '450') ?? 450,
+        macros: recetaMap['macros']?.toString() ?? '',
+        instrucciones: recetaMap['instrucciones']?.toString() ?? '',
+        imagenUrl:
+            'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
+        esOficial: ServicioAdmin.esAdmin(),
+        esPublica: ServicioAdmin.esAdmin(),
+      );
 
       final int idRecetaNueva = resReceta['id_receta'];
 
