@@ -1024,7 +1024,6 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
             'precio': precioUnitario > 0
                 ? (double.parse(precioUnitario.toStringAsFixed(2)))
                 : null,
-            'categoria': 'Compra $nombreSuper',
             'fecha_ingreso': hoy,
           });
         }

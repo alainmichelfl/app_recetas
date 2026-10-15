@@ -189,7 +189,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       // 5. Datos de despensa e inventario
       final despensaData = await supabase
           .from('despensa_usuario')
-          .select('id_item, nombre, cantidad, precio, categoria, fecha_ingreso')
+          .select('id_item, nombre, cantidad, precio, fecha_ingreso')
           .order('fecha_ingreso', ascending: false);
 
       final List itemsDespensa = despensaData as List;
@@ -367,7 +367,6 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             'nombre': nombre,
             'cantidad': cant > 0 ? cant : 1.0,
             'precio': precio > 0 ? precio : null,
-            'categoria': 'Ticket $tienda',
             'fecha_ingreso': hoyStr,
           });
           insertados++;
@@ -529,7 +528,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     try {
       final resp = await supabase
           .from('despensa_usuario')
-          .select('id_item, precio, categoria');
+          .select('id_item, precio');
       final List items = resp as List;
       final List<dynamic> idsEliminar = [];
 
@@ -537,9 +536,8 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
         final id = it['id_item'];
         if (id == null) continue;
         if (soloTicketsYCompras) {
-          final cat = (it['categoria'] ?? '').toString();
           final p = _parsearNumero(it['precio']);
-          if (cat.contains('Ticket') || cat.contains('Compra') || p > 0) {
+          if (p > 0) {
             idsEliminar.add(id);
           }
         } else {
