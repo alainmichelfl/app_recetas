@@ -1,6 +1,6 @@
 {
-    "name": "App Jitomate y Cebolla",
-    "short_name": "App Jitomate y Cebolla",
+    "name": "Jitomate y Cebolla",
+    "short_name": "Jitomate y Cebolla",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
