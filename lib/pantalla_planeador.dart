@@ -52,6 +52,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
   String _alergias = '';
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
+  final Set<String> _categoriasColapsadas = {};
 
   @override
   void initState() {
@@ -2303,6 +2304,13 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     final snacks = miPlan.where((i) => i['tipo_comida'] == 'Snack').toList();
     final cenas = miPlan.where((i) => i['tipo_comida'] == 'Cena').toList();
 
+    final List<String> categoriasActivas = [
+      if (desayunos.isNotEmpty) 'desayunos',
+      if (comidas.isNotEmpty) 'comidas',
+      if (snacks.isNotEmpty) 'snacks',
+      if (cenas.isNotEmpty) 'cenas',
+    ];
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       drawer: const MenuLateral(rutaActual: 'planeador'),
@@ -2602,35 +2610,80 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     padding: const EdgeInsets.all(15),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
+                        if (categoriasActivas.length > 1) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.teal.shade800,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    final bool todasColapsadas =
+                                        categoriasActivas.every((c) => _categoriasColapsadas.contains(c));
+                                    if (todasColapsadas) {
+                                      _categoriasColapsadas.clear();
+                                    } else {
+                                      _categoriasColapsadas.addAll(categoriasActivas);
+                                    }
+                                  });
+                                },
+                                icon: Icon(
+                                  categoriasActivas.every((c) => _categoriasColapsadas.contains(c))
+                                      ? Icons.unfold_more_rounded
+                                      : Icons.unfold_less_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  categoriasActivas.every((c) => _categoriasColapsadas.contains(c))
+                                      ? 'Expandir todas las comidas'
+                                      : 'Colapsar todas las comidas',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                        ],
                         if (desayunos.isNotEmpty) ...[
                           _crearSeccionCategoria(
-                            '🍳 Desayunos',
-                            desayunos,
-                            Colors.orange,
+                            clave: 'desayunos',
+                            titulo: '🍳 Desayunos',
+                            items: desayunos,
+                            colorTema: Colors.orange,
                           ),
                           const SizedBox(height: 15),
                         ],
                         if (comidas.isNotEmpty) ...[
                           _crearSeccionCategoria(
-                            '🍲 Comidas',
-                            comidas,
-                            Colors.green,
+                            clave: 'comidas',
+                            titulo: '🍲 Comidas',
+                            items: comidas,
+                            colorTema: Colors.green,
                           ),
                           const SizedBox(height: 15),
                         ],
                         if (snacks.isNotEmpty) ...[
                           _crearSeccionCategoria(
-                            '🍎 Snacks',
-                            snacks,
-                            Colors.redAccent,
+                            clave: 'snacks',
+                            titulo: '🍎 Snacks',
+                            items: snacks,
+                            colorTema: Colors.redAccent,
                           ),
                           const SizedBox(height: 15),
                         ],
                         if (cenas.isNotEmpty) ...[
                           _crearSeccionCategoria(
-                            '🌙 Cenas',
-                            cenas,
-                            Colors.indigo,
+                            clave: 'cenas',
+                            titulo: '🌙 Cenas',
+                            items: cenas,
+                            colorTema: Colors.indigo,
                           ),
                           const SizedBox(height: 15),
                         ],
@@ -2642,13 +2695,15 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     );
   }
 
-  Widget _crearSeccionCategoria(
-    String titulo,
-    List<dynamic> items,
-    Color colorTema,
-  ) {
+  Widget _crearSeccionCategoria({
+    required String clave,
+    required String titulo,
+    required List<dynamic> items,
+    required Color colorTema,
+  }) {
+    final bool estaColapsada = _categoriasColapsadas.contains(clave);
     final totalCalCategoria = items.fold<int>(0, (acc, item) {
-      final receta = item['recetas'] as Map<String, dynamic>? ?? {};
+      final receta = item['recetas'] is Map ? item['recetas'] as Map : {};
       final c = int.tryParse(receta['calorias']?.toString() ?? '0') ?? 0;
       return acc + c;
     });
@@ -2656,45 +2711,85 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.bookmark, color: colorTema, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              titulo,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorTema,
-              ),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            setState(() {
+              if (estaColapsada) {
+                _categoriasColapsadas.remove(clave);
+              } else {
+                _categoriasColapsadas.add(clave);
+              }
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: estaColapsada ? colorTema.withValues(alpha: 0.08) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 8),
-            Chip(
-              label: Text(
-                '${items.length}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+            child: Row(
+              children: [
+                Icon(
+                  estaColapsada
+                      ? Icons.arrow_right_rounded
+                      : Icons.arrow_drop_down_rounded,
+                  color: colorTema,
+                  size: 26,
                 ),
-              ),
-              backgroundColor: colorTema.withValues(alpha: 0.15),
-              visualDensity: VisualDensity.compact,
+                const SizedBox(width: 4),
+                Text(
+                  titulo,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colorTema,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: colorTema.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${items.length}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: colorTema,
+                    ),
+                  ),
+                ),
+                if (totalCalCategoria > 0) ...[
+                  const Spacer(),
+                  Text(
+                    '~$totalCalCategoria kcal',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ] else ...[
+                  const Spacer(),
+                ],
+                const SizedBox(width: 6),
+                Icon(
+                  estaColapsada
+                      ? Icons.expand_more_rounded
+                      : Icons.expand_less_rounded,
+                  size: 20,
+                  color: Colors.grey.shade600,
+                ),
+              ],
             ),
-            if (totalCalCategoria > 0) ...[
-              const Spacer(),
-              Text(
-                '~$totalCalCategoria kcal',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
         const SizedBox(height: 8),
-        ...items.map((item) {
+        if (!estaColapsada) ...[
+          ...items.map((item) {
           final receta = item['recetas'] ?? {};
           final tituloReceta = receta['titulo'] ?? 'Receta eliminada';
           final imagen = receta['imagen_url'];
@@ -2944,6 +3039,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             ),
           );
         }),
+        ],
       ],
     );
   }
