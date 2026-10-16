@@ -666,6 +666,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               color: Colors.deepOrange,
               onRefresh: _cargarTodoFinanzas,
               child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
                 children: [
                   // 1. TERMÓMETRO DE PRESUPUESTO SEMANAL

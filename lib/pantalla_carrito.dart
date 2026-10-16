@@ -1539,28 +1539,43 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     ),
                     if (items.isEmpty)
                       Expanded(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        child: RefreshIndicator(
+                          color: Colors.red.shade800,
+                          onRefresh: () async {
+                            if (mounted) setState(() {});
+                            await _recalcularPresupuesto();
+                          },
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             children: [
-                              const Icon(
-                                Icons.shopping_cart_outlined,
-                                size: 70,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Tu lista de compras está vacía.',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.shopping_cart_outlined,
+                                        size: 70,
+                                        color: Colors.grey,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        'Tu lista de compras está vacía.',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.sync),
+                                        label: const Text('Autollenar con Planeador'),
+                                        onPressed: autollenarListaDesdePlaneador,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.sync),
-                                label: const Text('Autollenar con Planeador'),
-                                onPressed: autollenarListaDesdePlaneador,
                               ),
                             ],
                           ),
@@ -1568,9 +1583,17 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       )
                     else
                       Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.only(bottom: 90, top: 4),
-                          children: _construirSeccionesPorCategoria(items),
+                        child: RefreshIndicator(
+                          color: Colors.red.shade800,
+                          onRefresh: () async {
+                            if (mounted) setState(() {});
+                            await _recalcularPresupuesto();
+                          },
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 90, top: 4),
+                            children: _construirSeccionesPorCategoria(items),
+                          ),
                         ),
                       ),
                   ],

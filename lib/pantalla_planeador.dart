@@ -2367,9 +2367,17 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 color: Theme.of(context).colorScheme.primary,
               ),
             )
-          : CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
+          : RefreshIndicator(
+              color: Colors.deepOrange,
+              onRefresh: () async {
+                await Future.wait([
+                  cargarPlan(),
+                  _cargarObjetivoDesdePreferencias(),
+                ]);
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
                 // 🍏 1. Encabezado retráctil que se desplaza hacia arriba con el scroll
                 SliverToBoxAdapter(
                   child: Container(
@@ -2753,6 +2761,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   ),
               ],
             ),
+          ),
     );
   }
 

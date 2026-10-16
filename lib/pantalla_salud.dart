@@ -368,9 +368,16 @@ class _PantallaSaludState extends State<PantallaSalud> {
       ),
       body: cargando
           ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+          : RefreshIndicator(
+              color: Colors.teal,
+              onRefresh: () async {
+                await _cargarPerfilDesdePreferencias();
+                await calcularNutricionDelDia();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // --- SELECTOR DE PERFIL DIETÉTICO ---
@@ -638,6 +645,7 @@ class _PantallaSaludState extends State<PantallaSalud> {
                 ],
               ),
             ),
+          ),
     );
   }
 }

@@ -1720,27 +1720,42 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.orange),
                   )
-                : recetasFiltradas.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 70,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'No se encontraron recetas',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(15),
-                    itemCount: recetasFiltradas.length,
+                : RefreshIndicator(
+                    color: Colors.orange.shade800,
+                    onRefresh: cargarRecetas,
+                    child: recetasFiltradas.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.45,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.search_off,
+                                        size: 70,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const Text(
+                                        'No se encontraron recetas',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(15),
+                            itemCount: recetasFiltradas.length,
                     itemBuilder: (context, index) {
                       final receta = recetasFiltradas[index];
                       final titulo = receta['titulo'] ?? 'Sin título';
@@ -2138,6 +2153,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       );
                     },
                   ),
+                ),
           ),
         ],
       ),

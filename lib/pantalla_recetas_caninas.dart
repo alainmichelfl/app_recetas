@@ -383,45 +383,67 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.brown),
                   )
-                : recetasFiltradas.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.pets, size: 80, color: Colors.grey[400]),
-                        const SizedBox(height: 15),
-                        const Text(
-                          'No hay recetas caninas disponibles aún',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.brown[700],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
+                : RefreshIndicator(
+                    color: Colors.brown[700],
+                    onRefresh: cargarRecetasCaninas,
+                    child: recetasFiltradas.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.pets,
+                                        size: 80,
+                                        color: Colors.grey[400],
+                                      ),
+                                      const SizedBox(height: 15),
+                                      const Text(
+                                        'No hay recetas caninas disponibles aún',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.brown[700],
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                          ),
+                                        ),
+                                        icon: const Icon(Icons.add),
+                                        label: const Text(
+                                          'Crear la primera receta 🐶',
+                                        ),
+                                        onPressed: _mostrarOpcionesCreacion,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(
+                              left: 15,
+                              right: 15,
+                              top: 15,
+                              bottom: 85,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Crear la primera receta 🐶'),
-                          onPressed: _mostrarOpcionesCreacion,
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(
-                      left: 15,
-                      right: 15,
-                      top: 15,
-                      bottom: 85,
-                    ),
-                    itemCount: recetasFiltradas.length,
+                            itemCount: recetasFiltradas.length,
                     itemBuilder: (context, index) {
                       final receta = recetasFiltradas[index];
                       final id = receta['id_receta'] as int;
@@ -523,6 +545,7 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
                       );
                     },
                   ),
+                ),
           ),
         ],
       ),

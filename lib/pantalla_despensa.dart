@@ -813,24 +813,45 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                 final despensa = snapshot.data ?? [];
 
                 if (despensa.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  return RefreshIndicator(
+                    color: Colors.red.shade800,
+                    onRefresh: () async {
+                      if (mounted) setState(() {});
+                      await Future.delayed(const Duration(milliseconds: 300));
+                    },
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        Icon(
-                          Icons.kitchen_outlined,
-                          size: 70,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 15),
-                        const Text(
-                          'Tu despensa está vacía',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'Agrega ingredientes o escanea tu ticket de compra',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.kitchen_outlined,
+                                  size: 70,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 15),
+                                const Text(
+                                  'Tu despensa está vacía',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                const Text(
+                                  'Agrega ingredientes o escanea tu ticket de compra',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -930,9 +951,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                         ),
                       ),
                     Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                        itemCount: despensaItems.length,
+                      child: RefreshIndicator(
+                        color: Colors.red.shade800,
+                        onRefresh: () async {
+                          if (mounted) setState(() {});
+                          await Future.delayed(const Duration(milliseconds: 300));
+                        },
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                          itemCount: despensaItems.length,
                         itemBuilder: (context, index) {
                           final item = despensaItems[index];
                           final idItem = item['id_item'];
@@ -1024,6 +1052,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                         },
                       ),
                     ),
+                  ),
                   ],
                 );
               },
