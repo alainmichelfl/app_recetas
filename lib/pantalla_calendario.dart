@@ -339,12 +339,383 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     }
   }
 
+  /// Elimina un platillo individual del calendario con advertencia amigable
+  Future<void> _eliminarComidaIndividual(Map<String, dynamic> item) async {
+    final idPlaneador = int.tryParse(item['id_planeador']?.toString() ?? '0') ?? 0;
+    final receta = _obtenerRecetaSegura(item['recetas']);
+    final titulo = (receta['titulo'] ?? 'este platillo').toString();
+    final fechaStr = _normalizarClaveFecha(item['fecha']);
+
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.delete_outline, color: Colors.red.shade800),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '¿Eliminar platillo?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Deseas quitar "$titulo" de tu calendario?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: Colors.amber.shade900),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Aviso amigable: Al eliminarlo se actualizará tu "Resumen de tu Mes Culinario 📈".',
+                      style: TextStyle(fontSize: 12, color: Colors.brown.shade800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade800,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      if (idPlaneador > 0) {
+        await Supabase.instance.client
+            .from('planeador')
+            .delete()
+            .eq('id_planeador', idPlaneador);
+      } else {
+        await Supabase.instance.client
+            .from('planeador')
+            .delete()
+            .eq('fecha', fechaStr)
+            .eq('tipo_comida', item['tipo_comida'] ?? '');
+      }
+
+      await _cargarDatos();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"$titulo" eliminado del calendario 🗑️'),
+          backgroundColor: Colors.teal.shade800,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error al eliminar comida del calendario: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo eliminar el platillo: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Borra todas las comidas de un día seleccionado con advertencia amigable
+  Future<void> _confirmarBorrarDia(DateTime dia, List<Map<String, dynamic>> comidas) async {
+    if (comidas.isEmpty) return;
+    final fechaClave = _formatoFechaClave(dia);
+    final fechaTexto = _formatoDiaCompleto(dia);
+
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.delete_sweep_outlined, color: Colors.red.shade800),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '¿Vaciar este día?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Se eliminarán los ${comidas.length} platillos planeados para el $fechaTexto.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: Colors.amber.shade900),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Aviso amigable: Al vaciar este día se actualizará tu "Resumen de tu Mes Culinario 📈".',
+                      style: TextStyle(fontSize: 12, color: Colors.brown.shade800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade800,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Vaciar día'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await Supabase.instance.client
+          .from('planeador')
+          .delete()
+          .eq('fecha', fechaClave);
+
+      await _cargarDatos();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Se vaciaron las comidas del $fechaTexto 🗑️'),
+          backgroundColor: Colors.teal.shade800,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error al vaciar día: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudieron borrar las comidas: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Limpia todas las comidas de fechas pasadas con advertencia amigable de reinicio del resumen
+  Future<void> _confirmarLimpiarComidasPasadas() async {
+    final hoy = DateTime.now();
+    final hoyClave = _formatoFechaClave(hoy);
+
+    int comidasPasadasCount = 0;
+    for (final entry in _planesPorFecha.entries) {
+      if (entry.key.compareTo(hoyClave) < 0) {
+        comidasPasadasCount += entry.value.length;
+      }
+    }
+
+    if (comidasPasadasCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes comidas de días pasados para limpiar ✨'),
+          backgroundColor: Colors.teal,
+        ),
+      );
+      return;
+    }
+
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.cleaning_services_rounded, color: Colors.orange.shade900),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Limpiar días pasados',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Se eliminarán $comidasPasadasCount platillo(s) planeado(s) de fechas anteriores a hoy (${hoy.day}/${hoy.month}/${hoy.year}).',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber.shade300, width: 1.2),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 22, color: Colors.orange.shade900),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Aviso amigable ⚠️',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.brown.shade900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Al borrar las comidas pasadas se reiniciará el conteo de tu "Resumen de tu Mes Culinario 📈" para esas fechas y quedará limpio a partir de hoy.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.brown.shade800,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Mantenerlas', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange.shade800,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, limpiar comidas pasadas'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await Supabase.instance.client
+          .from('planeador')
+          .delete()
+          .lt('fecha', hoyClave);
+
+      await _cargarDatos();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Se limpiaron $comidasPasadasCount comida(s) de días pasados 🧹✨'),
+          backgroundColor: Colors.teal.shade800,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error al limpiar comidas pasadas: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al limpiar comidas pasadas: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hoy = DateTime.now();
     final fechaHoyClave = _formatoFechaClave(hoy);
     final fechaSeleccionadaClave = _formatoFechaClave(_diaSeleccionado);
     final comidasDia = _planesPorFecha[fechaSeleccionadaClave] ?? [];
+
+    int comidasPasadasCount = 0;
+    for (final entry in _planesPorFecha.entries) {
+      if (entry.key.compareTo(fechaHoyClave) < 0) {
+        comidasPasadasCount += entry.value.length;
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -371,6 +742,12 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          if (comidasPasadasCount > 0)
+            IconButton(
+              icon: const Icon(Icons.cleaning_services_rounded),
+              tooltip: 'Limpiar comidas de días pasados ($comidasPasadasCount)',
+              onPressed: _confirmarLimpiarComidasPasadas,
+            ),
           if (Navigator.canPop(context))
             Builder(
               builder: (ctx) => IconButton(
@@ -483,17 +860,35 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                           ),
                         ),
                         if (comidasDia.isNotEmpty)
-                          TextButton.icon(
-                            onPressed: () {
-                              for (final item in comidasDia) {
-                                _exportarAlCalendarioNativo(item);
-                              }
-                            },
-                            icon: const Icon(Icons.event_available, size: 16, color: Colors.teal),
-                            label: const Text(
-                              'Exportar día',
-                              style: TextStyle(fontSize: 12, color: Colors.teal),
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _confirmarBorrarDia(_diaSeleccionado, comidasDia),
+                                icon: const Icon(Icons.delete_outline,
+                                    size: 16, color: Colors.redAccent),
+                                label: const Text(
+                                  'Borrar día',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.redAccent),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  for (final item in comidasDia) {
+                                    _exportarAlCalendarioNativo(item);
+                                  }
+                                },
+                                icon: const Icon(Icons.event_available,
+                                    size: 16, color: Colors.teal),
+                                label: const Text(
+                                  'Exportar día',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.teal),
+                                ),
+                              ),
+                            ],
                           ),
                       ],
                     ),
@@ -508,7 +903,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                     const SizedBox(height: 24),
 
                     // 📊 5. TARJETA RESUMEN MENSUAL Y ACCESO RÁPIDO AL PLANEADOR
-                    _construirTarjetaResumenMensual(),
+                    _construirTarjetaResumenMensual(comidasPasadasCount),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -968,6 +1363,11 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
               ),
             ),
             IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+              tooltip: 'Eliminar platillo del calendario',
+              onPressed: () => _eliminarComidaIndividual(item),
+            ),
+            IconButton(
               icon: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
               tooltip: 'Ver detalle',
               onPressed: () {
@@ -990,7 +1390,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     );
   }
 
-  Widget _construirTarjetaResumenMensual() {
+  Widget _construirTarjetaResumenMensual(int comidasPasadasCount) {
     final diasConComida = _planesPorFecha.keys.length;
     final totalPlatillos = _todosLosPlanes.length;
 
@@ -1039,6 +1439,63 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
               _metricaResumen('${_idsCocinadas.length}', 'Cocinadas 🔥'),
             ],
           ),
+          if (comidasPasadasCount > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white30),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.history_toggle_off,
+                      color: Colors.amberAccent, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tienes $comidasPasadasCount comida(s) de días pasados',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Text(
+                          'Limpia para reiniciar tu resumen y empezar desde hoy.',
+                          style: TextStyle(fontSize: 10.5, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.orange.shade900,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: _confirmarLimpiarComidasPasadas,
+                    icon: const Icon(Icons.cleaning_services_rounded, size: 14),
+                    label: const Text(
+                      'Limpiar',
+                      style: TextStyle(
+                          fontSize: 11.5, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
