@@ -14,6 +14,7 @@ import 'menu_lateral.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
 import 'pantalla_carga_masiva_recetas.dart';
+import 'dialogo_manifiesto_bienvenida.dart';
 
 class PantallaRecetas extends StatefulWidget {
   final FiltroAudienciaReceta? filtroInicial;
@@ -62,6 +63,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     _searchController.addListener(_filtrarRecetas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _verificarYMostrarAgradecimiento();
+      DialogoManifiestoBienvenida.verificarYMostrar(context);
     });
   }
 
@@ -1478,6 +1480,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   builder: (context) => const PantallaRecetasCaninas(),
                 ),
               );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
+            tooltip: '💡 Nuestro Manifiesto: Conoce la App',
+            onPressed: () {
+              DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
             },
           ),
           if (ServicioAdmin.esAdmin())

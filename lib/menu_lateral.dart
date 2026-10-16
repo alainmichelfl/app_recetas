@@ -15,6 +15,7 @@ import 'pantalla_finanzas.dart';
 import 'pantalla_preferencias.dart';
 import 'pantalla_login.dart';
 import 'servicio_hogar.dart';
+import 'dialogo_manifiesto_bienvenida.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -572,6 +573,52 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.settings,
                     colorIcono: Colors.blueGrey,
                     pantalla: () => const PantallaPreferencias(),
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.amber,
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Nuestro Manifiesto',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 15,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'Wellness ✨',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
+                    },
                   ),
                   ListTile(
                     dense: true,
