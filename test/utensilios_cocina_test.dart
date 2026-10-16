@@ -3,11 +3,12 @@ import 'package:app_recetas/utensilios_cocina.dart';
 
 void main() {
   group('UtensiliosCocina - Catálogo y Serialización', () {
-    test('Catálogo contiene 10 utensilios clave', () {
-      expect(UtensiliosCocina.catalogo.length, 10);
+    test('Catálogo contiene 11 utensilios clave incluyendo Nutribullet', () {
+      expect(UtensiliosCocina.catalogo.length, 11);
       final ids = UtensiliosCocina.catalogo.map((u) => u.id).toSet();
       expect(ids.contains('sarten'), isTrue);
       expect(ids.contains('licuadora'), isTrue);
+      expect(ids.contains('nutribullet'), isTrue);
       expect(ids.contains('air_fryer'), isTrue);
       expect(ids.contains('thermomix'), isTrue);
       expect(ids.contains('horno'), isTrue);

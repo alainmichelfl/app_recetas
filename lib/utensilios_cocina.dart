@@ -35,6 +35,23 @@ class UtensiliosCocina {
       palabrasClave: ['licuadora', 'licuar', 'licúa', 'licue', 'procesador', 'procesar'],
     ),
     UtensilioItem(
+      id: 'nutribullet',
+      nombre: 'Nutribullet / Personal',
+      icono: '🥤',
+      descripcion: 'Extractor para smoothies, batidos de proteína y bowls express',
+      activoPorDefecto: false,
+      palabrasClave: [
+        'nutribullet',
+        'nutri bullet',
+        'licuadora personal',
+        'magic bullet',
+        'ninja personal',
+        'smoothie',
+        'batido de proteína',
+        'smoothie bowl',
+      ],
+    ),
+    UtensilioItem(
       id: 'horno',
       nombre: 'Horno Convencional',
       icono: '🍞',
