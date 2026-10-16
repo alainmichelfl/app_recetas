@@ -11,6 +11,7 @@ import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'menu_lateral.dart';
 import 'pantalla_recetas_caninas.dart';
+import 'servicio_copiloto_cocina.dart';
 
 class PantallaChef extends StatefulWidget {
   final String? ingredientesIniciales;
@@ -30,6 +31,7 @@ class _PantallaChefState extends State<PantallaChef> {
   final SupabaseClient supabase = Supabase.instance.client;
   bool _generando = false;
   bool _modoPerruno = false; // 🐾 Interruptor para recetas de perritos
+  ModoElectrodomestico _electrodomesticoSeleccionado = ModoElectrodomestico.tradicional;
 
   final TextEditingController _ingredientesCtrl = TextEditingController();
 
@@ -93,8 +95,9 @@ class _PantallaChefState extends State<PantallaChef> {
     String tipoComida,
     String objetivoSalud,
     String tipoCocina,
-    bool esPerruno,
-  ) {
+    bool esPerruno, [
+    ModoElectrodomestico electrodomestico = ModoElectrodomestico.tradicional,
+  ]) {
     if (esPerruno) {
       final String insPerruno = ingredientesBase.isNotEmpty
           ? '- Ingredientes base a incluir: $ingredientesBase'
@@ -156,6 +159,25 @@ class _PantallaChefState extends State<PantallaChef> {
     final String instruccionEstilos =
         PerfilesNutricionales.instruccionesPrompt(_estilos);
 
+    final String instruccionElectrodomestico =
+        electrodomestico == ModoElectrodomestico.thermomix
+            ? '''
+    - ELECTRODOMÉSTICO OBLIGATORIO: THERMOMIX (TM5 / TM6).
+    Toda la receta DEBE estar redactada específicamente para Thermomix.
+    CADA PASO en "instrucciones" DEBE iniciar obligatoriamente con el formato de corchetes:
+    [Tiempo | Temperatura | Velocidad | Giro inverso (si aplica) | Accesorio (si aplica)]
+    Ejemplo: "1. [5 seg | Sin temp | Vel 5] Picar la cebolla en el vaso con el cubilete puesto.\\n2. [7 min | 120°C | Vel 1] Sofreír con aceite.\\n3. [20 min | 100°C | Giro inverso ↺ | Vel cuchara 🥄 | Mariposa 🦋] Cocinar guisado."
+    '''
+            : electrodomestico == ModoElectrodomestico.airFryer
+                ? '''
+    - ELECTRODOMÉSTICO OBLIGATORIO: FREIDORA DE AIRE (AIR FRYER).
+    Toda la receta DEBE estar redactada específicamente para freidora de aire.
+    CADA PASO en "instrucciones" DEBE iniciar obligatoriamente con el formato de corchetes:
+    [Temperatura | Tiempo | Acción clave]
+    Ejemplo: "1. [200°C | 3 min] Precalentar la freidora de aire.\\n2. [180°C | 15 min | Agitar a la mitad] Cocinar en la canastilla en una sola capa."
+    '''
+                : '';
+
     return '''
     Eres el chef principal y nutriólogo de la app "Jitomate y Cebolla".
     Tu tarea es crear una receta deliciosa, realista y fácil de preparar.
@@ -165,6 +187,7 @@ class _PantallaChefState extends State<PantallaChef> {
     $instruccionCocina
     $instruccionAlergias
     $instruccionEstilos
+    $instruccionElectrodomestico
     - Tipo de comida: $tipoComida
     - Objetivo de salud: $objetivoSalud
     
@@ -223,6 +246,7 @@ class _PantallaChefState extends State<PantallaChef> {
         _objetivoSeleccionado,
         _tipoCocinaSeleccionado,
         _modoPerruno,
+        _electrodomesticoSeleccionado,
       );
 
       final response = await model.generateContent([Content.text(prompt)]);
@@ -327,7 +351,10 @@ class _PantallaChefState extends State<PantallaChef> {
                         ),
                       ),
                       const SizedBox(height: 15),
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Chip(
                             label: Text('${receta['calorias'] ?? 0} kcal'),
@@ -338,7 +365,6 @@ class _PantallaChefState extends State<PantallaChef> {
                             ),
                           ),
                           if (!_modoPerruno) ...[
-                            const SizedBox(width: 8),
                             Chip(
                               avatar: Text(
                                 TiposCocina.iconos[_tipoCocinaSeleccionado] ??
@@ -352,17 +378,38 @@ class _PantallaChefState extends State<PantallaChef> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (_electrodomesticoSeleccionado !=
+                                ModoElectrodomestico.tradicional)
+                              Chip(
+                                avatar: Text(
+                                  _electrodomesticoSeleccionado.icono,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                label: Text(
+                                  _electrodomesticoSeleccionado ==
+                                          ModoElectrodomestico.thermomix
+                                      ? 'Thermomix'
+                                      : 'Air Fryer',
+                                ),
+                                backgroundColor: _electrodomesticoSeleccionado
+                                    .colorPrimario
+                                    .withValues(alpha: 0.12),
+                                labelStyle: TextStyle(
+                                  color: _electrodomesticoSeleccionado
+                                      .colorPrimario,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                           ],
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
+                          if (receta['macros'] != null &&
+                              receta['macros'].toString().isNotEmpty)
+                            Text(
                               receta['macros'] ?? '',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -1046,6 +1093,65 @@ class _PantallaChefState extends State<PantallaChef> {
 
                 // 🎴 BARRA DE TARJETAS DE TIPO DE COCINA / GASTRONOMÍA
                 _construirSelectorTarjetasCocina(colorPremium),
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Equipo / Robot de Cocina 🤖',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: ModoElectrodomestico.values.map((modo) {
+                    final bool isSelected =
+                        _electrodomesticoSeleccionado == modo;
+                    final Color chipColor =
+                        modo == ModoElectrodomestico.thermomix
+                            ? const Color(0xFF00897B)
+                            : modo == ModoElectrodomestico.airFryer
+                                ? const Color(0xFFF57C00)
+                                : colorPremium;
+
+                    return ChoiceChip(
+                      avatar: Text(
+                        modo.icono,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      label: Text(
+                        modo == ModoElectrodomestico.thermomix
+                            ? 'Thermomix TM5/TM6'
+                            : modo == ModoElectrodomestico.airFryer
+                                ? 'Air Fryer'
+                                : 'Tradicional (Estufa)',
+                      ),
+                      selected: isSelected,
+                      selectedColor: chipColor,
+                      backgroundColor: Colors.grey.shade200,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _electrodomesticoSeleccionado = modo);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
                 const SizedBox(height: 32),
               ] else ...[
                 const SizedBox(height: 20),
@@ -1068,9 +1174,16 @@ class _PantallaChefState extends State<PantallaChef> {
                       ? 'Cocinando...'
                       : (_modoPerruno
                             ? 'Cocinar Snack Perruno 🐾'
-                            : (_tipoCocinaSeleccionado == TiposCocina.todas
-                                ? 'Cocinar Receta con IA 👨‍🍳'
-                                : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')),
+                            : (_electrodomesticoSeleccionado ==
+                                    ModoElectrodomestico.thermomix
+                                ? 'Cocinar con Thermomix 🤖'
+                                : (_electrodomesticoSeleccionado ==
+                                        ModoElectrodomestico.airFryer
+                                    ? 'Cocinar con Air Fryer 🍟'
+                                    : (_tipoCocinaSeleccionado ==
+                                            TiposCocina.todas
+                                        ? 'Cocinar Receta con IA 👨‍🍳'
+                                        : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')))),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1079,7 +1192,13 @@ class _PantallaChefState extends State<PantallaChef> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _modoPerruno
                       ? Colors.amber.shade800
-                      : colorPremium,
+                      : (_electrodomesticoSeleccionado ==
+                              ModoElectrodomestico.thermomix
+                          ? const Color(0xFF00897B)
+                          : (_electrodomesticoSeleccionado ==
+                                  ModoElectrodomestico.airFryer
+                              ? const Color(0xFFF57C00)
+                              : colorPremium)),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

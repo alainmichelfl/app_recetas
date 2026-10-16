@@ -7,6 +7,7 @@ import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
+import 'servicio_copiloto_cocina.dart';
 
 class PantallaDetalleReceta extends StatefulWidget {
   final int idReceta;
@@ -740,6 +741,87 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     ),
                   ),
 
+                  // 🤖 COPILOTO INTELIGENTE (THERMOMIX & AIR FRYER)
+                  Container(
+                    margin: const EdgeInsets.only(top: 14),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF004D40),
+                          Color(0xFF00897B),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF004D40).withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Text('🤖', style: TextStyle(fontSize: 24)),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Modo Thermomix & Air Fryer',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Adapta tiempos, temperaturas y velocidades',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF004D40),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                          ),
+                          onPressed: () => _abrirModalCopilotoElectrodomesticos(
+                            ingredientes: listaIngredientes,
+                            instrucciones: bloqueInstrucciones,
+                          ),
+                          child: const Text(
+                            'Adaptar ⚡',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 35),
 
                   // 📝 SECCIÓN INGREDIENTES
@@ -1010,5 +1092,361 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
         ),
       );
     }
+  }
+
+  Future<void> _abrirModalCopilotoElectrodomesticos({
+    required List<String> ingredientes,
+    required String instrucciones,
+  }) async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00897B).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Text('🤖', style: TextStyle(fontSize: 26)),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Copiloto de Electrodomésticos ⚡',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          'Adapta con IA a los parámetros exactos de tu equipo',
+                          style: TextStyle(fontSize: 12.5, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Opción Thermomix
+              _tarjetaSeleccionElectrodomestico(
+                icono: '🤖',
+                titulo: 'Thermomix TM5 / TM6',
+                descripcion:
+                    'Tiempos cortos, velocidad de cuchillas, temperatura Varoma/120°C y giro inverso ↺.',
+                colorTema: const Color(0xFF00897B),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _procesarAdaptacionIA(
+                    modo: ModoElectrodomestico.thermomix,
+                    ingredientes: ingredientes,
+                    instrucciones: instrucciones,
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Opción Air Fryer
+              _tarjetaSeleccionElectrodomestico(
+                icono: '🍟',
+                titulo: 'Air Fryer (Freidora de Aire)',
+                descripcion:
+                    'Temperatura de convección, tiempos reducidos y alertas de agitar canastilla.',
+                colorTema: const Color(0xFFF57C00),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _procesarAdaptacionIA(
+                    modo: ModoElectrodomestico.airFryer,
+                    ingredientes: ingredientes,
+                    instrucciones: instrucciones,
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tarjetaSeleccionElectrodomestico({
+    required String icono,
+    required String titulo,
+    required String descripcion,
+    required Color colorTema,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorTema.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: colorTema.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colorTema.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(icono, style: const TextStyle(fontSize: 22)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colorTema,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    descripcion,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: colorTema),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _procesarAdaptacionIA({
+    required ModoElectrodomestico modo,
+    required List<String> ingredientes,
+    required String instrucciones,
+  }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctxDialog) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: modo.colorPrimario),
+                const SizedBox(height: 20),
+                Text(
+                  'El Chef IA está adaptando la receta...',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: modo.colorPrimario,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  modo == ModoElectrodomestico.thermomix
+                      ? 'Calculando tiempos, velocidades y temperaturas Varoma...'
+                      : 'Optimizando temperatura de aire y tiempo de convección...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12.5, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final resultado = await ServicioCopilotoCocina.adaptarReceta(
+        titulo: widget.titulo,
+        ingredientes: ingredientes.join('\n'),
+        instrucciones: instrucciones,
+        modo: modo,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cierra diálogo de carga
+
+      if (resultado != null && resultado.isNotEmpty) {
+        _mostrarResultadoAdaptacion(
+          modo: modo,
+          instruccionesAdaptadas: resultado,
+          ingredientes: ingredientes,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No fue posible adaptar la receta con IA en este momento.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al procesar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _mostrarResultadoAdaptacion({
+    required ModoElectrodomestico modo,
+    required String instruccionesAdaptadas,
+    required List<String> ingredientes,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(modo.icono, style: const TextStyle(fontSize: 26)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Receta Adaptada a ${modo.etiqueta.split(' ')[0]}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: modo.colorPrimario,
+                          ),
+                        ),
+                        Text(
+                          modo.subtitulo,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Text(
+                    instruccionesAdaptadas,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: modo.colorPrimario,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PantallaModoCocina(
+                        recetaInstrucciones: widget.descripcion,
+                        idReceta: widget.idReceta,
+                        titulo: widget.titulo,
+                        multiplicador: multiplicador,
+                        listaIngredientes: ingredientes,
+                        textoInstrucciones: instruccionesAdaptadas,
+                        modoInicial: modo,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.soup_kitchen, size: 24),
+                label: Text(
+                  '¡Entrar al Modo Cocina ${modo.etiqueta.split(' ')[0]}!',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

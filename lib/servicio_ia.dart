@@ -477,4 +477,91 @@ Compara Walmart, Soriana, La Comer, Costco y Sam's Club con viñetas y un ganado
       return null;
     }
   }
+
+  // 🤖 COPILOTO INTELIGENTE: ADAPTACIÓN DE RECETAS A THERMOMIX Y AIR FRYER
+  static Future<String?> adaptarRecetaAElectrodomestico({
+    required String titulo,
+    required String ingredientes,
+    required String instrucciones,
+    required String modo, // 'thermomix' o 'air_fryer'
+  }) async {
+    final bool esThermomix = modo.toLowerCase().contains('thermo');
+
+    final String prompt = esThermomix
+        ? '''
+Eres un Chef Consultor oficial experto en Thermomix (modelos TM5 y TM6) y robots de cocina inteligentes.
+Tu misión es convertir esta receta tradicional en una receta guiada precisa para Thermomix.
+
+REGLAS DE PRECISIÓN DE THERMOMIX:
+1. Picar ingredientes: usa tiempos cortos (ej. cebolla/ajo: 3-5 seg / Vel 5).
+2. Sofreír: 120°C (o Varoma en TM5), Vel 1 o Vel Cuchara, sin cubilete o con cestillo sobre la tapa.
+3. Guisos / Carnes delicadas: SIEMPRE indica "Giro inverso ↺" y "Velocidad cuchara 🥄" para no desbaratar la carne o legumbres.
+4. Cocción al vapor: Temperatura Varoma, con el accesorio Varoma o Cestillo en el vaso.
+5. Emulsionar o amasar: Indica Mariposa 🦋 (para montar nata o claras) o Función Espiga 🌾 (para masas).
+6. FORMATO DE CADA PASO (MUY ESTRICTO):
+Inicia cada paso con un bloque de parámetros entre corchetes con el formato:
+[Tiempo | Temperatura | Velocidad | Giro (si aplica) | Accesorio (si aplica)]
+Ejemplos:
+1. [5 seg | Sin temp | Vel 5] Colocar la cebolla y el ajo en el vaso. Picar con el cubilete puesto.
+2. [7 min | 120°C | Vel 1] Añadir 30g de aceite y sofreír.
+3. [20 min | 100°C | Giro inverso ↺ | Vel cuchara 🥄 | Mariposa 🦋] Añadir el pollo y la salsa. Cocinar.
+
+Devuelve ÚNICAMENTE los pasos numerados, uno por línea. Sin saludos ni markdown extra.
+
+Receta: $titulo
+Ingredientes:
+$ingredientes
+
+Instrucciones tradicionales:
+$instrucciones
+'''
+        : '''
+Eres un Chef experto en freidoras de aire (Air Fryer).
+Tu misión es convertir esta receta tradicional en una receta optimizada para Air Fryer.
+
+REGLAS DE AIR FRYER:
+1. Tiempos y Temperaturas: La freidora de aire cocina un 20% más rápido que un horno convencional.
+2. Precalentado: 3 a 5 minutos a la temperatura indicada.
+3. No saturar la canastilla: dejar espacio para la circulación de aire en una sola capa.
+4. Agitado / Volteo: Indicar a mitad de cocción (ej. a los 8 min voltear las piezas).
+5. FORMATO DE CADA PASO (MUY ESTRICTO):
+Inicia cada paso con un bloque de parámetros entre corchetes:
+[Temperatura | Tiempo | Acción clave]
+Ejemplos:
+1. [200°C | 3 min] Precalentar la freidora de aire.
+2. [180°C | 15 min | Agitar a la mitad] Colocar los alimentos en la canastilla sin encimar y cocinar hasta que estén dorados y crujientes.
+
+Devuelve ÚNICAMENTE los pasos numerados, uno por línea. Sin saludos ni markdown extra.
+
+Receta: $titulo
+Ingredientes:
+$ingredientes
+
+Instrucciones tradicionales:
+$instrucciones
+''';
+
+    final Map<String, dynamic> cuerpo = {
+      "contents": [
+        {
+          "parts": [
+            {"text": prompt},
+          ],
+        },
+      ],
+    };
+
+    final respuesta = await _hacerPeticion(cuerpo, forzarJson: false);
+    if (respuesta == null ||
+        respuesta.trim().isEmpty ||
+        respuesta.contains('❌ Error')) {
+      return null;
+    }
+
+    return respuesta
+        .replaceAll('```markdown', '')
+        .replaceAll('```', '')
+        .trim();
+  }
 }
+
