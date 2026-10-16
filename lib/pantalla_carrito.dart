@@ -7,6 +7,7 @@ import 'conversor_unidades.dart';
 import 'pantalla_cotizador.dart';
 import 'pantalla_finanzas.dart';
 import 'servicio_preferencias.dart';
+import 'servicio_hogar.dart';
 import 'menu_lateral.dart';
 
 export 'servicio_cotizador.dart';
@@ -1517,6 +1518,14 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 return Column(
                   children: [
                     _construirBarraPresupuesto(items),
+                    BannerHogarFamiliar(
+                      onHogarActualizado: () {
+                        if (mounted) {
+                          setState(() {});
+                          _recalcularPresupuesto();
+                        }
+                      },
+                    ),
                     if (items.isEmpty)
                       Expanded(
                         child: Center(

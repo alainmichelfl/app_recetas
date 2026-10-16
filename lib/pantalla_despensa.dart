@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'conversor_unidades.dart';
 import 'pantalla_chef.dart';
 import 'servicio_ia.dart';
+import 'servicio_hogar.dart';
 import 'menu_lateral.dart';
 
 class PantallaDespensa extends StatefulWidget {
@@ -504,6 +505,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.family_restroom_rounded),
+            tooltip: 'Hogar Familiar Compartido',
+            onPressed: () => ModalHogarFamiliar.mostrar(
+              context,
+              onHogarCambiado: () {
+                if (mounted) setState(() {});
+              },
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.document_scanner),
             tooltip: 'Escanear ticket de compra',
             onPressed: _mostrarOpcionesOrigenTicket,
@@ -565,6 +576,11 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
             ),
           ),
           const Divider(height: 1),
+          BannerHogarFamiliar(
+            onHogarActualizado: () {
+              if (mounted) setState(() {});
+            },
+          ),
           Expanded(
             child: StreamBuilder(
               stream: Supabase.instance.client

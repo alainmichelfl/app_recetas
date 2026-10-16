@@ -14,6 +14,7 @@ import 'pantalla_salud.dart';
 import 'pantalla_finanzas.dart';
 import 'pantalla_preferencias.dart';
 import 'pantalla_login.dart';
+import 'servicio_hogar.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -459,6 +460,52 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.kitchen,
                     colorIcono: Colors.blue.shade700,
                     pantalla: () => const PantallaDespensa(),
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.family_restroom_rounded,
+                        color: Colors.teal.shade800,
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Hogar Familiar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 15,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Familia 👨‍👩‍👧‍👦',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade800,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ModalHogarFamiliar.mostrar(context);
+                    },
                   ),
                   _construirItem(
                     context: context,
