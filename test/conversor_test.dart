@@ -95,4 +95,50 @@ void main() {
       );
     });
   });
+
+  group('Frutas y verduras en kg (redondeo a 0.05 kg)', () {
+    test('Redondeo al múltiplo de 0.05 kg más cercano (mínimo 0.05)', () {
+      expect(ConversorUnidades.redondearKg(0.16), 0.15);
+      expect(ConversorUnidades.redondearKg(0.02), 0.05);
+      expect(ConversorUnidades.redondearKg(0.96), 0.95);
+      expect(ConversorUnidades.redondearKg(1.0), 1.0);
+    });
+
+    test('1 plátano -> 0.15 kg (≈ 1 pza)', () {
+      final item = ConversorUnidades.normalizarParaSupermercado('plátano', 1, 'pza');
+      expect(item.unidad, 'kg');
+      expect(item.cantidad, 0.15);
+      expect(item.textoCantidad, '0.15 kg (≈ 1 pza)');
+    });
+
+    test('Una penca de plátanos son ~6 piezas (~0.95 kg)', () {
+      final item = ConversorUnidades.parsearLineaIngrediente('1 penca de plátano');
+      expect(item.unidad, 'kg');
+      expect(item.cantidad, 0.95);
+      expect(item.textoCantidad, '0.95 kg (≈ 6 pzas)');
+    });
+
+    test('Jitomate: piezas y gramos convergen a kg', () {
+      final porPiezas = ConversorUnidades.parsearLineaIngrediente('2 jitomates');
+      expect(porPiezas.unidad, 'kg');
+      expect(porPiezas.cantidad, 0.25);
+      final porGramos = ConversorUnidades.parsearLineaIngrediente('250 g de jitomate');
+      expect(porGramos.cantidad, 0.25);
+    });
+
+    test('Piezas pequeñas nunca bajan de 0.05 kg', () {
+      final limon = ConversorUnidades.normalizarParaSupermercado('limón', 1, 'pza');
+      expect(limon.cantidad, 0.05);
+      final chile = ConversorUnidades.normalizarParaSupermercado('chile serrano', 3, 'pza');
+      expect(chile.cantidad, 0.05);
+    });
+
+    test('Despensa interpreta frutas y verduras como kg', () {
+      expect(
+        ConversorUnidades.formatearParaDespensa('Plátano', 0.95),
+        '0.95 kg (≈ 6 pzas) en despensa',
+      );
+      expect(ConversorUnidades.pasoKgFrutaVerdura('plátano'), 0.15);
+    });
+  });
 }

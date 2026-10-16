@@ -447,35 +447,17 @@ class ConversorUnidades {
       );
     }
 
-    // 2.6. Jitomate Saladet / bola fresco -> piezas o kg (¡NUNCA jamás frasco!)
+    // 2.6. Jitomate Saladet / bola fresco -> kg estándar (¡NUNCA jamás frasco!)
     if (normNombre.contains('jitomate') &&
         !normNombre.contains('pure') &&
         !normNombre.contains('pasta')) {
-      if (normUnidad.contains('kg') || normUnidad.contains('kilo')) {
-        final kg = (cantSegura * 100).round() / 100.0;
-        return ItemSupermercado(
-          nombre: 'Jitomate Saladet',
-          cantidad: kg,
-          unidad: 'kg',
-          textoCantidad: '$kg kg',
-        );
-      } else if (normUnidad.contains('g') || (cantSegura > 15 && !normUnidad.contains('pza'))) {
-        final kg = ((cantSegura / 1000.0) * 100).round() / 100.0;
-        return ItemSupermercado(
-          nombre: 'Jitomate Saladet',
-          cantidad: kg,
-          unidad: 'kg',
-          textoCantidad: '$kg kg',
-        );
-      } else {
-        final pzas = cantSegura.ceilToDouble().clamp(1.0, 30.0);
-        return ItemSupermercado(
-          nombre: 'Jitomate Saladet',
-          cantidad: pzas,
-          unidad: 'pza',
-          textoCantidad: '${pzas.toInt()} pza${pzas > 1 ? 's' : ''}',
-        );
-      }
+      return _produceEnKg(
+        nombreMostrar: 'Jitomate Saladet',
+        nombreBase: 'jitomate',
+        cantidad: cantSegura,
+        unidad: normUnidad,
+        umbralGramos: 15,
+      );
     }
 
     // 2.7. Tomate cherry o baby -> paquete (domo)
@@ -740,6 +722,14 @@ class ConversorUnidades {
 
     // 12. Peso genérico en gramos -> kg
     if (normUnidad == 'g' || normUnidad == 'gr' || normUnidad == 'gramo' || normUnidad == 'gramos') {
+      if (esFrutaOVerduraPorKilo(nombreLimpio)) {
+        return _produceEnKg(
+          nombreMostrar: _capitalizar(nombreLimpio),
+          nombreBase: nombreLimpio,
+          cantidad: cantSegura,
+          unidad: 'g',
+        );
+      }
       final double kg = (cantSegura / 1000.0);
       final double kgRedondeado = (kg * 100).round() / 100.0;
       return ItemSupermercado(
@@ -752,6 +742,14 @@ class ConversorUnidades {
 
     // 13. Peso genérico en kilos -> kg
     if (normUnidad == 'kg' || normUnidad == 'kilo' || normUnidad == 'kilos' || normUnidad == 'kilogramo') {
+      if (esFrutaOVerduraPorKilo(nombreLimpio)) {
+        return _produceEnKg(
+          nombreMostrar: _capitalizar(nombreLimpio),
+          nombreBase: nombreLimpio,
+          cantidad: cantSegura,
+          unidad: 'kg',
+        );
+      }
       final double kgRedondeado = (cantSegura * 100).round() / 100.0;
       return ItemSupermercado(
         nombre: _capitalizar(nombreLimpio),
@@ -770,6 +768,17 @@ class ConversorUnidades {
         cantidad: 1.0,
         unidad: 'frasco',
         textoCantidad: '1 frasco',
+      );
+    }
+
+    // 14.5. Frutas y verduras frescas -> kg estándar (redondeo a 0.05 kg).
+    // Los tickets del súper y los precios vienen por peso, no por pieza.
+    if (esFrutaOVerduraPorKilo(nombreLimpio)) {
+      return _produceEnKg(
+        nombreMostrar: _capitalizar(nombreLimpio),
+        nombreBase: nombreLimpio,
+        cantidad: cantSegura,
+        unidad: normUnidad,
       );
     }
 
@@ -818,7 +827,7 @@ class ConversorUnidades {
     // Extraer unidad segura
     String unidad = '';
     final matchUnidad = RegExp(
-      r'^(litros?|lts?|lt|kilogramos?|kilos?|kg|gramos?|gr|mililitros?|mls?|ml|cucharaditas?|cditas?|cucharadas?|cdas?|paquetes?|bolsas?|latas?|piezas?|pzas?|frascos?|botes?|dientes?|manojos?|ramitas?|ramas?|rebanadas?|tazas?|vasos?|pizcas?|cuadros?|l\b|g\b)(?=\s|\.|$|\d)',
+      r'^(litros?|lts?|lt|kilogramos?|kilos?|kg|gramos?|gr|mililitros?|mls?|ml|cucharaditas?|cditas?|cucharadas?|cdas?|paquetes?|bolsas?|latas?|piezas?|pzas?|pencas?|frascos?|botes?|dientes?|manojos?|ramitas?|ramas?|rebanadas?|tazas?|vasos?|pizcas?|cuadros?|l\b|g\b)(?=\s|\.|$|\d)',
       caseSensitive: false,
     ).firstMatch(l);
 
@@ -826,6 +835,12 @@ class ConversorUnidades {
       unidad = matchUnidad.group(1)!.toLowerCase();
       l = l.substring(matchUnidad.group(0)!.length).trim();
       if (l.startsWith('.')) l = l.substring(1).trim();
+    }
+
+    // Una penca de plátanos equivale aproximadamente a 6 piezas
+    if (unidad.startsWith('penca')) {
+      cantidad = cantidad * 6;
+      unidad = 'pza';
     }
 
     // Limpiar conectores como "de", "del"
@@ -1057,6 +1072,7 @@ class ConversorUnidades {
       'pimiento', 'naranja', 'pera', 'durazno', 'nopal', 'nopales', 'fresa',
       'mango', 'guayaba', 'toronja', 'mandarina', 'uvas', 'uva', 'chile serrano',
       'chile jalapeño', 'chile poblano', 'chile habanero', 'chile verde', 'chile',
+      'sandia', 'melon', 'papaya', 'brocoli', 'coliflor', 'lechuga', 'betabel',
     };
     return produce.any((p) => n.contains(p));
   }
@@ -1064,6 +1080,13 @@ class ConversorUnidades {
   /// Retorna el peso promedio en kilogramos (kg) de una sola pieza de fruta o verdura.
   static double pesoAproximadoKilosPorPieza(String nombre) {
     final n = sinAcentos(nombre).trim();
+    if (n.contains('sandia')) return 3.5;
+    if (n.contains('melon')) return 1.5;
+    if (n.contains('papaya')) return 1.0;
+    if (n.contains('coliflor')) return 0.8;
+    if (n.contains('brocoli') || n.contains('lechuga')) return 0.35;
+    if (n.contains('betabel')) return 0.12;
+    if (n.contains('mango')) return 0.30;
     if (n.contains('limon')) return 0.06;
     if (n.contains('jitomate') || n.contains('tomate') || n.contains('zanahoria')) return 0.12;
     if (n.contains('cebolla') || n.contains('calabacita') || n.contains('papa')) return 0.15;
@@ -1079,6 +1102,70 @@ class ConversorUnidades {
     if (n.contains('diente de ajo') || n.contains('dientes de ajo')) return 0.01;
     if (n.contains('ajo')) return 0.05;
     return 0.15;
+  }
+
+  /// Redondea un peso en kg al múltiplo más cercano de 0.05 kg (50 g), con un
+  /// mínimo de 0.05 kg. Es la precisión práctica de la báscula de verdulería.
+  static double redondearKg(double kg) {
+    final int pasos = (kg * 20).round();
+    return (pasos < 1 ? 1 : pasos) / 20.0;
+  }
+
+  /// Formatea kg sin ceros sobrantes (1 → "1", 0.15 → "0.15", 0.5 → "0.5").
+  static String formatearKg(double kg) {
+    String t = kg.toStringAsFixed(2);
+    t = t.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+    return t;
+  }
+
+  /// Texto de kg con su equivalencia aproximada en piezas para frutas y verduras
+  /// (ej. "0.3 kg (≈ 2 pzas)").
+  static String textoKgConPiezas(String nombre, double kg) {
+    final String base = '${formatearKg(kg)} kg';
+    if (!esFrutaOVerduraPorKilo(nombre)) return base;
+    final double peso = pesoAproximadoKilosPorPieza(nombre);
+    final int pzas = (kg / peso).round().clamp(1, 999);
+    return '$base (≈ $pzas pza${pzas > 1 ? 's' : ''})';
+  }
+
+  /// Paso de ajuste (+/−) en kg para frutas y verduras: el peso de una pieza
+  /// redondeado a múltiplos de 0.05 kg (mínimo 0.05 kg).
+  static double pasoKgFrutaVerdura(String nombre) {
+    return redondearKg(pesoAproximadoKilosPorPieza(nombre));
+  }
+
+  /// Convierte una cantidad de fruta/verdura (piezas, g, kg...) a kg estándar
+  /// redondeados a 0.05 kg, devolviendo el item normalizado en 'kg'.
+  static ItemSupermercado _produceEnKg({
+    required String nombreMostrar,
+    required String nombreBase,
+    required double cantidad,
+    required String unidad,
+    double umbralGramos = 30,
+  }) {
+    final String u = sinAcentos(unidad).trim();
+    final double peso = pesoAproximadoKilosPorPieza(nombreBase);
+    double kg;
+    if (u == 'kg' || u.startsWith('kilo')) {
+      kg = cantidad;
+    } else if (u == 'g' || u.startsWith('gr')) {
+      kg = cantidad / 1000.0;
+    } else if (u.startsWith('taza')) {
+      kg = cantidad * 0.15;
+    } else if (u.startsWith('rebanada')) {
+      kg = cantidad * peso * 0.1;
+    } else if (u.isEmpty && cantidad > umbralGramos) {
+      kg = cantidad / 1000.0;
+    } else {
+      kg = cantidad * peso;
+    }
+    final double kgRed = redondearKg(kg);
+    return ItemSupermercado(
+      nombre: nombreMostrar,
+      cantidad: kgRed,
+      unidad: 'kg',
+      textoCantidad: textoKgConPiezas(nombreBase, kgRed),
+    );
   }
 
   static double _extraerNumeroSeguro(dynamic v) {
@@ -1230,9 +1317,13 @@ class ConversorUnidades {
         final int cInt = nuevaCant.ceil();
         nuevoTexto = '$cInt $unidadExistente${cInt > 1 ? 's' : ''}';
       } else if (unidadExistente == 'kg' || unidadExistente == 'L') {
-        nuevoTexto = nuevaCant == nuevaCant.toInt()
-            ? '${nuevaCant.toInt()} $unidadExistente'
-            : '${nuevaCant.toStringAsFixed(2)} $unidadExistente';
+        if (unidadExistente == 'kg' && esFrutaOVerduraPorKilo(canNombre)) {
+          nuevoTexto = textoKgConPiezas(canNombre, nuevaCant);
+        } else {
+          nuevoTexto = nuevaCant == nuevaCant.toInt()
+              ? '${nuevaCant.toInt()} $unidadExistente'
+              : '${nuevaCant.toStringAsFixed(2)} $unidadExistente';
+        }
       }
 
       await supabase.from('lista_compras').update({
@@ -1328,7 +1419,11 @@ class ConversorUnidades {
         final int cInt = c.ceil();
         textoCant = '$cInt $u${cInt > 1 ? 's' : ''}';
       } else if (u == 'kg' || u == 'L') {
-        textoCant = c == c.toInt() ? '${c.toInt()} $u' : '${c.toStringAsFixed(2)} $u';
+        textoCant = u == 'kg'
+            ? (esFrutaOVerduraPorKilo(entry['nombre'].toString())
+                ? textoKgConPiezas(entry['nombre'].toString(), c)
+                : (c == c.toInt() ? '${c.toInt()} $u' : '${c.toStringAsFixed(2)} $u'))
+            : (c == c.toInt() ? '${c.toInt()} $u' : '${c.toStringAsFixed(2)} $u');
       } else {
         textoCant = '$c $u';
       }
@@ -1356,6 +1451,13 @@ class ConversorUnidades {
     return false;
   }
 
+  /// Normaliza una cantidad guardada en la despensa. Las frutas y verduras se
+  /// guardan en kilogramos; el resto conserva su interpretación habitual.
+  static ItemSupermercado normalizarItemDespensa(String nombre, double cantidad) {
+    final String unidad = esFrutaOVerduraPorKilo(nombre) ? 'kg' : '';
+    return normalizarParaSupermercado(nombre, cantidad, unidad);
+  }
+
   /// Formatea la cantidad y unidad adecuada para mostrar en la despensa
   static String formatearParaDespensa(String nombre, dynamic cantidadRaw) {
     if (cantidadRaw == null) return 'Disponible';
@@ -1363,7 +1465,7 @@ class ConversorUnidades {
         ? cantidadRaw.toDouble()
         : double.tryParse(cantidadRaw.toString()) ?? 1.0;
 
-    final item = normalizarParaSupermercado(nombre, cant, '');
+    final item = normalizarItemDespensa(nombre, cant);
     return '${item.textoCantidad} en despensa';
   }
 

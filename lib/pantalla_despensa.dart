@@ -111,18 +111,18 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
   Future<void> _ajustarCantidad(dynamic item, int delta) async {
     final String nombre = (item['nombre'] ?? '').toString();
     final double guardada = _aDouble(item['cantidad']);
-    final actual =
-        ConversorUnidades.normalizarParaSupermercado(nombre, guardada, '');
-    final double paso =
-        (actual.unidad == 'kg' || actual.unidad == 'L') ? 0.25 : 1.0;
+    final actual = ConversorUnidades.normalizarItemDespensa(nombre, guardada);
+    // Frutas y verduras: un paso = peso de 1 pieza (múltiplo de 0.05 kg).
+    final double paso = ConversorUnidades.esFrutaOVerduraPorKilo(nombre)
+        ? ConversorUnidades.pasoKgFrutaVerdura(nombre)
+        : ((actual.unidad == 'kg' || actual.unidad == 'L') ? 0.25 : 1.0);
 
     double candidata = guardada;
     bool cambio = false;
     for (int i = 0; i < 80; i++) {
       candidata = ((candidata + delta * paso) * 100).round() / 100.0;
       if (candidata <= 0) break;
-      final nueva =
-          ConversorUnidades.normalizarParaSupermercado(nombre, candidata, '');
+      final nueva = ConversorUnidades.normalizarItemDespensa(nombre, candidata);
       if ((delta > 0 && nueva.cantidad > actual.cantidad) ||
           (delta < 0 && nueva.cantidad < actual.cantidad)) {
         cambio = true;
@@ -147,8 +147,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
   Future<void> _editarCantidadManual(dynamic item) async {
     final String nombre = (item['nombre'] ?? '').toString();
     final double guardada = _aDouble(item['cantidad']);
-    final actual =
-        ConversorUnidades.normalizarParaSupermercado(nombre, guardada, '');
+    final actual = ConversorUnidades.normalizarItemDespensa(nombre, guardada);
     final String sugerido = actual.cantidad == actual.cantidad.toInt()
         ? actual.cantidad.toInt().toString()
         : actual.cantidad.toString();

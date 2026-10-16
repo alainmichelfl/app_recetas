@@ -710,6 +710,11 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             final int cantInt = nuevaCantidad.ceil();
             texto =
                 '$cantInt ${existente.unidad}${cantInt > 1 ? 's' : ''}';
+          } else if (existente.unidad == 'kg' && ConversorUnidades.esFrutaOVerduraPorKilo(canNombre)) {
+            texto = ConversorUnidades.textoKgConPiezas(
+              canNombre,
+              ConversorUnidades.redondearKg(nuevaCantidad),
+            );
           } else if (existente.unidad == 'kg' || existente.unidad == 'L') {
             texto = nuevaCantidad == nuevaCantidad.toInt()
                 ? '${nuevaCantidad.toInt()} ${existente.unidad}'
@@ -812,6 +817,12 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                   final int cantInt = rLimpio.ceil();
                   texto =
                       '$cantInt ${reqItem.unidad}${cantInt > 1 ? 's' : ''}';
+                } else if (reqItem.unidad == 'kg' &&
+                    ConversorUnidades.esFrutaOVerduraPorKilo(reqItem.nombre)) {
+                  texto = ConversorUnidades.textoKgConPiezas(
+                    reqItem.nombre,
+                    ConversorUnidades.redondearKg(rLimpio),
+                  );
                 } else if (reqItem.unidad == 'kg' || reqItem.unidad == 'L') {
                   texto = rLimpio == rLimpio.toInt()
                       ? '${rLimpio.toInt()} ${reqItem.unidad}'
