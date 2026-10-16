@@ -18,6 +18,7 @@ class PantallaDespensa extends StatefulWidget {
 class _PantallaDespensaState extends State<PantallaDespensa> {
   final TextEditingController _itemController = TextEditingController();
   bool procesandoTicket = false;
+  int _cantidadNueva = 1;
 
   @override
   void dispose() {
@@ -30,7 +31,15 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
     if (texto.isEmpty) return;
 
     try {
-      final parsed = ConversorUnidades.parsearLineaIngrediente(texto);
+      // Si el usuario ya escribió una cantidad ("6 plátanos") se respeta;
+      // de lo contrario se usa el selector de cantidad.
+      final bool tieneNumeroInicial =
+          RegExp(r'^\s*[-*•]?\s*\d').hasMatch(texto);
+      final String textoFinal = (!tieneNumeroInicial && _cantidadNueva > 1)
+          ? '$_cantidadNueva $texto'
+          : texto;
+
+      final parsed = ConversorUnidades.parsearLineaIngrediente(textoFinal);
       await Supabase.instance.client.from('despensa_usuario').insert({
         'nombre': parsed.nombre,
         'cantidad': parsed.cantidad,
@@ -38,6 +47,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
       });
 
       _itemController.clear();
+      if (mounted) setState(() => _cantidadNueva = 1);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -48,6 +58,157 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
     } catch (e) {
       debugPrint('Error al agregar ingrediente: $e');
     }
+  }
+
+  Widget _botonCantidad({
+    required IconData icono,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.red.shade50,
+          foregroundColor: Colors.red.shade800,
+          shape: const CircleBorder(),
+        ),
+        icon: Icon(icono, size: 18),
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+  double _aDouble(dynamic v) {
+    if (v is num) return v.toDouble();
+    return double.tryParse(v?.toString() ?? '') ?? 1.0;
+  }
+
+  Future<void> _guardarCantidad(dynamic idItem, double cantidad) async {
+    try {
+      await Supabase.instance.client
+          .from('despensa_usuario')
+          .update({'cantidad': cantidad})
+          .eq('id_item', idItem);
+    } catch (e) {
+      debugPrint('Error al actualizar cantidad: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo actualizar la cantidad: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Aumenta o disminuye la cantidad *mostrada* de un ingrediente (piezas, kg, L...).
+  /// Como la cantidad guardada se normaliza al mostrarse (ej. ajo → cabezas),
+  /// se avanza el valor guardado hasta que la cantidad visible cambie.
+  Future<void> _ajustarCantidad(dynamic item, int delta) async {
+    final String nombre = (item['nombre'] ?? '').toString();
+    final double guardada = _aDouble(item['cantidad']);
+    final actual =
+        ConversorUnidades.normalizarParaSupermercado(nombre, guardada, '');
+    final double paso =
+        (actual.unidad == 'kg' || actual.unidad == 'L') ? 0.25 : 1.0;
+
+    double candidata = guardada;
+    bool cambio = false;
+    for (int i = 0; i < 80; i++) {
+      candidata = ((candidata + delta * paso) * 100).round() / 100.0;
+      if (candidata <= 0) break;
+      final nueva =
+          ConversorUnidades.normalizarParaSupermercado(nombre, candidata, '');
+      if ((delta > 0 && nueva.cantidad > actual.cantidad) ||
+          (delta < 0 && nueva.cantidad < actual.cantidad)) {
+        cambio = true;
+        break;
+      }
+    }
+
+    if (!cambio) {
+      if (delta < 0 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Es la cantidad mínima. Usa el bote 🗑️ para quitarlo.'),
+          ),
+        );
+      }
+      return;
+    }
+    await _guardarCantidad(item['id_item'], candidata);
+  }
+
+  /// Permite escribir una cantidad exacta (ej. 6 plátanos, 1.5 kg).
+  Future<void> _editarCantidadManual(dynamic item) async {
+    final String nombre = (item['nombre'] ?? '').toString();
+    final double guardada = _aDouble(item['cantidad']);
+    final actual =
+        ConversorUnidades.normalizarParaSupermercado(nombre, guardada, '');
+    final String sugerido = actual.cantidad == actual.cantidad.toInt()
+        ? actual.cantidad.toInt().toString()
+        : actual.cantidad.toString();
+    final ctrl = TextEditingController(text: sugerido);
+
+    final String? resultado = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Cantidad de $nombre'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Actual: ${ConversorUnidades.formatearParaDespensa(nombre, guardada)}',
+              style: const TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Nueva cantidad (${actual.unidad.isEmpty ? 'pzas' : actual.unidad})',
+                border: const OutlineInputBorder(),
+              ),
+              onSubmitted: (v) => Navigator.pop(ctx, v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade800,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (resultado == null) return;
+    final double? n = double.tryParse(resultado.trim().replaceAll(',', '.'));
+    if (n == null || n <= 0) return;
+
+    // Se re-parsea con la misma lógica que la captura manual para que cada
+    // tipo de ingrediente guarde la cantidad en su propia unidad.
+    final String unidadTexto =
+        (actual.unidad == 'kg' || actual.unidad == 'L') ? '${actual.unidad} ' : '';
+    final parsed = ConversorUnidades.parsearLineaIngrediente(
+      '$n $unidadTexto$nombre',
+    );
+    await _guardarCantidad(item['id_item'], parsed.cantidad);
   }
 
   Future<void> _eliminarItem(dynamic idItem) async {
@@ -533,44 +694,98 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             color: Colors.white,
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _itemController,
-                    decoration: InputDecoration(
-                      hintText: 'Agregar ingrediente a mano...',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _itemController,
+                        decoration: InputDecoration(
+                          hintText: 'Agregar ingrediente a mano...',
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        onSubmitted: (_) => _agregarManual(),
                       ),
                     ),
-                    onSubmitted: (_) => _agregarManual(),
-                  ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _agregarManual,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade800,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                      ),
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _agregarManual,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade800,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      'Cantidad a agregar:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
+                    const SizedBox(width: 6),
+                    _botonCantidad(
+                      icono: Icons.remove,
+                      tooltip: 'Menos',
+                      onPressed: () {
+                        if (_cantidadNueva > 1) {
+                          setState(() => _cantidadNueva--);
+                        }
+                      },
                     ),
-                  ),
-                  child: const Icon(Icons.add),
+                    SizedBox(
+                      width: 32,
+                      child: Text(
+                        '$_cantidadNueva',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    _botonCantidad(
+                      icono: Icons.add,
+                      tooltip: 'Más',
+                      onPressed: () => setState(() => _cantidadNueva++),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'o escribe "6 plátanos"',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -779,13 +994,32 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                                   ),
                                 ],
                               ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.redAccent,
-                                ),
-                                onPressed: () => _eliminarItem(idItem),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _botonCantidad(
+                                    icono: Icons.remove,
+                                    tooltip: 'Disminuir cantidad',
+                                    onPressed: () =>
+                                        _ajustarCantidad(item, -1),
+                                  ),
+                                  _botonCantidad(
+                                    icono: Icons.add,
+                                    tooltip: 'Aumentar cantidad',
+                                    onPressed: () =>
+                                        _ajustarCantidad(item, 1),
+                                  ),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.redAccent,
+                                    ),
+                                    onPressed: () => _eliminarItem(idItem),
+                                  ),
+                                ],
                               ),
+                              onTap: () => _editarCantidadManual(item),
                             ),
                           );
                         },
