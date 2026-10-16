@@ -139,6 +139,25 @@ class ServicioRecetas {
     return !esOficial(receta);
   }
 
+  /// Determina si una receta es de naturaleza canina / para mascotas (premios, galletas, snacks perrunos)
+  static bool esRecetaCanina(Map<String, dynamic> receta) {
+    final tipo = (receta['tipo_comida'] ?? '').toString().toLowerCase();
+    final titulo = (receta['titulo'] ?? '').toString().toLowerCase();
+
+    if (tipo.contains('canin') || tipo.contains('perrun') || tipo.contains('perro')) {
+      return true;
+    }
+    if (titulo.contains('canino') ||
+        titulo.contains('canina') ||
+        titulo.contains('perruno') ||
+        titulo.contains('perruna') ||
+        titulo.contains('para perro') ||
+        titulo.contains('para perrito')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Determina si el usuario actual tiene permisos para eliminar o editar la receta
   static bool puedeModificar(Map<String, dynamic> receta) {
     if (ServicioAdmin.esAdmin()) return true;
@@ -162,15 +181,33 @@ class ServicioRecetas {
     }
   }
 
-  /// Elimina una receta (verificando antes que pertenezca al usuario o sea admin)
+  /// Elimina una receta (verificando antes que pertenezca al usuario o sea admin).
+  /// Limpia de forma segura en cascada 'receta_detalle', 'planeador' y 'recetas_cocinadas'
+  /// para evitar bloqueos por llaves foráneas en Postgres.
   static Future<bool> eliminarReceta(int idReceta) async {
     try {
-      // 1. Eliminar primero los ingredientes detallados
+      // 1. Limpiar ingredientes detallados
       try {
         await _client.from('receta_detalle').delete().eq('id_receta', idReceta);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Aviso al limpiar receta_detalle: $e');
+      }
 
-      // 2. Eliminar la receta
+      // 2. Limpiar referencias en planeador
+      try {
+        await _client.from('planeador').delete().eq('id_receta', idReceta);
+      } catch (e) {
+        debugPrint('Aviso al limpiar planeador: $e');
+      }
+
+      // 3. Limpiar referencias en recetas_cocinadas
+      try {
+        await _client.from('recetas_cocinadas').delete().eq('id_receta', idReceta);
+      } catch (e) {
+        debugPrint('Aviso al limpiar recetas_cocinadas: $e');
+      }
+
+      // 4. Eliminar la receta principal
       await _client.from('recetas').delete().eq('id_receta', idReceta);
       return true;
     } catch (e) {

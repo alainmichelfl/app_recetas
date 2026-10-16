@@ -6,7 +6,9 @@ import 'servicio_recetas.dart';
 import 'servicio_ia.dart';
 
 class PantallaAgregarReceta extends StatefulWidget {
-  const PantallaAgregarReceta({super.key});
+  final String? tipoComidaInicial;
+
+  const PantallaAgregarReceta({super.key, this.tipoComidaInicial});
 
   @override
   State<PantallaAgregarReceta> createState() => _PantallaAgregarRecetaState();
@@ -31,6 +33,12 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
     super.initState();
     final bool esAdmin = ServicioAdmin.esAdmin();
     _esOficial = esAdmin;
+    if (widget.tipoComidaInicial != null) {
+      _tipoComida = widget.tipoComidaInicial!;
+      if (_tipoComida == 'Snack Canino') {
+        _compartirComunidad = true;
+      }
+    }
   }
 
   @override
@@ -152,16 +160,19 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
       );
 
       if (mounted) {
-        final String mensaje = _esOficial
-            ? '¡Receta guardada en el Catálogo Oficial! 🌟'
-            : _compartirComunidad
-                ? '¡Receta guardada y compartida con la comunidad! 🌎'
-                : '¡Receta guardada en tus recetas privadas! 👨‍🍳🔒';
+        final bool esCanina = _tipoComida == 'Snack Canino';
+        final String mensaje = esCanina
+            ? '¡Receta canina guardada en el Recetario Canino 🐾 y compartida con la comunidad!'
+            : _esOficial
+                ? '¡Receta guardada en el Catálogo Oficial! 🌟'
+                : _compartirComunidad
+                    ? '¡Receta guardada y compartida con la comunidad! 🌎'
+                    : '¡Receta guardada en tus recetas privadas! 👨‍🍳🔒';
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(mensaje),
-            backgroundColor: Colors.green,
+            backgroundColor: esCanina ? Colors.brown.shade700 : Colors.green,
           ),
         );
         Navigator.pop(context, true);
@@ -239,6 +250,10 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
                 DropdownMenuItem(value: 'Cena', child: Text('🌙 Cena')),
                 DropdownMenuItem(value: 'Snack', child: Text('🍎 Snack')),
                 DropdownMenuItem(value: 'Postre', child: Text('🍰 Postre')),
+                DropdownMenuItem(
+                  value: 'Snack Canino',
+                  child: Text('🐾 Snack / Premio Canino'),
+                ),
               ],
               onChanged: (val) {
                 if (val != null) setState(() => _tipoComida = val);

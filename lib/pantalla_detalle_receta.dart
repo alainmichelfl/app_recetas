@@ -5,6 +5,8 @@ import 'pantalla_modo_cocina.dart';
 import 'pantalla_cotizador.dart';
 import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
+import 'servicio_recetas.dart';
+import 'servicio_admin.dart';
 
 class PantallaDetalleReceta extends StatefulWidget {
   final int idReceta;
@@ -33,13 +35,37 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
   double multiplicador = 1.0;
   RegistroCocina? _registroCocina;
   String? _textoCargado;
+  String? _recipeUserId;
+
+  bool get _puedeEliminar =>
+      ServicioAdmin.esAdmin() ||
+      (_recipeUserId != null &&
+          _recipeUserId == Supabase.instance.client.auth.currentUser?.id);
 
   @override
   void initState() {
     super.initState();
     _extraerPorciones();
     _inicializarDatosReceta();
+    _verificarPermisosYReceta();
     _cargarEstadoCocinada(mostrarAvisoAlEntrar: true);
+  }
+
+  Future<void> _verificarPermisosYReceta() async {
+    if (widget.idReceta > 0) {
+      try {
+        final res = await Supabase.instance.client
+            .from('recetas')
+            .select('user_id')
+            .eq('id_receta', widget.idReceta)
+            .maybeSingle();
+        if (res != null && mounted) {
+          setState(() {
+            _recipeUserId = res['user_id']?.toString();
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   Future<void> _inicializarDatosReceta() async {
@@ -173,6 +199,66 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
             );
           }
         });
+      }
+    }
+  }
+
+  Future<void> _confirmarEliminarReceta() async {
+    final bool esAdmin = ServicioAdmin.esAdmin();
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Eliminar Receta'),
+          ],
+        ),
+        content: Text(
+          esAdmin
+              ? '¿Eliminar definitivamente "${widget.titulo}" del sistema? Como administrador, esta receta se borrará para todos los usuarios.'
+              : '¿Estás seguro de eliminar tu receta "${widget.titulo}"? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar Definitivamente'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true && mounted) {
+      final messenger = ScaffoldMessenger.of(context);
+      final nav = Navigator.of(context);
+      final ok = await ServicioRecetas.eliminarReceta(widget.idReceta);
+      if (ok) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Receta "${widget.titulo}" eliminada correctamente.'),
+            backgroundColor: Colors.black87,
+          ),
+        );
+        nav.pop(true);
+      } else {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo eliminar la receta. Verifica permisos en Supabase o conexión.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -357,6 +443,14 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     : '¡Cociné esta receta! (Descontar de despensa)',
                 onPressed: _marcarCocinadaYDescontar,
               ),
+              if (_puedeEliminar)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.white),
+                  tooltip: ServicioAdmin.esAdmin()
+                      ? 'Eliminar receta (Administrador)'
+                      : 'Eliminar mi receta',
+                  onPressed: _confirmarEliminarReceta,
+                ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(

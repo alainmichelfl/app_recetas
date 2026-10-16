@@ -10,11 +10,17 @@ import 'servicio_preferencias.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'menu_lateral.dart';
+import 'pantalla_recetas_caninas.dart';
 
 class PantallaChef extends StatefulWidget {
   final String? ingredientesIniciales;
+  final bool modoPerrunoInicial;
 
-  const PantallaChef({super.key, this.ingredientesIniciales});
+  const PantallaChef({
+    super.key,
+    this.ingredientesIniciales,
+    this.modoPerrunoInicial = false,
+  });
 
   @override
   State<PantallaChef> createState() => _PantallaChefState();
@@ -45,6 +51,9 @@ class _PantallaChefState extends State<PantallaChef> {
   @override
   void initState() {
     super.initState();
+    if (widget.modoPerrunoInicial) {
+      _modoPerruno = true;
+    }
     if (widget.ingredientesIniciales != null && widget.ingredientesIniciales!.isNotEmpty) {
       _ingredientesCtrl.text = widget.ingredientesIniciales!;
     }
@@ -466,19 +475,30 @@ class _PantallaChefState extends State<PantallaChef> {
       sb.writeln(instrucciones);
 
       final String descCompleta = sb.toString().trim();
+      final bool esPerruna = _modoPerruno;
+      final String tipoComidaFinal =
+          esPerruna ? 'Snack Canino' : (recetaGenerada['tipo_comida'] ?? 'Comida');
 
       final resReceta = await ServicioRecetas.insertarReceta(
-        titulo: recetaGenerada['titulo'] ?? 'Receta Chef IA',
-        descripcion: descCompleta.isNotEmpty ? descCompleta : (recetaGenerada['descripcion'] ?? ''),
+        titulo: recetaGenerada['titulo'] ??
+            (esPerruna ? 'Snack Canino Chef' : 'Receta Chef IA'),
+        descripcion: descCompleta.isNotEmpty
+            ? descCompleta
+            : (recetaGenerada['descripcion'] ?? ''),
         instrucciones: recetaGenerada['instrucciones'] ?? '',
-        tipoComida: recetaGenerada['tipo_comida'] ?? 'Comida',
+        tipoComida: tipoComidaFinal,
         calorias: recetaGenerada['calorias'] is num
             ? (recetaGenerada['calorias'] as num).toInt()
-            : int.tryParse(recetaGenerada['calorias']?.toString() ?? '450'),
+            : int.tryParse(
+                recetaGenerada['calorias']?.toString() ??
+                    (esPerruna ? '250' : '450'),
+              ),
         macros: recetaGenerada['macros']?.toString(),
-        imagenUrl: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
-        esOficial: ServicioAdmin.esAdmin(),
-        esPublica: ServicioAdmin.esAdmin(),
+        imagenUrl: esPerruna
+            ? 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500'
+            : 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
+        esOficial: esPerruna ? false : ServicioAdmin.esAdmin(),
+        esPublica: esPerruna ? true : ServicioAdmin.esAdmin(),
       );
 
       final int idRecetaNueva = resReceta['id_receta'];
@@ -523,10 +543,26 @@ class _PantallaChefState extends State<PantallaChef> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '¡Receta "${recetaGenerada['titulo']}" guardada con éxito! 🎉',
+              esPerruna
+                  ? '¡Receta canina guardada en el Recetario Canino 🐾 y compartida con la comunidad!'
+                  : '¡Receta "${recetaGenerada['titulo']}" guardada con éxito! 🎉',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: esPerruna ? Colors.brown.shade700 : Colors.green,
             duration: const Duration(seconds: 4),
+            action: esPerruna
+                ? SnackBarAction(
+                    label: 'Ver Recetario 🐾',
+                    textColor: Colors.amberAccent,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PantallaRecetasCaninas(),
+                        ),
+                      );
+                    },
+                  )
+                : null,
           ),
         );
         _ingredientesCtrl.clear();

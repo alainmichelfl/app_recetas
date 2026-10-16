@@ -81,5 +81,32 @@ void main() {
       expect(ServicioRecetas.esComunidad(recetaPrivadaDeOtro, myUid), isFalse);
       expect(ServicioRecetas.esComunidad(miReceta, myUid), isFalse); // Es mía, no de la comunidad externa
     });
+
+    test('Identifica recetas caninas por tipo_comida o título', () {
+      expect(
+        ServicioRecetas.esRecetaCanina({'tipo_comida': 'Snack Canino'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esRecetaCanina({'tipo_comida': 'Premio Perruno'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esRecetaCanina({'tipo_comida': 'Receta Canina'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esRecetaCanina({'titulo': 'Galletas para perro de avena'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esRecetaCanina({'tipo_comida': 'Comida', 'titulo': 'Enchiladas Verdes'}),
+        isFalse,
+      );
+      expect(
+        ServicioRecetas.esRecetaCanina({'tipo_comida': 'Desayuno', 'titulo': 'Huevos con jamón'}),
+        isFalse,
+      );
+    });
   });
 }

@@ -224,12 +224,15 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       final respuesta = await Supabase.instance.client
           .from('recetas')
           .select()
-          .neq('tipo_comida', 'Premio Perruno')
           .order('id_receta', ascending: false);
 
       if (!mounted) return;
+      final recetasHumanas = List<Map<String, dynamic>>.from(respuesta)
+          .where((r) => !ServicioRecetas.esRecetaCanina(r))
+          .toList();
+
       setState(() {
-        todasLasRecetas = List<Map<String, dynamic>>.from(respuesta);
+        todasLasRecetas = recetasHumanas;
         _idsCocinadas = ids;
         _titulosCocinados = tits;
         cargando = false;
@@ -2105,7 +2108,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ],
                           ),
                           onTap: () async {
-                            await Navigator.push(
+                            final eliminada = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => PantallaDetalleReceta(
@@ -2116,6 +2119,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 ),
                               ),
                             );
+                            if (eliminada == true) {
+                              cargarRecetas();
+                              return;
+                            }
                             final ids =
                                 await ServicioHistorialCocina.obtenerIdsCocinadas();
                             final tits =
