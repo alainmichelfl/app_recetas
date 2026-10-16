@@ -20,6 +20,9 @@ class PreferenciasUsuario {
   final int porciones;
   final double presupuestoSemanal;
   final bool notificaciones;
+  final bool alertaDescongelado;
+  final bool alertaFrescura;
+  final String horaDescongelado;
 
   const PreferenciasUsuario({
     this.objetivo = PerfilesNutricionales.mantenimiento,
@@ -30,6 +33,9 @@ class PreferenciasUsuario {
     this.porciones = 2,
     this.presupuestoSemanal = 1500.0,
     this.notificaciones = true,
+    this.alertaDescongelado = true,
+    this.alertaFrescura = true,
+    this.horaDescongelado = '20:00',
   });
 
   factory PreferenciasUsuario.fromMap(
@@ -59,6 +65,13 @@ class PreferenciasUsuario {
       notificaciones: map['notificaciones'] is bool
           ? map['notificaciones'] as bool
           : (map['notificaciones']?.toString().toLowerCase() == 'true'),
+      alertaDescongelado: map['alerta_descongelado'] is bool
+          ? map['alerta_descongelado'] as bool
+          : (map['alerta_descongelado']?.toString().toLowerCase() != 'false'),
+      alertaFrescura: map['alerta_frescura'] is bool
+          ? map['alerta_frescura'] as bool
+          : (map['alerta_frescura']?.toString().toLowerCase() != 'false'),
+      horaDescongelado: map['hora_descongelado']?.toString() ?? '20:00',
     );
   }
 
@@ -72,6 +85,9 @@ class PreferenciasUsuario {
       'porciones': porciones,
       'presupuesto_semanal': presupuestoSemanal,
       'notificaciones': notificaciones,
+      'alerta_descongelado': alertaDescongelado,
+      'alerta_frescura': alertaFrescura,
+      'hora_descongelado': horaDescongelado,
       'actualizado_en': DateTime.now().toIso8601String(),
     };
   }
@@ -89,12 +105,18 @@ class ServicioPreferencias {
   /// Obtiene las preferencias del usuario en sesión, o las predeterminadas si falla
   static Future<PreferenciasUsuario> obtenerPreferencias() async {
     List<String>? tiposCocinaLocales;
+    bool? alertaDescongeladoLocal;
+    bool? alertaFrescuraLocal;
+    String? horaDescongeladoLocal;
     try {
       final sp = await SharedPreferences.getInstance();
       final guardado = sp.getString(_keyTiposCocinaLocal);
       if (guardado != null && guardado.isNotEmpty) {
         tiposCocinaLocales = TiposCocina.deserializar(guardado);
       }
+      alertaDescongeladoLocal = sp.getBool('pref_alerta_descongelado_v1');
+      alertaFrescuraLocal = sp.getBool('pref_alerta_frescura_v1');
+      horaDescongeladoLocal = sp.getString('pref_hora_descongelado_v1');
     } catch (e) {
       debugPrint('Error al leer preferencias locales: $e');
     }
@@ -109,8 +131,18 @@ class ServicioPreferencias {
             .limit(1);
 
         if (respuesta.isNotEmpty) {
+          final map = Map<String, dynamic>.from(respuesta.first as Map);
+          if (alertaDescongeladoLocal != null && !map.containsKey('alerta_descongelado')) {
+            map['alerta_descongelado'] = alertaDescongeladoLocal;
+          }
+          if (alertaFrescuraLocal != null && !map.containsKey('alerta_frescura')) {
+            map['alerta_frescura'] = alertaFrescuraLocal;
+          }
+          if (horaDescongeladoLocal != null && !map.containsKey('hora_descongelado')) {
+            map['hora_descongelado'] = horaDescongeladoLocal;
+          }
           _cache = PreferenciasUsuario.fromMap(
-            Map<String, dynamic>.from(respuesta.first as Map),
+            map,
             fallbackTiposCocina: tiposCocinaLocales,
           );
           return _cache!;
@@ -122,6 +154,9 @@ class ServicioPreferencias {
 
     _cache ??= PreferenciasUsuario(
       tiposCocina: tiposCocinaLocales ?? const [TiposCocina.todas],
+      alertaDescongelado: alertaDescongeladoLocal ?? true,
+      alertaFrescura: alertaFrescuraLocal ?? true,
+      horaDescongelado: horaDescongeladoLocal ?? '20:00',
     );
     return _cache!;
   }
@@ -141,6 +176,9 @@ class ServicioPreferencias {
         _keyTiposCocinaLocal,
         TiposCocina.serializar(prefs.tiposCocina),
       );
+      await sp.setBool('pref_alerta_descongelado_v1', prefs.alertaDescongelado);
+      await sp.setBool('pref_alerta_frescura_v1', prefs.alertaFrescura);
+      await sp.setString('pref_hora_descongelado_v1', prefs.horaDescongelado);
     } catch (e) {
       debugPrint('Error al persistir preferencias en local: $e');
     }
@@ -154,19 +192,17 @@ class ServicioPreferencias {
           .from('preferencias_usuario')
           .upsert(datos, onConflict: 'user_id');
     } catch (e) {
-      // Si la columna tipos_cocina no existe aún en la tabla de Supabase, reintentar sin romper
-      if (e.toString().contains('tipos_cocina') ||
-          e.toString().contains('column') ||
-          e.toString().contains('schema')) {
-        debugPrint(
-          'Aviso: tipos_cocina no existe aún como columna en Supabase; guardando resto de campos.',
-        );
-        datos.remove('tipos_cocina');
+      debugPrint('Aviso: columna opcional faltante en Supabase al guardar preferencias: $e');
+      datos.remove('tipos_cocina');
+      datos.remove('alerta_descongelado');
+      datos.remove('alerta_frescura');
+      datos.remove('hora_descongelado');
+      try {
         await _supabase
             .from('preferencias_usuario')
             .upsert(datos, onConflict: 'user_id');
-      } else {
-        rethrow;
+      } catch (e2) {
+        debugPrint('Error secundario guardando preferencias básicas: $e2');
       }
     }
 

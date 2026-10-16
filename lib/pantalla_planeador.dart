@@ -21,6 +21,7 @@ import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
+import 'servicio_recordatorios.dart';
 import 'menu_lateral.dart';
 
 // Constante global de primer nivel para evitar errores de null en Hot Reload
@@ -56,11 +57,43 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
   Set<String> _titulosCocinados = {};
   final Set<String> _categoriasColapsadas = {};
 
+  // 🧊 Prioridad 9: Recordatorios para descongelar y frescura de alimentos
+  bool _alertaDescongeladoActiva = true;
+  bool _alertaFrescuraActiva = true;
+  AlertaDescongelacion? _alertaDescongelacion;
+  List<Map<String, dynamic>> _alimentosEnRiesgo = [];
+
   @override
   void initState() {
     super.initState();
     cargarPlan();
     _cargarObjetivoDesdePreferencias();
+  }
+
+  Future<void> _verificarAlertas() async {
+    try {
+      final prefs = await ServicioPreferencias.obtenerPreferencias();
+      _alertaDescongeladoActiva = prefs.alertaDescongelado;
+      _alertaFrescuraActiva = prefs.alertaFrescura;
+
+      if (_alertaDescongeladoActiva && miPlan.isNotEmpty) {
+        _alertaDescongelacion =
+            await ServicioRecordatorios.detectarAlertaDescongelacion(miPlan);
+      } else {
+        _alertaDescongelacion = null;
+      }
+
+      if (_alertaFrescuraActiva) {
+        _alimentosEnRiesgo =
+            await ServicioRecordatorios.obtenerAlimentosEnRiesgoDespensa();
+      } else {
+        _alimentosEnRiesgo = [];
+      }
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Error al verificar alertas en Planeador: $e');
+    }
   }
 
   Future<void> _cargarObjetivoDesdePreferencias() async {
@@ -79,7 +112,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         _alergias = prefs.alergias;
         _tiposCocina = prefs.tiposCocina;
         objetivoActivo = objetivo;
+        _alertaDescongeladoActiva = prefs.alertaDescongelado;
+        _alertaFrescuraActiva = prefs.alertaFrescura;
       });
+      _verificarAlertas();
     } catch (e) {
       debugPrint('Error al leer preferencias en Planeador: $e');
     }
@@ -430,6 +466,280 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     );
   }
 
+  Widget _construirBannerAlertaDescongelacion() {
+    if (!_alertaDescongeladoActiva || _alertaDescongelacion == null) {
+      return const SizedBox.shrink();
+    }
+
+    final alerta = _alertaDescongelacion!;
+    final String tiempoTexto = alerta.esParaManana ? 'Mañana' : 'Hoy';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade300, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.ac_unit_rounded,
+                  color: Colors.blueAccent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🧊 Recordatorio para Descongelar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.blue.shade900,
+                      ),
+                    ),
+                    Text(
+                      '$tiempoTexto: ${alerta.platillo} (${alerta.tipoComida})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade800,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18, color: Colors.blueGrey),
+                tooltip: 'Descartar aviso',
+                onPressed: () {
+                  setState(() => _alertaDescongelacion = null);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            alerta.esParaManana
+                ? '💡 Recuerda bajar ${alerta.proteina} del congelador al refrigerador esta noche para que esté lista, tierna y jugosa mañana.'
+                : '💡 Verifica si ${alerta.proteina} ya está descongelada antes de empezar a cocinar tu ${alerta.tipoComida}.',
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Colors.black87,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.check_circle_outline, size: 16),
+                label: const Text(
+                  'Ya lo bajé ✅',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () async {
+                  await ServicioRecordatorios.marcarComoAtendido(
+                    alerta.idIdentificador,
+                  );
+                  if (!mounted) return;
+                  setState(() => _alertaDescongelacion = null);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '¡Excelente hábito culinario! Carne lista a tiempo. 🧊👨‍🍳',
+                      ),
+                      backgroundColor: Colors.teal,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                },
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue.shade900,
+                  side: BorderSide(color: Colors.blue.shade400),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.alarm_add_rounded, size: 16),
+                label: const Text(
+                  'Alarma 8:00 PM ⏰',
+                  style: TextStyle(fontSize: 12),
+                ),
+                onPressed: () async {
+                  final exito =
+                      await ServicioRecordatorios.agendarAlarmaEnCalendario(
+                    platillo: alerta.platillo,
+                    proteina: alerta.proteina,
+                    tipoComida: alerta.tipoComida,
+                  );
+                  if (!mounted) return;
+                  if (exito) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          '¡Alarma programada en tu calendario para las 8:00 PM! 📅⏰',
+                        ),
+                        backgroundColor: Colors.blueAccent,
+                      ),
+                    );
+                  }
+                },
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue.shade800,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                ),
+                icon: const Icon(Icons.lightbulb_outline, size: 16),
+                label: const Text(
+                  'Tips Chef 💡',
+                  style: TextStyle(fontSize: 12),
+                ),
+                onPressed: () =>
+                    ServicioRecordatorios.mostrarModalTipsDescongelado(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirBannerAlertaFrescura() {
+    if (!_alertaFrescuraActiva || _alimentosEnRiesgo.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final int cantidad = _alimentosEnRiesgo.length;
+    final List<String> nombres = _alimentosEnRiesgo
+        .map((e) => (e['nombre'] ?? '').toString())
+        .take(3)
+        .toList();
+    final bool tieneUrgentes =
+        _alimentosEnRiesgo.any((e) => e['esUrgente'] == true);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tieneUrgentes ? Colors.red.shade50 : Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: tieneUrgentes ? Colors.red.shade300 : Colors.amber.shade400,
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            tieneUrgentes ? Icons.warning_rounded : Icons.eco_rounded,
+            color: tieneUrgentes ? Colors.red.shade700 : Colors.deepOrange,
+            size: 26,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tieneUrgentes
+                      ? '🚨 ¡$cantidad insumos por vencer en tu despensa!'
+                      : '🍃 $cantidad insumos frescos para consumir pronto',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: tieneUrgentes
+                        ? Colors.red.shade900
+                        : Colors.brown.shade900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${nombres.join(', ')}${cantidad > 3 ? ' y más...' : ''}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: tieneUrgentes
+                        ? Colors.red.shade800
+                        : Colors.brown.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  tieneUrgentes ? Colors.red.shade700 : Colors.deepOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () {
+              final lista =
+                  _alimentosEnRiesgo.map((e) => e['nombre']).join(', ');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      PantallaChef(ingredientesIniciales: lista),
+                ),
+              );
+            },
+            child: const Text(
+              'Rescatar 👨‍🍳',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> cargarPlan() async {
     setState(() => cargando = true);
     try {
@@ -452,6 +762,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         _titulosCocinados = tits;
         cargando = false;
       });
+      _verificarAlertas();
     } catch (e) {
       debugPrint('Error al cargar plan: $e');
       if (mounted) setState(() => cargando = false);
@@ -2374,6 +2685,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   cargarPlan(),
                   _cargarObjetivoDesdePreferencias(),
                 ]);
+                await _verificarAlertas();
               },
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -2385,6 +2697,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     color: Colors.white,
                     child: Column(
                       children: [
+                        // 🧊 Prioridad 9: Recordatorio Inteligente para Descongelar
+                        _construirBannerAlertaDescongelacion(),
+                        // 🚨 Prioridad 9: Alerta de Frescura y Desperdicio Cero
+                        _construirBannerAlertaFrescura(),
                         // Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento
                         _construirTarjetaCumplimiento(),
                         const SizedBox(height: 10),

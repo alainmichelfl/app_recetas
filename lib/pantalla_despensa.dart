@@ -6,6 +6,7 @@ import 'conversor_unidades.dart';
 import 'pantalla_chef.dart';
 import 'servicio_ia.dart';
 import 'servicio_hogar.dart';
+import 'servicio_recordatorios.dart';
 import 'menu_lateral.dart';
 
 class PantallaDespensa extends StatefulWidget {
@@ -673,6 +674,12 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                 if (mounted) setState(() {});
               },
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.ac_unit_rounded),
+            tooltip: 'Guía de Descongelado Seguro 🧊',
+            onPressed: () =>
+                ServicioRecordatorios.mostrarModalTipsDescongelado(context),
           ),
           IconButton(
             icon: const Icon(Icons.document_scanner),

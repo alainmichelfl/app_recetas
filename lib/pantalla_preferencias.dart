@@ -24,6 +24,9 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   String superFavorito = 'Walmart';
   final TextEditingController alergiasController = TextEditingController();
   bool notificacionesActivas = true;
+  bool alertaDescongeladoActiva = true;
+  bool alertaFrescuraActiva = true;
+  String horaDescongelado = '20:00';
   bool guardando = false;
   bool cargando = true;
 
@@ -101,6 +104,9 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         porcionesDefecto = prefs.porciones.clamp(1, 12);
         presupuestoSemanal = prefs.presupuestoSemanal.clamp(500.0, 5000.0);
         notificacionesActivas = prefs.notificaciones;
+        alertaDescongeladoActiva = prefs.alertaDescongelado;
+        alertaFrescuraActiva = prefs.alertaFrescura;
+        horaDescongelado = prefs.horaDescongelado;
         cargando = false;
       });
     } catch (e) {
@@ -122,6 +128,9 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         porciones: porcionesDefecto,
         presupuestoSemanal: presupuestoSemanal,
         notificaciones: notificacionesActivas,
+        alertaDescongelado: alertaDescongeladoActiva,
+        alertaFrescura: alertaFrescuraActiva,
+        horaDescongelado: horaDescongelado,
       );
 
       await ServicioPreferencias.guardarPreferencias(prefs);
@@ -732,25 +741,89 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 💡 4. SISTEMA
+                  // 💡 4. ASISTENTE Y RECORDATORIOS
+                  const Text(
+                    '🔔 Asistente y Recordatorios',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    child: SwitchListTile(
-                      title: const Text(
-                        'Notificaciones del Planeador',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.ac_unit_rounded,
+                            color: Colors.blueAccent,
+                          ),
+                          title: const Text(
+                            'Alertas para Descongelar',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Avisa la noche anterior si tu comida planeada requiere bajar carne o pollo al refri.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          activeThumbColor: Colors.blueAccent,
+                          value: alertaDescongeladoActiva,
+                          onChanged: (val) =>
+                              setState(() => alertaDescongeladoActiva = val),
                         ),
-                      ),
-                      subtitle: const Text('Recordatorios para cocinar'),
-                      activeThumbColor: Colors.blueGrey,
-                      value: notificacionesActivas,
-                      onChanged: (val) =>
-                          setState(() => notificacionesActivas = val),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.eco_rounded,
+                            color: Colors.green,
+                          ),
+                          title: const Text(
+                            'Monitor de Frescura y Desperdicio Cero',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Detecta alimentos con varios días en despensa y ofrece recetas express para rescatarlos.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          activeThumbColor: Colors.green,
+                          value: alertaFrescuraActiva,
+                          onChanged: (val) =>
+                              setState(() => alertaFrescuraActiva = val),
+                        ),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.notifications_active_outlined,
+                            color: Colors.orange,
+                          ),
+                          title: const Text(
+                            'Notificaciones del Planeador',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Recordatorios generales para cocinar y preparar platillos.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          activeThumbColor: Colors.orange,
+                          value: notificacionesActivas,
+                          onChanged: (val) =>
+                              setState(() => notificacionesActivas = val),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 35),
