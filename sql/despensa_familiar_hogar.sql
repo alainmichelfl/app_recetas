@@ -46,20 +46,26 @@ CREATE INDEX IF NOT EXISTS idx_miembros_hogar_user_id ON public.miembros_hogar(u
 -- ------------------------------------------------------------------------------
 -- 2. ASEGURAR COLUMNAS DE TRAZABILIDAD EN DESPENSA, CARRITO Y PLANEADOR
 -- ------------------------------------------------------------------------------
-ALTER TABLE public.despensa_usuario
+ALTER TABLE IF EXISTS public.despensa_usuario
   ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid(),
   ADD COLUMN IF NOT EXISTS agregado_por TEXT;
 
-ALTER TABLE public.lista_compras
+ALTER TABLE IF EXISTS public.lista_compras
   ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid(),
   ADD COLUMN IF NOT EXISTS agregado_por TEXT;
 
-ALTER TABLE public.planeador_semanal
+ALTER TABLE IF EXISTS public.planeador
   ADD COLUMN IF NOT EXISTS user_id UUID DEFAULT auth.uid();
 
 CREATE INDEX IF NOT EXISTS idx_despensa_user_id ON public.despensa_usuario(user_id);
 CREATE INDEX IF NOT EXISTS idx_lista_compras_user_id ON public.lista_compras(user_id);
-CREATE INDEX IF NOT EXISTS idx_planeador_user_id ON public.planeador_semanal(user_id);
+
+DO $$
+BEGIN
+  IF to_regclass('public.planeador') IS NOT NULL THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS idx_planeador_user_id ON public.planeador(user_id)';
+  END IF;
+END $$;
 
 -- ------------------------------------------------------------------------------
 -- 3. FUNCIÓN DE VERIFICACIÓN DE MISMO HOGAR FAMILIAR
@@ -133,9 +139,12 @@ CREATE POLICY "lista_compras_hogar_familiar_all" ON public.lista_compras
   USING (public.es_miembro_mismo_hogar(user_id))
   WITH CHECK (auth.role() = 'authenticated');
 
-ALTER TABLE public.planeador_semanal ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "planeador_hogar_familiar_all" ON public.planeador_semanal;
-CREATE POLICY "planeador_hogar_familiar_all" ON public.planeador_semanal
-  FOR ALL
-  USING (public.es_miembro_mismo_hogar(user_id))
-  WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  IF to_regclass('public.planeador') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.planeador ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS "planeador_hogar_familiar_all" ON public.planeador';
+    EXECUTE 'CREATE POLICY "planeador_hogar_familiar_all" ON public.planeador FOR ALL USING (public.es_miembro_mismo_hogar(user_id)) WITH CHECK (auth.role() = ''authenticated'')';
+  END IF;
+END $$;
+
