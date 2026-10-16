@@ -53,6 +53,76 @@ class _PantallaCargaMasivaRecetasState
     super.dispose();
   }
 
+  /// Asigna imágenes directas y verificadas de alta resolución de Unsplash según el platillo,
+  /// evitando fotos no correspondientes (ej. hotcakes para guacamole) o placeholders rotos.
+  static String _resolverImagenOptimizada(
+    String titulo,
+    String tipoComida,
+    String? urlSugerida,
+  ) {
+    final t = titulo.toLowerCase();
+
+    // 1. Detección específica por platillos tradicionales
+    if (t.contains('guacamole')) {
+      return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?w=800';
+    }
+    if (t.contains('chilaquil')) {
+      return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800';
+    }
+    if (t.contains('avena') || t.contains('oatmeal')) {
+      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=800';
+    }
+    if (t.contains('mollete')) {
+      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?w=800';
+    }
+    if (t.contains('omelette') || t.contains('huevo')) {
+      return 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800';
+    }
+    if (t.contains('pescado') ||
+        t.contains('salmón') ||
+        t.contains('salmon') ||
+        t.contains('atún') ||
+        t.contains('atun')) {
+      return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800';
+    }
+    if (t.contains('pollo') || t.contains('tinga') || t.contains('pechuga')) {
+      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800';
+    }
+    if (t.contains('sopa') ||
+        t.contains('crema') ||
+        t.contains('caldo') ||
+        t.contains('lenteja')) {
+      return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800';
+    }
+    if (t.contains('ensalada') || t.contains('caprese') || t.contains('quinoa')) {
+      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800';
+    }
+    if (t.contains('perro') || t.contains('canin') || t.contains('lomito')) {
+      return 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800';
+    }
+
+    // 2. Si la URL sugerida es válida y no es un hotcake erróneo ni un placeholder
+    if (urlSugerida != null &&
+        urlSugerida.trim().isNotEmpty &&
+        !urlSugerida.contains('placeholder') &&
+        !urlSugerida.contains('photo-1541288097308-7b8e3f58c4c6')) {
+      return urlSugerida.trim();
+    }
+
+    // 3. Fallbacks temáticos según el tipo de comida
+    switch (tipoComida.toLowerCase()) {
+      case 'desayuno':
+        return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800';
+      case 'comida':
+        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800';
+      case 'cena':
+        return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800';
+      case 'snack':
+      default:
+        return 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=800';
+    }
+  }
+
   Future<void> _generarLoteConGemini() async {
     final tema = _temaController.text.trim();
     if (tema.isEmpty) {
@@ -127,8 +197,16 @@ class _PantallaCargaMasivaRecetasState
 
       final dynamic decoded = jsonDecode(jsonStr);
       if (decoded is List) {
+        final list = List<Map<String, dynamic>>.from(decoded);
+        for (var item in list) {
+          item['imagen_url'] = _resolverImagenOptimizada(
+            item['titulo']?.toString() ?? '',
+            item['tipo_comida']?.toString() ?? 'Comida',
+            item['imagen_url']?.toString(),
+          );
+        }
         setState(() {
-          _recetasGeneradas = List<Map<String, dynamic>>.from(decoded);
+          _recetasGeneradas = list;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -211,8 +289,11 @@ class _PantallaCargaMasivaRecetasState
         final String titulo = r['titulo']?.toString().trim() ?? 'Receta Oficial';
         final String tipoComida = r['tipo_comida']?.toString().trim() ?? 'Comida';
         final String instrucciones = r['instrucciones']?.toString().trim() ?? '';
-        final String imagenUrl = r['imagen_url']?.toString().trim() ??
-            'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500';
+        final String imagenUrl = _resolverImagenOptimizada(
+          titulo,
+          tipoComida,
+          r['imagen_url']?.toString(),
+        );
         final int calorias = r['calorias'] is num
             ? (r['calorias'] as num).toInt()
             : int.tryParse(r['calorias']?.toString() ?? '450') ?? 450;
