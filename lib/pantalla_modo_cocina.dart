@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_copiloto_cocina.dart';
+import 'servicio_voz_cocina.dart';
 
 class PantallaModoCocina extends StatefulWidget {
   final String recetaInstrucciones;
@@ -35,6 +37,13 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
   final Map<ModoElectrodomestico, String> _instruccionesPorModo = {};
   bool _adaptandoIA = false;
 
+  // 🎙️ Servicio de voz para modo manos libres
+  final ServicioVozCocina _servicioVoz = ServicioVozCocina();
+  bool _modoVozActivo = false;
+  bool _microfonoEscuchando = false;
+  String? _ultimoTextoVoz;
+  Timer? _temporizadorLimpiezaVoz;
+
   // 💡 Estructura inteligente para manejar diferentes tipos de tarjetas
   List<Map<String, dynamic>> paginasCocina = [];
   int _pasoActual = 0;
@@ -49,6 +58,101 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
     _instruccionesPorModo[_modoActual] = textoBase;
 
     _procesarInstrucciones();
+    _configurarServicioVoz();
+  }
+
+  void _configurarServicioVoz() {
+    _servicioVoz.onSiguiente = () {
+      if (!mounted) return;
+      if (_pasoActual < paginasCocina.length - 1) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _finalizarYCocinar();
+      }
+    };
+
+    _servicioVoz.onAnterior = () {
+      if (!mounted) return;
+      if (_pasoActual > 0) {
+        _pageController.previousPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    };
+
+    _servicioVoz.onTerminar = () {
+      if (!mounted) return;
+      _finalizarYCocinar();
+    };
+
+    _servicioVoz.onTextoReconocido = (texto) {
+      if (!mounted) return;
+      setState(() {
+        _ultimoTextoVoz = texto;
+      });
+      _temporizadorLimpiezaVoz?.cancel();
+      _temporizadorLimpiezaVoz = Timer(const Duration(seconds: 4), () {
+        if (mounted) {
+          setState(() => _ultimoTextoVoz = null);
+        }
+      });
+    };
+
+    _servicioVoz.onEstadoCambiado = (escuchando) {
+      if (!mounted) return;
+      setState(() {
+        _microfonoEscuchando = escuchando;
+      });
+    };
+  }
+
+  Future<void> _alternarModoVoz() async {
+    if (_modoVozActivo) {
+      await _servicioVoz.detenerEscucha();
+      if (mounted) {
+        setState(() {
+          _modoVozActivo = false;
+          _microfonoEscuchando = false;
+          _ultimoTextoVoz = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Modo manos libres desactivado 🔇'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      final inicializado = await _servicioVoz.inicializar();
+      if (!inicializado) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo acceder al micrófono para el modo manos libres.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+      await _servicioVoz.iniciarEscucha();
+      if (mounted) {
+        setState(() {
+          _modoVozActivo = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎙️ Modo Manos Libres Activo. Di "Siguiente", "Atrás" o "Terminar" sin tocar la pantalla.'),
+            backgroundColor: Colors.teal,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    }
   }
 
   void _procesarInstrucciones() {
@@ -472,6 +576,29 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: _modoVozActivo
+                    ? (_microfonoEscuchando
+                        ? Colors.redAccent.withValues(alpha: 0.25)
+                        : Colors.teal.withValues(alpha: 0.25))
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _modoVozActivo ? Icons.mic : Icons.mic_none,
+                color: _modoVozActivo
+                    ? (_microfonoEscuchando ? Colors.redAccent : Colors.tealAccent)
+                    : Colors.white,
+              ),
+            ),
+            tooltip: _modoVozActivo
+                ? 'Desactivar Modo Manos Libres'
+                : 'Activar Modo Manos Libres (Voz)',
+            onPressed: _alternarModoVoz,
+          ),
           if (_modoActual != ModoElectrodomestico.tradicional)
             IconButton(
               icon: const Icon(Icons.auto_awesome, color: Colors.amberAccent),
@@ -496,6 +623,53 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                 color: colorActual,
                 minHeight: 6,
               ),
+
+              // Banner interactivo del Modo Manos Libres por Voz
+              if (_modoVozActivo)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _microfonoEscuchando
+                        ? Colors.red.shade900.withValues(alpha: 0.45)
+                        : Colors.teal.shade900.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _microfonoEscuchando ? Colors.redAccent : Colors.tealAccent,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _microfonoEscuchando ? Icons.mic : Icons.mic_none,
+                        size: 18,
+                        color: _microfonoEscuchando ? Colors.redAccent : Colors.tealAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _ultimoTextoVoz != null
+                              ? '🗣️ "$_ultimoTextoVoz"'
+                              : '🎙️ Manos libres: Di "Siguiente", "Atrás" o "Terminar"',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: _alternarModoVoz,
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: Icon(Icons.close, size: 16, color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               Expanded(
                 child: PageView.builder(
@@ -847,5 +1021,13 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
         ),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _temporizadorLimpiezaVoz?.cancel();
+    _servicioVoz.dispose();
+    _pageController.dispose();
+    super.dispose();
   }
 }

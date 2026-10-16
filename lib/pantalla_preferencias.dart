@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
 import 'widget_deslizador_cocinas.dart';
+import 'utensilios_cocina.dart';
 import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
 
@@ -18,6 +19,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   String objetivoSeleccionado = PerfilesNutricionales.mantenimiento;
   List<String> estilosSeleccionados = [PerfilesNutricionales.libre];
   List<String> tiposCocinaSeleccionados = [TiposCocina.todas];
+  List<String> utensiliosSeleccionados = UtensiliosCocina.porDefecto;
   bool _modoTarjetasDeslizables = true;
   double presupuestoSemanal = 1500;
   int porcionesDefecto = 2;
@@ -97,6 +99,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         objetivoSeleccionado = prefs.objetivo;
         estilosSeleccionados = PerfilesNutricionales.normalizar(prefs.estilos);
         tiposCocinaSeleccionados = TiposCocina.normalizar(prefs.tiposCocina);
+        utensiliosSeleccionados = List<String>.from(prefs.utensilios);
         alergiasController.text = prefs.alergias;
         superFavorito = opcionesSuper.contains(prefs.superFavorito)
             ? prefs.superFavorito
@@ -123,6 +126,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         objetivo: objetivoSeleccionado,
         estilos: estilosSeleccionados,
         tiposCocina: tiposCocinaSeleccionados,
+        utensilios: utensiliosSeleccionados,
         alergias: alergiasController.text.trim(),
         superFavorito: superFavorito,
         porciones: porcionesDefecto,
@@ -572,7 +576,223 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 💡 3. HOGAR Y COMPRAS (SUPERMERCADOS COMO BOTONES)
+                  // 💡 3. TU COCINA Y UTENSILIOS
+                  const Text(
+                    '🍳 Tu Cocina y Utensilios',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Electrodomésticos y Equipo',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        utensiliosSeleccionados = UtensiliosCocina.catalogo
+                                            .map((u) => u.id)
+                                            .toList();
+                                      });
+                                    },
+                                    child: const Text('Todos', style: TextStyle(fontSize: 12)),
+                                  ),
+                                  const Text('•', style: TextStyle(color: Colors.grey)),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        utensiliosSeleccionados = UtensiliosCocina.porDefecto;
+                                      });
+                                    },
+                                    child: const Text('Básicos', style: TextStyle(fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Toca las tarjetas con los utensilios que tienes. El Chef IA adaptará las recetas para que nunca te pida un equipo que no tengas en casa.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cardWidth = (constraints.maxWidth - 10) / 2;
+                              return Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: UtensiliosCocina.catalogo.map((utensilio) {
+                                  final bool activo =
+                                      utensiliosSeleccionados.contains(utensilio.id);
+                                  return SizedBox(
+                                    width: cardWidth,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            if (activo) {
+                                              if (utensiliosSeleccionados.length > 1) {
+                                                utensiliosSeleccionados.remove(utensilio.id);
+                                              } else {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Debes conservar al menos 1 utensilio seleccionado.',
+                                                    ),
+                                                    duration: Duration(seconds: 2),
+                                                  ),
+                                                );
+                                              }
+                                            } else {
+                                              utensiliosSeleccionados.add(utensilio.id);
+                                            }
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: activo
+                                                ? colorPrincipal.withValues(alpha: 0.08)
+                                                : Colors.grey.shade50,
+                                            borderRadius: BorderRadius.circular(14),
+                                            border: Border.all(
+                                              color: activo
+                                                  ? colorPrincipal
+                                                  : Colors.grey.shade300,
+                                              width: activo ? 2 : 1,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    utensilio.icono,
+                                                    style: const TextStyle(fontSize: 22),
+                                                  ),
+                                                  Icon(
+                                                    activo
+                                                        ? Icons.check_circle
+                                                        : Icons.radio_button_unchecked,
+                                                    size: 18,
+                                                    color: activo
+                                                        ? colorPrincipal
+                                                        : Colors.grey.shade400,
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                utensilio.nombre,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: activo
+                                                      ? colorPrincipal
+                                                      : Colors.black87,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                utensilio.descripcion,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade600,
+                                                  height: 1.2,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amber.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.tips_and_updates_outlined,
+                                  size: 20,
+                                  color: Colors.amber.shade900,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${utensiliosSeleccionados.length} de ${UtensiliosCocina.catalogo.length} equipos activos. Si seleccionas Freidora de Aire o Thermomix, se habilitará el Copiloto IA con pasos y parámetros programados.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.brown.shade900,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 💡 4. HOGAR Y COMPRAS (SUPERMERCADOS COMO BOTONES)
                   const Text(
                     '🛒 Hogar y Compras',
                     style: TextStyle(
@@ -684,7 +904,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 💡 3. FINANZAS
+                  // 💡 5. FINANZAS
                   const Text(
                     '💰 Finanzas',
                     style: TextStyle(
@@ -741,7 +961,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 💡 4. ASISTENTE Y RECORDATORIOS
+                  // 💡 6. ASISTENTE Y RECORDATORIOS
                   const Text(
                     '🔔 Asistente y Recordatorios',
                     style: TextStyle(

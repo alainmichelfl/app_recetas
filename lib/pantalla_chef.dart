@@ -12,6 +12,7 @@ import 'servicio_admin.dart';
 import 'menu_lateral.dart';
 import 'pantalla_recetas_caninas.dart';
 import 'servicio_copiloto_cocina.dart';
+import 'utensilios_cocina.dart';
 
 class PantallaChef extends StatefulWidget {
   final String? ingredientesIniciales;
@@ -40,6 +41,7 @@ class _PantallaChefState extends State<PantallaChef> {
   String _tipoCocinaSeleccionado = TiposCocina.mexicana;
   String _alergias = '';
   List<String> _estilos = [PerfilesNutricionales.libre];
+  List<String> _utensiliosDisponibles = UtensiliosCocina.porDefecto;
 
   final List<String> _tiposComida = ['Desayuno', 'Comida', 'Cena', 'Snack'];
   final List<String> _objetivosSalud = [
@@ -69,6 +71,7 @@ class _PantallaChefState extends State<PantallaChef> {
       setState(() {
         _alergias = prefs.alergias;
         _estilos = prefs.estilos;
+        _utensiliosDisponibles = prefs.utensilios;
         if (prefs.tiposCocina.isNotEmpty &&
             prefs.tiposCocina.first != TiposCocina.todas) {
           _tipoCocinaSeleccionado = prefs.tiposCocina.first;
@@ -159,6 +162,9 @@ class _PantallaChefState extends State<PantallaChef> {
     final String instruccionEstilos =
         PerfilesNutricionales.instruccionesPrompt(_estilos);
 
+    final String instruccionUtensilios =
+        UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
+
     final String instruccionElectrodomestico =
         electrodomestico == ModoElectrodomestico.thermomix
             ? '''
@@ -187,6 +193,7 @@ class _PantallaChefState extends State<PantallaChef> {
     $instruccionCocina
     $instruccionAlergias
     $instruccionEstilos
+    $instruccionUtensilios
     $instruccionElectrodomestico
     - Tipo de comida: $tipoComida
     - Objetivo de salud: $objetivoSalud

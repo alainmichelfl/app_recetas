@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
+import 'utensilios_cocina.dart';
 
 class PreferenciasUsuario {
   /// Meta calórica: Déficit (Baja) | Mantenimiento | Volumen (Alta)
@@ -14,6 +15,9 @@ class PreferenciasUsuario {
 
   /// Tipos de cocina preferidos (Mexicana, Japonesa, Thai, Italiana, etc.)
   final List<String> tiposCocina;
+
+  /// Utensilios y electrodomésticos disponibles en cocina
+  final List<String> utensilios;
 
   final String alergias;
   final String superFavorito;
@@ -28,6 +32,7 @@ class PreferenciasUsuario {
     this.objetivo = PerfilesNutricionales.mantenimiento,
     this.estilos = const [PerfilesNutricionales.libre],
     this.tiposCocina = const [TiposCocina.todas],
+    this.utensilios = const ['sarten', 'licuadora'],
     this.alergias = '',
     this.superFavorito = 'Walmart',
     this.porciones = 2,
@@ -41,12 +46,18 @@ class PreferenciasUsuario {
   factory PreferenciasUsuario.fromMap(
     Map<String, dynamic> map, {
     List<String>? fallbackTiposCocina,
+    List<String>? fallbackUtensilios,
   }) {
     final objetivo = map['objetivo']?.toString() ?? '';
     final rawTipos = map['tipos_cocina']?.toString();
     final tipos = rawTipos != null && rawTipos.isNotEmpty
         ? TiposCocina.deserializar(rawTipos)
         : (fallbackTiposCocina ?? [TiposCocina.todas]);
+
+    final rawUtensilios = map['utensilios']?.toString();
+    final utensilios = rawUtensilios != null && rawUtensilios.isNotEmpty
+        ? UtensiliosCocina.deserializar(rawUtensilios)
+        : (fallbackUtensilios ?? UtensiliosCocina.porDefecto);
 
     return PreferenciasUsuario(
       objetivo: PerfilesNutricionales.objetivos.contains(objetivo)
@@ -56,6 +67,7 @@ class PreferenciasUsuario {
         map['estilos_dieta']?.toString(),
       ),
       tiposCocina: TiposCocina.normalizar(tipos),
+      utensilios: utensilios,
       alergias: map['alergias']?.toString() ?? '',
       superFavorito: map['super_favorito']?.toString() ?? 'Walmart',
       porciones: int.tryParse(map['porciones']?.toString() ?? '2') ?? 2,
@@ -80,6 +92,7 @@ class PreferenciasUsuario {
       'objetivo': objetivo,
       'estilos_dieta': PerfilesNutricionales.serializar(estilos),
       'tipos_cocina': TiposCocina.serializar(tiposCocina),
+      'utensilios': UtensiliosCocina.serializar(utensilios),
       'alergias': alergias,
       'super_favorito': superFavorito,
       'porciones': porciones,
@@ -96,6 +109,7 @@ class PreferenciasUsuario {
 class ServicioPreferencias {
   static final SupabaseClient _supabase = Supabase.instance.client;
   static const String _keyTiposCocinaLocal = 'pref_tipos_cocina_local_v1';
+  static const String _keyUtensiliosLocal = 'pref_utensilios_local_v1';
 
   // Cache en memoria para acceso rápido
   static PreferenciasUsuario? _cache;
@@ -105,6 +119,7 @@ class ServicioPreferencias {
   /// Obtiene las preferencias del usuario en sesión, o las predeterminadas si falla
   static Future<PreferenciasUsuario> obtenerPreferencias() async {
     List<String>? tiposCocinaLocales;
+    List<String>? utensiliosLocales;
     bool? alertaDescongeladoLocal;
     bool? alertaFrescuraLocal;
     String? horaDescongeladoLocal;
@@ -113,6 +128,10 @@ class ServicioPreferencias {
       final guardado = sp.getString(_keyTiposCocinaLocal);
       if (guardado != null && guardado.isNotEmpty) {
         tiposCocinaLocales = TiposCocina.deserializar(guardado);
+      }
+      final guardadoUtensilios = sp.getString(_keyUtensiliosLocal);
+      if (guardadoUtensilios != null && guardadoUtensilios.isNotEmpty) {
+        utensiliosLocales = UtensiliosCocina.deserializar(guardadoUtensilios);
       }
       alertaDescongeladoLocal = sp.getBool('pref_alerta_descongelado_v1');
       alertaFrescuraLocal = sp.getBool('pref_alerta_frescura_v1');
@@ -144,6 +163,7 @@ class ServicioPreferencias {
           _cache = PreferenciasUsuario.fromMap(
             map,
             fallbackTiposCocina: tiposCocinaLocales,
+            fallbackUtensilios: utensiliosLocales,
           );
           return _cache!;
         }
@@ -154,6 +174,7 @@ class ServicioPreferencias {
 
     _cache ??= PreferenciasUsuario(
       tiposCocina: tiposCocinaLocales ?? const [TiposCocina.todas],
+      utensilios: utensiliosLocales ?? UtensiliosCocina.porDefecto,
       alertaDescongelado: alertaDescongeladoLocal ?? true,
       alertaFrescura: alertaFrescuraLocal ?? true,
       horaDescongelado: horaDescongeladoLocal ?? '20:00',
@@ -176,6 +197,10 @@ class ServicioPreferencias {
         _keyTiposCocinaLocal,
         TiposCocina.serializar(prefs.tiposCocina),
       );
+      await sp.setString(
+        _keyUtensiliosLocal,
+        UtensiliosCocina.serializar(prefs.utensilios),
+      );
       await sp.setBool('pref_alerta_descongelado_v1', prefs.alertaDescongelado);
       await sp.setBool('pref_alerta_frescura_v1', prefs.alertaFrescura);
       await sp.setString('pref_hora_descongelado_v1', prefs.horaDescongelado);
@@ -194,6 +219,7 @@ class ServicioPreferencias {
     } catch (e) {
       debugPrint('Aviso: columna opcional faltante en Supabase al guardar preferencias: $e');
       datos.remove('tipos_cocina');
+      datos.remove('utensilios');
       datos.remove('alerta_descongelado');
       datos.remove('alerta_frescura');
       datos.remove('hora_descongelado');
