@@ -1161,7 +1161,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               // Opción Thermomix
               _tarjetaSeleccionElectrodomestico(
                 icono: '🤖',
-                titulo: 'Thermomix TM5 / TM6',
+                titulo: 'Thermomix (TM5 / TM6 / TM7)',
                 descripcion:
                     'Tiempos cortos, velocidad de cuchillas, temperatura Varoma/120°C y giro inverso ↺.',
                 colorTema: const Color(0xFF00897B),

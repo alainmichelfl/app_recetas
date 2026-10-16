@@ -168,7 +168,7 @@ class _PantallaChefState extends State<PantallaChef> {
     final String instruccionElectrodomestico =
         electrodomestico == ModoElectrodomestico.thermomix
             ? '''
-    - ELECTRODOMÉSTICO OBLIGATORIO: THERMOMIX (TM5 / TM6).
+    - ELECTRODOMÉSTICO OBLIGATORIO: THERMOMIX (TM5 / TM6 / TM7).
     Toda la receta DEBE estar redactada específicamente para Thermomix.
     CADA PASO en "instrucciones" DEBE iniciar obligatoriamente con el formato de corchetes:
     [Tiempo | Temperatura | Velocidad | Giro inverso (si aplica) | Accesorio (si aplica)]
@@ -1131,7 +1131,7 @@ class _PantallaChefState extends State<PantallaChef> {
                       ),
                       label: Text(
                         modo == ModoElectrodomestico.thermomix
-                            ? 'Thermomix TM5/TM6'
+                            ? 'Thermomix (TM5/TM6/TM7)'
                             : modo == ModoElectrodomestico.airFryer
                                 ? 'Air Fryer'
                                 : 'Tradicional (Estufa)',

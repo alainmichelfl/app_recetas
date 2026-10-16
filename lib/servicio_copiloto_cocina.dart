@@ -13,7 +13,7 @@ extension ModoElectrodomesticoExt on ModoElectrodomestico {
       case ModoElectrodomestico.tradicional:
         return 'Tradicional';
       case ModoElectrodomestico.thermomix:
-        return 'Thermomix TM5/TM6 🤖';
+        return 'Thermomix (TM5/TM6/TM7) 🤖';
       case ModoElectrodomestico.airFryer:
         return 'Air Fryer 🍟';
     }

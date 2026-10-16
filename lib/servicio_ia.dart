@@ -489,7 +489,7 @@ Compara Walmart, Soriana, La Comer, Costco y Sam's Club con viñetas y un ganado
 
     final String prompt = esThermomix
         ? '''
-Eres un Chef Consultor oficial experto en Thermomix (modelos TM5 y TM6) y robots de cocina inteligentes.
+Eres un Chef Consultor oficial experto en Thermomix (modelos TM5, TM6 y TM7) y robots de cocina inteligentes.
 Tu misión es convertir esta receta tradicional en una receta guiada precisa para Thermomix.
 
 REGLAS DE PRECISIÓN DE THERMOMIX:

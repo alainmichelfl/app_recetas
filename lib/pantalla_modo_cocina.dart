@@ -307,7 +307,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
           paginasCocina.add({
             'tipo': 'paso',
             'titulo': _modoActual == ModoElectrodomestico.thermomix
-                ? 'Thermomix TM5/TM6 🤖'
+                ? 'Thermomix (TM5/TM6/TM7) 🤖'
                 : _modoActual == ModoElectrodomestico.airFryer
                     ? 'Air Fryer 🍟'
                     : 'Paso a Paso',
