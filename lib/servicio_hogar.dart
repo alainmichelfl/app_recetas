@@ -325,7 +325,7 @@ class ServicioHogar {
     final mensaje =
         '🏠👨‍👩‍👧‍👦 ¡Únete a nuestro Hogar Familiar *"${hogar.nombre}"* en *Jitomate y Cebolla* 🍅🧅!\n\n'
         'Así compartiremos en tiempo real la misma Despensa, Lista del Súper y Planeador Semanal.\n\n'
-        '1️⃣ Entra a: https://alainmichelfl.github.io/app_recetas/\n'
+        '1️⃣ Entra a: https://www.jitomateycebolla.com/\n'
         '2️⃣ Abre *"Mi Despensa"* o el menú lateral y toca *"Hogar Familiar"*.\n'
         '3️⃣ Elige *"Unirme con un código"* y escribe:\n'
         '👉 *${hogar.codigo}*';

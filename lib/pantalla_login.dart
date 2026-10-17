@@ -104,12 +104,12 @@ class _PantallaLoginState extends State<PantallaLogin> {
   String _obtenerUrlRedireccion() {
     if (kIsWeb) {
       final origin = Uri.base.origin;
-      if (origin.contains('localhost') || origin.contains('127.0.0.1')) {
+      if (origin.isNotEmpty && origin != 'null') {
         return '$origin${Uri.base.path}';
       }
-      return 'https://alainmichelfl.github.io/app_recetas/';
+      return 'https://www.jitomateycebolla.com/';
     }
-    return 'https://alainmichelfl.github.io/app_recetas/';
+    return 'https://www.jitomateycebolla.com/';
   }
 
   Future<void> _iniciarSesion() async {

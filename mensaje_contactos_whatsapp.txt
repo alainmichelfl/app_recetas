@@ -27,13 +27,13 @@ Si ya te habías registrado, ¡tienes que entrar a ver todo lo nuevo que añadim
 *(¡Sin App Store, sin ocupar memoria y 100% gratis!)*
 
 🍎 *En iPhone / iPad (Safari):*
-1. Abre este enlace en Safari: https://alainmichelfl.github.io/app_recetas/
+1. Abre este enlace en Safari: https://www.jitomateycebolla.com/
 2. Toca el botón de Compartir abajo (el cuadrito con la flechita ⎋).
 3. Selecciona *"Agregar a pantalla de inicio"* ➕.
 ¡Listo! Te aparecerá el nuevo ícono oficial en tu pantalla principal.
 
 🤖 *En Android (Chrome):*
-1. Abre el enlace en Chrome: https://alainmichelfl.github.io/app_recetas/
+1. Abre el enlace en Chrome: https://www.jitomateycebolla.com/
 2. Toca los 3 puntitos arriba a la derecha (⋮).
 3. Selecciona *"Instalar aplicación"* o *"Agregar a pantalla principal"* 📲.
 ¡Y listo! Se abre en pantalla completa como cualquier app nativa.
@@ -41,7 +41,7 @@ Si ya te habías registrado, ¡tienes que entrar a ver todo lo nuevo que añadim
 ---
 
 👉 *Pruébala gratis aquí desde tu celular o computadora:*
-🔗 https://alainmichelfl.github.io/app_recetas/
+🔗 https://www.jitomateycebolla.com/
 
 💡 *Tip:* Al registrarte, revisa tu carpeta de *Spam / Correo no deseado* para activar tu cuenta con el enlace de confirmación ✉️.
 
