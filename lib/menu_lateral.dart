@@ -16,6 +16,7 @@ import 'pantalla_preferencias.dart';
 import 'pantalla_login.dart';
 import 'servicio_hogar.dart';
 import 'dialogo_manifiesto_bienvenida.dart';
+import 'dialogo_contacto_soporte.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -664,6 +665,59 @@ class MenuLateral extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       _mostrarModalInstalacionPwa(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.alternate_email_rounded,
+                        color: Colors.blueAccent,
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Contacto y Soporte',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 15,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      '@jitomateycebolla.com',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'Oficial ✉️',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DialogoContactoSoporte.mostrar(context);
                     },
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'widget_deslizador_cocinas.dart';
 import 'utensilios_cocina.dart';
 import 'servicio_preferencias.dart';
 import 'menu_lateral.dart';
+import 'dialogo_contacto_soporte.dart';
 
 class PantallaPreferencias extends StatefulWidget {
   const PantallaPreferencias({super.key});
@@ -1078,6 +1079,54 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ✉️ CANALES OFICIALES DE CONTACTO
+                  Card(
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      side: BorderSide(
+                        color: Colors.blueAccent.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    color: Colors.blue.shade50.withValues(alpha: 0.4),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.alternate_email_rounded,
+                          color: Colors.blueAccent,
+                          size: 22,
+                        ),
+                      ),
+                      title: const Text(
+                        'Contacto y Soporte Oficial',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'hola, contacto y alain @jitomateycebolla.com',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 15,
+                        color: Colors.blueAccent,
+                      ),
+                      onTap: () => DialogoContactoSoporte.mostrar(context),
                     ),
                   ),
                   const SizedBox(height: 30),
