@@ -46,6 +46,7 @@ jobs:
         run: |
           flutter build web --release --base-href "/"
           echo "www.jitomateycebolla.com" > build/web/CNAME
+          cp build/web/index.html build/web/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
