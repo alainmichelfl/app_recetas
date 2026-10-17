@@ -61,7 +61,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
         } else if (desc.isNotEmpty) {
           _mostrarDialogoErrorEnlace('Aviso de autenticación: $desc');
         }
-      } else if (fragment.contains('type=signup') || fragment.contains('access_token')) {
+      } else if (fragment.contains('type=recovery') || query['type'] == 'recovery') {
+        // Enlace de recuperación de contraseña: es procesado por ControladorSesion / PantallaRestablecerPassword
+      } else if (fragment.contains('type=signup') || (fragment.contains('access_token') && !fragment.contains('type=recovery'))) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Muchas gracias por registrarte y autenticarte! Tu cuenta está lista 🎉🍅🧅'),
@@ -105,7 +107,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
     if (kIsWeb) {
       final origin = Uri.base.origin;
       if (origin.isNotEmpty && origin != 'null') {
-        return '$origin${Uri.base.path}';
+        final path = Uri.base.path.isEmpty ? '/' : Uri.base.path;
+        return '$origin$path';
       }
       return 'https://www.jitomateycebolla.com/';
     }
@@ -445,8 +448,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña:',
-              style: TextStyle(fontSize: 14),
+              'Ingresa tu correo y te enviaremos un enlace oficial para restablecer tu contraseña:\n\n'
+              '💡 Nota: El enlace es de un solo uso. Si solicitas más de un correo, asegúrate de abrir únicamente el último recibido.',
+              style: TextStyle(fontSize: 14, height: 1.35),
             ),
             const SizedBox(height: 14),
             TextField(

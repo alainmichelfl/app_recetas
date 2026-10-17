@@ -1,10 +1,12 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pantalla_login.dart';
 import 'pantalla_recetas.dart';
+import 'pantalla_restablecer_password.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,18 +93,55 @@ class ControladorSesion extends StatefulWidget {
 }
 
 class _ControladorSesionState extends State<ControladorSesion> {
+  bool _enRecuperacionPassword = false;
+
   @override
   void initState() {
     super.initState();
+    _detectarRecuperacionEnUrl();
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (mounted) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        if (mounted) {
+          setState(() {
+            _enRecuperacionPassword = true;
+          });
+        }
+      } else if (data.event == AuthChangeEvent.signedOut) {
+        if (mounted) {
+          setState(() {
+            _enRecuperacionPassword = false;
+          });
+        }
+      } else if (mounted) {
         setState(() {});
       }
     });
   }
 
+  void _detectarRecuperacionEnUrl() {
+    if (kIsWeb) {
+      try {
+        final fragment = Uri.base.fragment;
+        final query = Uri.base.queryParameters;
+        if (fragment.contains('type=recovery') || query['type'] == 'recovery') {
+          _enRecuperacionPassword = true;
+        }
+      } catch (_) {}
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_enRecuperacionPassword) {
+      return PantallaRestablecerPassword(
+        onPasswordRestablecida: () {
+          setState(() {
+            _enRecuperacionPassword = false;
+          });
+        },
+      );
+    }
+
     final sesionActiva = Supabase.instance.client.auth.currentSession != null;
 
     if (sesionActiva) {
