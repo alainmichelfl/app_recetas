@@ -18,6 +18,9 @@ import 'pantalla_login.dart';
 import 'servicio_hogar.dart';
 import 'dialogo_manifiesto_bienvenida.dart';
 import 'dialogo_contacto_soporte.dart';
+import 'dialogo_busqueda_spotlight.dart';
+import 'dialogo_onboarding_bienvenida.dart';
+import 'servicio_recordatorios.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -677,6 +680,35 @@ class MenuLateral extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.search_rounded, color: Colors.deepOrange, size: 20),
+                    ),
+                    title: const Text(
+                      'Búsqueda Spotlight',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('🔍 Global', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DialogoBusquedaSpotlight.mostrar(context);
+                    },
+                  ),
                   _construirMenuRecetasConSubmenu(context),
                   _construirMenuPlaneadorConSubmenu(context),
                   _construirMenuDespensaYComprasConSubmenu(context),
@@ -707,6 +739,64 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.tune,
                     colorIcono: const Color(0xFF455A64),
                     pantalla: () => const PantallaPreferencias(),
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.notifications_active_rounded, color: Colors.blueAccent, size: 20),
+                    ),
+                    title: const Text(
+                      'Centro de Recordatorios',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('🔔 Alertas', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ServicioRecordatorios.mostrarModalCentroRecordatorios(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.explore_rounded, color: Colors.teal, size: 20),
+                    ),
+                    title: const Text(
+                      'Tour de Bienvenida',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('🧭 3 Pasos', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DialogoOnboardingBienvenida.verificarYMostrar(context, forzar: true);
+                    },
                   ),
                   ListTile(
                     dense: true,

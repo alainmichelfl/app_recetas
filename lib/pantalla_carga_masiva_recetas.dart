@@ -169,12 +169,15 @@ class _PantallaCargaMasivaRecetasState
       4. UNIDADES: Usa "piezas", "kg", "L", "paquete", "lata" o "frasco". (NO uses gramos g ni mililitros ml).
       5. En "imagen_url", usa URLs directas y válidas de fotos de comida de Unsplash con formato WebP o jpg optimizado.
       6. CALORÍAS Y MACROS: Calcula valores nutricionales realistas para cada porción.
+      7. DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
+      - En "descripcion" incluye SIEMPRE al inicio el desglose: "Tiempo activo: X min | Cocción: Y min. Breve descripción apetitosa..."
+      - Al menos 2 de las 5 recetas por categoría DEBEN ser Express (tiempo total ≤ 20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
       
       RESPONDE ÚNICAMENTE con un arreglo JSON de 20 objetos con esta estructura exacta:
       [
         {
           "titulo": "Huevos a la Mexicana con Frijoles de la Olla",
-          "descripcion": "Desayuno clásico balanceado, alto en proteína y fibra.",
+          "descripcion": "Tiempo activo: 5 min | Cocción: 8 min. Desayuno clásico balanceado, alto en proteína y fibra.",
           "tipo_comida": "Desayuno",
           "calorias": 380,
           "macros": "Proteína: 22g | Carbos: 28g | Grasas: 14g",

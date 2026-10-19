@@ -292,7 +292,8 @@ La PRIMERA línea debe ser el nombre. Luego PORCIONES, TIEMPO, DIFICULTAD, CALOR
         '''
 Eres un Master Chef y Nutriólogo experto. Inventa una receta para $tipoComidaSugerida con dieta "$tipoDieta".
 $instruccionIngredientesHumano
-La PRIMERA línea debe ser el nombre. Luego PORCIONES, TIEMPO, DIFICULTAD, CALORÍAS, MACROS, TIPO, DIETAS IDEALES, 📝 INGREDIENTES y 🍳 INSTRUCCIONES. Cada ingrediente con guion (-).
+La PRIMERA línea debe ser el nombre. Luego PORCIONES, TIEMPO (desglosando: "Tiempo activo: X min | Cocción: Y min"), DIFICULTAD, CALORÍAS, MACROS, TIPO, DIETAS IDEALES, 📝 INGREDIENTES y 🍳 INSTRUCCIONES. Cada ingrediente con guion (-).
+Prioriza técnicas prácticas (≤20 min, un solo sartén o ensamble en frío si aplica).
 ''';
 
     final Map<String, dynamic> cuerpo = {

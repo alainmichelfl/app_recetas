@@ -621,7 +621,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
 
                 const SizedBox(height: 10),
 
-                // 💡 NUEVO BOTÓN: Tutorial / Onboarding
+                // 💡 BOTÓN: Guía Oficial y Pilares
                 TextButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -631,11 +631,11 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.info_outline, color: Colors.grey),
+                  icon: const Icon(Icons.tips_and_updates_outlined, color: Color(0xFFFFB300), size: 20),
                   label: const Text(
-                    '¿Cómo funciona la app?',
+                    '¿Cómo funciona la app? Conoce los Pilares ✨',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: Color(0xFFFFB300),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

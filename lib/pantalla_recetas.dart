@@ -18,6 +18,9 @@ import 'servicio_recetas.dart';
 import 'servicio_cocina_express.dart';
 import 'pantalla_carga_masiva_recetas.dart';
 import 'dialogo_manifiesto_bienvenida.dart';
+import 'dialogo_busqueda_spotlight.dart';
+import 'dialogo_onboarding_bienvenida.dart';
+import 'servicio_recordatorios.dart';
 
 class PantallaRecetas extends StatefulWidget {
   final FiltroAudienciaReceta? filtroInicial;
@@ -71,7 +74,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     _searchController.addListener(_filtrarRecetas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _verificarYMostrarAgradecimiento();
-      DialogoManifiestoBienvenida.verificarYMostrar(context);
+      DialogoOnboardingBienvenida.verificarYMostrar(context, alFinalizar: () {
+        DialogoManifiestoBienvenida.verificarYMostrar(context);
+      });
     });
   }
 
@@ -97,6 +102,142 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     if (mounted) {
       setState(() => _mostrarBannerInicioExplicativo = true);
     }
+  }
+
+  void _mostrarCentroDeAyudaYBienvenida() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2022),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.lightbulb, color: Colors.amberAccent, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Centro de Bienvenida y Ayuda',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Jitomate y Cebolla • Guía rápida y preferencias',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white60,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.05),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFD32F2F),
+                child: Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+              ),
+              title: const Text(
+                'Tour de Inicio & Mis Preferencias 🧭',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Configura porciones, dieta, súper favorito, alergias y electrodomésticos.',
+                style: TextStyle(color: Colors.white70, fontSize: 11.5),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                DialogoOnboardingBienvenida.verificarYMostrar(context, forzar: true);
+              },
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.05),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF2D3238),
+                child: Icon(Icons.rocket_launch_rounded, color: Color(0xFFFFB300), size: 20),
+              ),
+              title: const Text(
+                'Cómo Funciona la App & Manifiesto Rebelde 🔥',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Conoce los 5 pilares: IA, Batch Cooking, Modo Express y Cero Merma.',
+                style: TextStyle(color: Colors.white70, fontSize: 11.5),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
+              },
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.05),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF2D3238),
+                child: Icon(Icons.view_carousel_rounded, color: Colors.tealAccent, size: 20),
+              ),
+              title: const Text(
+                'Reactivar Tarjeta Explicativa de Inicio 🎴',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Vuelve a mostrar la tarjeta de 5 pilares al inicio del catálogo.',
+                style: TextStyle(color: Colors.white70, fontSize: 11.5),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _reactivarBannerInicioExplicativo();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('💡 Tarjeta de los 5 pilares reactivada en el catálogo'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -1503,6 +1644,23 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Búsqueda Global Spotlight 🔍',
+            onPressed: () {
+              DialogoBusquedaSpotlight.mostrar(
+                context,
+                recetas: todasLasRecetas,
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Centro de Recordatorios 🔔',
+            onPressed: () {
+              ServicioRecordatorios.mostrarModalCentroRecordatorios(context);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_month),
             tooltip: 'Planeador Semanal 📅',
             onPressed: () {
@@ -1528,11 +1686,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
           IconButton(
             icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
-            tooltip: '💡 Manifiesto y Tarjetas: Conoce la App',
-            onPressed: () {
-              _reactivarBannerInicioExplicativo();
-              DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
-            },
+            tooltip: '💡 Tour, Preferencias y Cómo Funciona',
+            onPressed: _mostrarCentroDeAyudaYBienvenida,
           ),
           if (ServicioAdmin.esAdmin())
             PopupMenuButton<String>(
@@ -2592,9 +2747,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             child: Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
+                  flex: 3,
+                  child: ElevatedButton.icon(
                     onPressed: () {
-                      DialogoManifiestoBienvenida.verificarYMostrar(
+                      DialogoOnboardingBienvenida.verificarYMostrar(
                         context,
                         forzar: true,
                       );
@@ -2604,45 +2760,61 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         vertical: 10,
-                        horizontal: 14,
+                        horizontal: 8,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      elevation: 4,
-                      shadowColor:
-                          const Color(0xFFD32F2F).withValues(alpha: 0.5),
+                      elevation: 3,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.rocket_launch_rounded, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Ver Manifiesto Rebelde Completo 🔥',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    icon: const Icon(Icons.tune_rounded, size: 16),
+                    label: Text(
+                      'Mis Preferencias ⚙️',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _ocultarBannerInicioExplicativo,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white60,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
+                Expanded(
+                  flex: 3,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      DialogoManifiestoBienvenida.verificarYMostrar(
+                        context,
+                        forzar: true,
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.rocket_launch_rounded, size: 15, color: Color(0xFFFFB300)),
+                    label: Text(
+                      'Ver Manifiesto 🔥',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'Ocultar',
-                    style: GoogleFonts.poppins(fontSize: 11),
-                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  tooltip: 'Ocultar tarjeta',
+                  icon: const Icon(Icons.visibility_off_outlined, color: Colors.white54, size: 18),
+                  onPressed: _ocultarBannerInicioExplicativo,
                 ),
               ],
             ),

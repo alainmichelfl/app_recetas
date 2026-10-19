@@ -104,6 +104,36 @@ class PreferenciasUsuario {
       'actualizado_en': DateTime.now().toIso8601String(),
     };
   }
+
+  PreferenciasUsuario copyWith({
+    String? objetivo,
+    List<String>? estilos,
+    List<String>? tiposCocina,
+    List<String>? utensilios,
+    String? alergias,
+    String? superFavorito,
+    int? porciones,
+    double? presupuestoSemanal,
+    bool? notificaciones,
+    bool? alertaDescongelado,
+    bool? alertaFrescura,
+    String? horaDescongelado,
+  }) {
+    return PreferenciasUsuario(
+      objetivo: objetivo ?? this.objetivo,
+      estilos: estilos ?? this.estilos,
+      tiposCocina: tiposCocina ?? this.tiposCocina,
+      utensilios: utensilios ?? this.utensilios,
+      alergias: alergias ?? this.alergias,
+      superFavorito: superFavorito ?? this.superFavorito,
+      porciones: porciones ?? this.porciones,
+      presupuestoSemanal: presupuestoSemanal ?? this.presupuestoSemanal,
+      notificaciones: notificaciones ?? this.notificaciones,
+      alertaDescongelado: alertaDescongelado ?? this.alertaDescongelado,
+      alertaFrescura: alertaFrescura ?? this.alertaFrescura,
+      horaDescongelado: horaDescongelado ?? this.horaDescongelado,
+    );
+  }
 }
 
 class ServicioPreferencias {

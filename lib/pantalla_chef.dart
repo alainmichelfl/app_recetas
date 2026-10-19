@@ -20,6 +20,7 @@ class PantallaChef extends StatefulWidget {
   final bool modoPerrunoInicial;
   final bool modoExpressInicial;
   final bool modoCeroTrastesInicial;
+  final bool modoSinFuegoInicial;
 
   const PantallaChef({
     super.key,
@@ -27,6 +28,7 @@ class PantallaChef extends StatefulWidget {
     this.modoPerrunoInicial = false,
     this.modoExpressInicial = false,
     this.modoCeroTrastesInicial = false,
+    this.modoSinFuegoInicial = false,
   });
 
   @override
@@ -39,6 +41,7 @@ class _PantallaChefState extends State<PantallaChef> {
   bool _modoPerruno = false; // 🐾 Interruptor para recetas de perritos
   bool _modoExpress = false; // ⚡ Modo Express (≤ 15 min)
   bool _modoCeroTrastes = false; // 🍳 Modo One-Pan (1 sola sartén)
+  bool _modoSinFuego = false; // 🥗 Modo Sin Fuego / Frío (5-10 min)
   ModoElectrodomestico _electrodomesticoSeleccionado = ModoElectrodomestico.tradicional;
 
   final TextEditingController _ingredientesCtrl = TextEditingController();
@@ -70,6 +73,9 @@ class _PantallaChefState extends State<PantallaChef> {
     }
     if (widget.modoCeroTrastesInicial) {
       _modoCeroTrastes = true;
+    }
+    if (widget.modoSinFuegoInicial) {
+      _modoSinFuego = true;
     }
     if (widget.ingredientesIniciales != null && widget.ingredientesIniciales!.isNotEmpty) {
       _ingredientesCtrl.text = widget.ingredientesIniciales!;
@@ -197,10 +203,11 @@ class _PantallaChefState extends State<PantallaChef> {
     '''
                 : '';
 
-    final String instruccionExpress = (_modoExpress || _modoCeroTrastes)
+    final String instruccionExpress = (_modoExpress || _modoCeroTrastes || _modoSinFuego)
         ? ServicioCocinaExpress.construirInstruccionesPromptExpress(
             modoCeroTrastes: _modoCeroTrastes,
-            tiempoMaximoMinutos: 15,
+            modoSinFuego: _modoSinFuego,
+            tiempoMaximoMinutos: _modoSinFuego ? 10 : 15,
           )
         : '';
 
@@ -1173,6 +1180,28 @@ class _PantallaChefState extends State<PantallaChef> {
                               ),
                             ),
                             onSelected: (val) => setState(() => _modoCeroTrastes = val),
+                          ),
+                          FilterChip(
+                            avatar: const Text('🥗', style: TextStyle(fontSize: 14)),
+                            label: const Text('Sin Estufa / Frío (5-10 min)'),
+                            selected: _modoSinFuego,
+                            selectedColor: const Color(0xFF2E7D32),
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: _modoSinFuego ? Colors.white : const Color(0xFF2E7D32),
+                              fontWeight: _modoSinFuego ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: _modoSinFuego
+                                    ? Colors.transparent
+                                    : const Color(0xFF2E7D32).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            onSelected: (val) => setState(() => _modoSinFuego = val),
                           ),
                         ],
                       ),

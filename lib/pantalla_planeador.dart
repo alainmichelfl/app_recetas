@@ -23,9 +23,13 @@ import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'servicio_recordatorios.dart';
 import 'servicio_exportar_calendario.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dialogo_batch_cooking.dart';
+import 'dialogo_onboarding_bienvenida.dart';
+import 'dialogo_manifiesto_bienvenida.dart';
 import 'servicio_finanzas_domesticas.dart';
 import 'menu_lateral.dart';
+import 'utensilios_cocina.dart';
 
 // Constante global de primer nivel para evitar errores de null en Hot Reload
 const Map<String, String> kDescripcionesObjetivo = {
@@ -55,6 +59,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
   String objetivoActivo = PerfilesNutricionales.mantenimiento;
   List<String> _estilos = [PerfilesNutricionales.libre];
   List<String> _tiposCocina = [TiposCocina.todas];
+  List<String> _utensiliosDisponibles = [];
   String _alergias = '';
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
@@ -71,6 +76,14 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     super.initState();
     cargarPlan();
     _cargarObjetivoDesdePreferencias();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DialogoOnboardingBienvenida.verificarYMostrar(context, alFinalizar: () {
+        if (mounted) {
+          _cargarObjetivoDesdePreferencias();
+          cargarPlan();
+        }
+      });
+    });
   }
 
   Future<void> _verificarAlertas() async {
@@ -114,6 +127,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         _estilos = prefs.estilos;
         _alergias = prefs.alergias;
         _tiposCocina = prefs.tiposCocina;
+        _utensiliosDisponibles = prefs.utensilios;
         objetivoActivo = objetivo;
         _alertaDescongeladoActiva = prefs.alertaDescongelado;
         _alertaFrescuraActiva = prefs.alertaFrescura;
@@ -133,6 +147,119 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       await _cargarObjetivoDesdePreferencias();
       await cargarPlan();
     }
+  }
+
+  void _mostrarCentroDeAyudaYBienvenida() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2022),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.lightbulb, color: Colors.amberAccent, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Centro de Bienvenida y Ayuda',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Jitomate y Cebolla • Guía rápida y preferencias',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white60,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.05),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFD32F2F),
+                child: Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+              ),
+              title: const Text(
+                'Tour de Inicio & Mis Preferencias 🧭',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Configura porciones, dieta, súper favorito, alergias y electrodomésticos.',
+                style: TextStyle(color: Colors.white70, fontSize: 11.5),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                DialogoOnboardingBienvenida.verificarYMostrar(context, forzar: true, alFinalizar: () {
+                  if (mounted) {
+                    _cargarObjetivoDesdePreferencias();
+                    cargarPlan();
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.05),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF2D3238),
+                child: Icon(Icons.rocket_launch_rounded, color: Color(0xFFFFB300), size: 20),
+              ),
+              title: const Text(
+                'Cómo Funciona la App & Manifiesto Rebelde 🔥',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              subtitle: const Text(
+                'Conoce los 5 pilares: IA, Batch Cooking, Modo Express y Cero Merma.',
+                style: TextStyle(color: Colors.white70, fontSize: 11.5),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Map<String, dynamic> _analizarCumplimiento() {
@@ -1089,7 +1216,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.restaurant, color: Colors.deepOrange, size: 20),
+                            Icon(Icons.restaurant, color: Color(0xFFD32F2F), size: 20),
                             SizedBox(width: 8),
                             Text(
                               'Tipo de Cocina',
@@ -1110,7 +1237,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 ),
                                 title: const Row(
                                   children: [
-                                    Icon(Icons.style, color: Colors.deepOrange),
+                                    Icon(Icons.style, color: Color(0xFFD32F2F)),
                                     SizedBox(width: 8),
                                     Text(
                                       'Deslizar Cocinas 🎴',
@@ -1132,7 +1259,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 actions: [
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepOrange,
+                                      backgroundColor: const Color(0xFFD32F2F),
                                       foregroundColor: Colors.white,
                                     ),
                                     onPressed: () => Navigator.pop(dCtx),
@@ -1142,12 +1269,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                               ),
                             );
                           },
-                          icon: const Icon(Icons.style, size: 16, color: Colors.deepOrange),
+                          icon: const Icon(Icons.style, size: 16, color: Color(0xFFD32F2F)),
                           label: const Text(
                             'Deslizar tarjetas 🎴',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.deepOrange,
+                              color: Color(0xFFD32F2F),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1171,7 +1298,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                           label: Text(tipo, style: const TextStyle(fontSize: 12)),
                           selected: seleccionado,
                           showCheckmark: false,
-                          selectedColor: Colors.deepOrange,
+                          selectedColor: const Color(0xFFD32F2F),
                           backgroundColor: Colors.grey.shade100,
                           labelStyle: TextStyle(
                             color: seleccionado ? Colors.white : Colors.black87,
@@ -1544,7 +1671,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Row(
               children: [
-                Icon(Icons.auto_awesome, color: Colors.deepOrange),
+                Icon(Icons.auto_awesome, color: Color(0xFFD32F2F)),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -1565,7 +1692,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
+                  backgroundColor: const Color(0xFFD32F2F),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1599,7 +1726,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           content: Text(
             '👨‍🍳 Chef IA preparando sugerencias autónomas para ${slotsFaltantes.length} platillos... 🍳✨',
           ),
-          backgroundColor: Colors.deepOrange,
+          backgroundColor: const Color(0xFF1E2022),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -1826,6 +1953,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
     final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
     final tiposCocinaPrompt = TiposCocina.promptChefIA(_tiposCocina);
+    final utensiliosStr = UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
     final alergiasStr = _alergias.trim().isNotEmpty
         ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
         : '';
@@ -1843,6 +1971,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     2. NUTRICIÓN: Alineado al objetivo calórico: $objetivo
     $estilosStr
     $alergiasStr
+    $utensiliosStr
+    3. DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
+    - En "descripcion" incluye OBLIGATORIAMENTE al inicio el desglose:
+      "Tiempo activo: X min | Cocción: Y min. Breve descripción..."
+    - Para Desayunos, Snacks y Cenas, prioriza platillos prácticos (≤20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
 
     REGLAS ESTRICTAS DE SUPERMERCADO Y MEDIDAS:
     - NO uses gramos (g) ni mililitros (ml) en los ingredientes.
@@ -1853,7 +1986,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     [
       {
         "titulo": "Nombre creativo y antojable del platillo",
-        "descripcion": "Descripción concisa resaltando el sabor",
+        "descripcion": "Tiempo activo: 10 min | Cocción: 15 min. Delicioso platillo balanceado con verduras salteadas.",
         "tipo_comida": "Desayuno",
         "calorias": 420,
         "macros": "Proteína: 28g | Carbos: 35g | Grasas: 12g",
@@ -1902,7 +2035,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome, color: Colors.orange),
+            Icon(Icons.auto_awesome, color: Color(0xFFD32F2F)),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1921,16 +2054,16 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFFFF5F5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: const Color(0xFFFFCDD2)),
               ),
               child: Text(
                 'Perfil activo: $detalleFiltro',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.orange.shade900,
+                  color: Color(0xFFB71C1C),
                 ),
               ),
             ),
@@ -1953,7 +2086,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange.shade800,
+              backgroundColor: const Color(0xFFD32F2F),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1987,7 +2120,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           content: Text(
             '👨‍🍳 Chef IA creando recetas a tu medida para la semana... 🍳✨',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: Color(0xFF1E2022),
           duration: Duration(seconds: 4),
         ),
       );
@@ -2002,6 +2135,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       );
 
       final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
+      final utensiliosStr = UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
       final alergiasStr = _alergias.trim().isNotEmpty
           ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
           : '';
@@ -2018,6 +2152,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       - Objetivo calórico: $objetivo
       $estilosStr
       $alergiasStr
+      $utensiliosStr
+
+      DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
+      - En "descripcion" incluye OBLIGATORIAMENTE al inicio:
+        "Tiempo activo: X min | Cocción: Y min. Breve descripción..."
+      - Para Desayuno, Cena y Snack, prioriza preparaciones rápidas (≤20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
 
       REGLA DE UNIDADES DE MEDIDA:
       - NO uses gramos (g) ni mililitros (ml) en los ingredientes.
@@ -2027,7 +2167,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       [
         {
           "titulo": "Nombre atractivo del platillo",
-          "descripcion": "Breve descripción",
+          "descripcion": "Tiempo activo: 10 min | Cocción: 15 min. Breve descripción apetitosa",
           "tipo_comida": "Desayuno",
           "calorias": 400,
           "macros": "Proteína: 25g | Carbos: 30g | Grasas: 10g",
@@ -2194,7 +2334,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome, color: Colors.orange),
+            Icon(Icons.auto_awesome, color: Color(0xFFD32F2F)),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -2216,9 +2356,9 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFFFF5F5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: const Color(0xFFFFCDD2)),
               ),
               child: Column(
                 children: [
@@ -2263,7 +2403,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange.shade800,
+              backgroundColor: const Color(0xFFD32F2F),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2291,7 +2431,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: actuales == 0 ? Colors.red.shade100 : Colors.orange.shade100,
+              color: actuales == 0 ? Colors.red.shade100 : const Color(0xFFFEF3C7),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -2299,7 +2439,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: actuales == 0 ? Colors.red.shade900 : Colors.orange.shade900,
+                color: actuales == 0 ? Colors.red.shade900 : const Color(0xFF92400E),
               ),
             ),
           ),
@@ -2320,7 +2460,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     messenger.showSnackBar(
       const SnackBar(
         content: Text('👨‍🍳 Chef IA creando platillos exclusivos para evitar repeticiones... 🍳✨'),
-        backgroundColor: Colors.orange,
+        backgroundColor: Color(0xFF1E2022),
         duration: Duration(seconds: 4),
       ),
     );
@@ -2350,6 +2490,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       );
 
       final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
+      final utensiliosStr = UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
       final alergiasStr = _alergias.trim().isNotEmpty
           ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
           : '';
@@ -2364,6 +2505,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       - Objetivo calórico: $objetivo
       $estilosStr
       $alergiasStr
+      $utensiliosStr
+
+      DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
+      - En "descripcion" incluye OBLIGATORIAMENTE al inicio:
+        "Tiempo activo: X min | Cocción: Y min. Breve descripción..."
+      - Para Desayuno, Cena y Snack, prioriza preparaciones rápidas (≤20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
 
       REGLA DE UNIDADES DE MEDIDA:
       - NO uses gramos (g) ni mililitros (ml) en los ingredientes.
@@ -2373,7 +2520,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       [
         {
           "titulo": "Nombre del platillo",
-          "descripcion": "Breve descripción",
+          "descripcion": "Tiempo activo: 10 min | Cocción: 15 min. Breve descripción apetitosa",
           "tipo_comida": "Desayuno",
           "calorias": 420,
           "macros": "Proteína: 25g | Carbos: 35g | Grasas: 12g",
@@ -2422,7 +2569,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.auto_awesome, color: Colors.orange),
+            Icon(Icons.auto_awesome, color: Color(0xFFD32F2F)),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -2444,16 +2591,16 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: const Color(0xFFFFF5F5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: const Color(0xFFFFCDD2)),
               ),
               child: Text(
                 'Meta: $objetivoActivo • Dieta: ${_estilos.join(', ')}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade900,
+                  color: Color(0xFFB71C1C),
                 ),
               ),
             ),
@@ -2471,7 +2618,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange.shade800,
+              backgroundColor: const Color(0xFFD32F2F),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2496,7 +2643,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           content: Text(
             '👨‍🍳 Chef IA creando un platillo alternativo de $tipoComida... 🍳✨',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFF1E2022),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -2512,6 +2659,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
       final estilosStr = PerfilesNutricionales.instruccionesPrompt(_estilos);
       final tiposCocinaPrompt = TiposCocina.promptChefIA(_tiposCocina);
+      final utensiliosStr = UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
       final alergiasStr = _alergias.trim().isNotEmpty
           ? '- ALERGIAS Y RESTRICCIONES (ESTRICTAMENTE PROHIBIDO USAR): ${_alergias.trim()}'
           : '';
@@ -2525,6 +2673,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       - Objetivo calórico: $objetivoActivo
       $estilosStr
       $alergiasStr
+      $utensiliosStr
+
+      DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
+      - En "descripcion" incluye OBLIGATORIAMENTE al inicio:
+        "Tiempo activo: X min | Cocción: Y min. Breve descripción..."
+      - Para Desayunos, Snacks y Cenas, prioriza platillos prácticos (≤20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
 
       REGLA DE UNIDADES DE MEDIDA:
       - NO uses gramos (g) ni mililitros (ml) en los ingredientes.
@@ -2534,7 +2688,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       [
         {
           "titulo": "Nombre atractivo del platillo",
-          "descripcion": "Breve descripción",
+          "descripcion": "Tiempo activo: 10 min | Cocción: 15 min. Breve descripción apetitosa",
           "tipo_comida": "$tipoComida",
           "calorias": 450,
           "macros": "Proteína: 30g | Carbos: 40g | Grasas: 15g",
@@ -2666,7 +2820,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No hay platillos en el planeador para exportar.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Color(0xFF1E2022),
         ),
       );
       return;
@@ -2757,6 +2911,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
               MaterialPageRoute(builder: (context) => const PantallaCarrito()),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
+            tooltip: '💡 Tour, Preferencias y Cómo Funciona',
+            onPressed: _mostrarCentroDeAyudaYBienvenida,
+          ),
         ],
       ),
       body: cargando
@@ -2796,7 +2955,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                           height: 50,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepOrange,
+                              backgroundColor: const Color(0xFFD32F2F),
                               foregroundColor: Colors.white,
                               elevation: 2,
                               shape: RoundedRectangleBorder(
@@ -2815,7 +2974,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.auto_awesome_rounded),
+                                : const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFD54F)),
                             label: Text(
                               planeandoIA
                                   ? 'Chef IA planeando tu semana...'
@@ -3030,7 +3189,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 height: 50,
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepOrange,
+                                    backgroundColor: const Color(0xFFD32F2F),
                                     foregroundColor: Colors.white,
                                     elevation: 3,
                                     shape: RoundedRectangleBorder(
@@ -3049,7 +3208,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                      : const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+                                      : const Icon(Icons.auto_awesome, color: Color(0xFFFFD54F)),
                                   label: Text(
                                     planeandoIA
                                         ? 'Chef IA planeando tu semana...'
@@ -3130,7 +3289,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                             clave: 'desayunos',
                             titulo: '🍳 Desayunos',
                             items: desayunos,
-                            colorTema: Colors.orange,
+                            colorTema: const Color(0xFFD97706),
                           ),
                           const SizedBox(height: 15),
                         ],
@@ -3139,7 +3298,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                             clave: 'comidas',
                             titulo: '🍲 Comidas',
                             items: comidas,
-                            colorTema: Colors.green,
+                            colorTema: const Color(0xFF2E7D32),
                           ),
                           const SizedBox(height: 15),
                         ],
@@ -3148,7 +3307,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                             clave: 'snacks',
                             titulo: '🍎 Snacks',
                             items: snacks,
-                            colorTema: Colors.redAccent,
+                            colorTema: const Color(0xFFBE185D),
                           ),
                           const SizedBox(height: 15),
                         ],
@@ -3157,7 +3316,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                             clave: 'cenas',
                             titulo: '🌙 Cenas',
                             items: cenas,
-                            colorTema: Colors.indigo,
+                            colorTema: const Color(0xFF4338CA),
                           ),
                           const SizedBox(height: 15),
                         ],
@@ -3381,10 +3540,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   if (calorias > 0)
                     Text(
                       '🔥 $calorias kcal',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade900,
+                        color: Color(0xFFB45309),
                       ),
                     ),
                 ],
@@ -3404,7 +3563,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   ),
                   if (fueCocinada)
                     Padding(
-                      padding: const EdgeInsets.only(top: 5),
+                       padding: const EdgeInsets.only(top: 5),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -3469,7 +3628,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   IconButton(
                     icon: const Icon(
                       Icons.auto_awesome,
-                      color: Colors.orange,
+                      color: Color(0xFFD32F2F),
                       size: 22,
                     ),
                     tooltip: 'Chef IA: Sugerir platillo diferente (guardar en mis recetas)',

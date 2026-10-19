@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,53 @@ class AlertaDescongelacion {
     this.esParaManana = false,
     this.idIdentificador = '',
   });
+}
+
+/// Preferencias y ajustes del centro de recordatorios inteligentes
+class ConfiguracionRecordatorios {
+  final bool alertaDescongelar;
+  final String horaDescongelar;
+  final bool alertaMermaRefri;
+  final int diasUmbralMerma;
+  final bool alertaAyunoIntermitente;
+  final String horaInicioVentana;
+  final String horaFinVentana;
+  final int minutosAnticipacionAyuno;
+
+  const ConfiguracionRecordatorios({
+    this.alertaDescongelar = true,
+    this.horaDescongelar = '20:00',
+    this.alertaMermaRefri = true,
+    this.diasUmbralMerma = 4,
+    this.alertaAyunoIntermitente = false,
+    this.horaInicioVentana = '12:00',
+    this.horaFinVentana = '20:00',
+    this.minutosAnticipacionAyuno = 30,
+  });
+
+  Map<String, dynamic> toMap() => {
+    'alertaDescongelar': alertaDescongelar,
+    'horaDescongelar': horaDescongelar,
+    'alertaMermaRefri': alertaMermaRefri,
+    'diasUmbralMerma': diasUmbralMerma,
+    'alertaAyunoIntermitente': alertaAyunoIntermitente,
+    'horaInicioVentana': horaInicioVentana,
+    'horaFinVentana': horaFinVentana,
+    'minutosAnticipacionAyuno': minutosAnticipacionAyuno,
+  };
+
+  factory ConfiguracionRecordatorios.fromMap(Map<String, dynamic> map) {
+    return ConfiguracionRecordatorios(
+      alertaDescongelar: map['alertaDescongelar'] ?? true,
+      horaDescongelar: map['horaDescongelar'] ?? '20:00',
+      alertaMermaRefri: map['alertaMermaRefri'] ?? true,
+      diasUmbralMerma: map['diasUmbralMerma'] ?? 4,
+      alertaAyunoIntermitente: map['alertaAyunoIntermitente'] ?? false,
+      horaInicioVentana: map['horaInicioVentana'] ?? '12:00',
+      horaFinVentana: map['horaFinVentana'] ?? '20:00',
+      minutosAnticipacionAyuno: map['minutosAnticipacionAyuno'] ?? 30,
+    );
+  }
 }
 
 class ServicioRecordatorios {
@@ -433,4 +481,404 @@ class ServicioRecordatorios {
       ),
     );
   }
+
+  static const String _keyConfigRecordatorios = 'config_recordatorios_inteligentes_v1';
+
+  /// Obtiene la configuración de recordatorios persistida en el dispositivo
+  static Future<ConfiguracionRecordatorios> obtenerConfiguracion() async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final str = sp.getString(_keyConfigRecordatorios);
+      if (str != null && str.isNotEmpty) {
+        final Map<String, dynamic> map = jsonDecode(str);
+        return ConfiguracionRecordatorios.fromMap(map);
+      }
+    } catch (e) {
+      debugPrint('Error cargando configuración de recordatorios: $e');
+    }
+    return const ConfiguracionRecordatorios();
+  }
+
+  /// Guarda la configuración de recordatorios
+  static Future<void> guardarConfiguracion(ConfiguracionRecordatorios config) async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      await sp.setString(_keyConfigRecordatorios, jsonEncode(config.toMap()));
+    } catch (e) {
+      debugPrint('Error guardando configuración de recordatorios: $e');
+    }
+  }
+
+  /// Calcula el estado actual de la ventana de alimentación / ayuno intermitente
+  static String calcularEstadoVentanaAyuno(
+    ConfiguracionRecordatorios config, {
+    DateTime? ahora,
+  }) {
+    if (!config.alertaAyunoIntermitente) {
+      return 'Monitoreo de ayuno desactivado';
+    }
+
+    final dt = ahora ?? DateTime.now();
+    final minutosActuales = dt.hour * 60 + dt.minute;
+
+    final partesInicio = config.horaInicioVentana.split(':');
+    final minutosInicio = (int.tryParse(partesInicio[0]) ?? 12) * 60 +
+        (partesInicio.length > 1 ? int.tryParse(partesInicio[1]) ?? 0 : 0);
+
+    final partesFin = config.horaFinVentana.split(':');
+    final minutosFin = (int.tryParse(partesFin[0]) ?? 20) * 60 +
+        (partesFin.length > 1 ? int.tryParse(partesFin[1]) ?? 0 : 0);
+
+    final anticipacion = config.minutosAnticipacionAyuno;
+
+    // 1. Pre-apertura
+    if (minutosActuales >= (minutosInicio - anticipacion) && minutosActuales < minutosInicio) {
+      final restantes = minutosInicio - minutosActuales;
+      return 'Apertura en $restantes min (${config.horaInicioVentana}). Prepara tu primer alimento.';
+    }
+
+    // 2. Ventana abierta
+    if (minutosActuales >= minutosInicio && minutosActuales < (minutosFin - anticipacion)) {
+      return 'Ventana de alimentación abierta (hasta las ${config.horaFinVentana})';
+    }
+
+    // 3. Pre-cierre
+    if (minutosActuales >= (minutosFin - anticipacion) && minutosActuales < minutosFin) {
+      final restantes = minutosFin - minutosActuales;
+      return '¡Cierre de ventana en $restantes min! Última ingesta recomendada.';
+    }
+
+    // 4. Período de ayuno
+    return 'En período de ayuno. Ventana abre a las ${config.horaInicioVentana}.';
+  }
+
+  /// Despliega el Centro de Recordatorios y Notificaciones Inteligentes
+  static void mostrarModalCentroRecordatorios(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _DialogoCentroRecordatoriosModal(),
+    );
+  }
 }
+
+class _DialogoCentroRecordatoriosModal extends StatefulWidget {
+  const _DialogoCentroRecordatoriosModal();
+
+  @override
+  State<_DialogoCentroRecordatoriosModal> createState() =>
+      _DialogoCentroRecordatoriosModalState();
+}
+
+class _DialogoCentroRecordatoriosModalState
+    extends State<_DialogoCentroRecordatoriosModal> {
+  ConfiguracionRecordatorios _config = const ConfiguracionRecordatorios();
+  bool _cargando = true;
+  int _alimentosEnRiesgoCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    final c = await ServicioRecordatorios.obtenerConfiguracion();
+    final alimentosRiesgo =
+        await ServicioRecordatorios.obtenerAlimentosEnRiesgoDespensa();
+    if (mounted) {
+      setState(() {
+        _config = c;
+        _alimentosEnRiesgoCount = alimentosRiesgo.length;
+        _cargando = false;
+      });
+    }
+  }
+
+  Future<void> _actualizar(ConfiguracionRecordatorios nueva) async {
+    setState(() => _config = nueva);
+    await ServicioRecordatorios.guardarConfiguracion(nueva);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final estadoAyuno = ServicioRecordatorios.calcularEstadoVentanaAyuno(_config);
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      child: _cargando
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.deepOrange),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_rounded,
+                          color: Colors.deepOrange,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Centro de Recordatorios 🔔',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Alertas automáticas de cocina, despensa y salud',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Tarjeta 1: Descongelar a las 8:00 PM
+                  _tarjetaRecordatorio(
+                    icono: Icons.ac_unit_rounded,
+                    color: Colors.blueAccent,
+                    titulo: 'Descongelar a Tiempo (${_config.horaDescongelar})',
+                    descripcion:
+                        'Avisa la noche anterior si tienes pollo, res o pescado programado en tu planeador para que baje al refrigerador sin bacterias.',
+                    activo: _config.alertaDescongelar,
+                    onChanged: (val) {
+                      _actualizar(
+                        ConfiguracionRecordatorios(
+                          alertaDescongelar: val,
+                          horaDescongelar: _config.horaDescongelar,
+                          alertaMermaRefri: _config.alertaMermaRefri,
+                          diasUmbralMerma: _config.diasUmbralMerma,
+                          alertaAyunoIntermitente: _config.alertaAyunoIntermitente,
+                          horaInicioVentana: _config.horaInicioVentana,
+                          horaFinVentana: _config.horaFinVentana,
+                          minutosAnticipacionAyuno: _config.minutosAnticipacionAyuno,
+                        ),
+                      );
+                    },
+                    accionExtra: TextButton.icon(
+                      icon: const Icon(Icons.tips_and_updates_outlined, size: 16),
+                      label: const Text('Ver Guía de Descongelado'),
+                      onPressed: () =>
+                          ServicioRecordatorios.mostrarModalTipsDescongelado(context),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Tarjeta 2: Alerta Anti-Merma (Refrigerador > 4 días)
+                  _tarjetaRecordatorio(
+                    icono: Icons.kitchen_rounded,
+                    color: Colors.teal,
+                    titulo: 'Prevención de Merma (Refri > 4 días)',
+                    descripcion:
+                        'Detecta insumos frescos que llevan más de 4 días y te sugiere recetas para aprovecharlos antes de que se desperdicien.',
+                    activo: _config.alertaMermaRefri,
+                    badgeTexto: _alimentosEnRiesgoCount > 0
+                        ? '$_alimentosEnRiesgoCount en riesgo'
+                        : '0 en riesgo ✓',
+                    colorBadge: _alimentosEnRiesgoCount > 0
+                        ? Colors.deepOrange
+                        : Colors.green,
+                    onChanged: (val) {
+                      _actualizar(
+                        ConfiguracionRecordatorios(
+                          alertaDescongelar: _config.alertaDescongelar,
+                          horaDescongelar: _config.horaDescongelar,
+                          alertaMermaRefri: val,
+                          diasUmbralMerma: _config.diasUmbralMerma,
+                          alertaAyunoIntermitente: _config.alertaAyunoIntermitente,
+                          horaInicioVentana: _config.horaInicioVentana,
+                          horaFinVentana: _config.horaFinVentana,
+                          minutosAnticipacionAyuno: _config.minutosAnticipacionAyuno,
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Tarjeta 3: Ventana de Ayuno Intermitente
+                  _tarjetaRecordatorio(
+                    icono: Icons.timer_outlined,
+                    color: Colors.purple,
+                    titulo: 'Ventana de Ayuno (${_config.horaInicioVentana} - ${_config.horaFinVentana})',
+                    descripcion:
+                        'Avisa ${_config.minutosAnticipacionAyuno} minutos antes de abrir o cerrar tu ventana de alimentación (protocolo 16:8).',
+                    activo: _config.alertaAyunoIntermitente,
+                    pieDePagina: _config.alertaAyunoIntermitente
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Estado hoy: $estadoAyuno',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.purple,
+                              ),
+                            ),
+                          )
+                        : null,
+                    onChanged: (val) {
+                      _actualizar(
+                        ConfiguracionRecordatorios(
+                          alertaDescongelar: _config.alertaDescongelar,
+                          horaDescongelar: _config.horaDescongelar,
+                          alertaMermaRefri: _config.alertaMermaRefri,
+                          diasUmbralMerma: _config.diasUmbralMerma,
+                          alertaAyunoIntermitente: val,
+                          horaInicioVentana: _config.horaInicioVentana,
+                          horaFinVentana: _config.horaFinVentana,
+                          minutosAnticipacionAyuno: _config.minutosAnticipacionAyuno,
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E2022),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Listo'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _tarjetaRecordatorio({
+    required IconData icono,
+    required Color color,
+    required String titulo,
+    required String descripcion,
+    required bool activo,
+    required ValueChanged<bool> onChanged,
+    Widget? accionExtra,
+    String? badgeTexto,
+    Color? colorBadge,
+    Widget? pieDePagina,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icono, color: color, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        titulo,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (badgeTexto != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (colorBadge ?? color).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          badgeTexto,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: colorBadge ?? color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Switch(
+                value: activo,
+                activeThumbColor: color,
+                onChanged: onChanged,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            descripcion,
+            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.3),
+          ),
+          ?pieDePagina,
+          ?accionExtra,
+        ],
+      ),
+    );
+  }
+}
+

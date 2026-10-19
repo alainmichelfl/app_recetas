@@ -189,15 +189,15 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
   Color _colorTipoComida(String? tipo) {
     switch (tipo) {
       case 'Desayuno':
-        return Colors.orange;
+        return const Color(0xFFD97706);
       case 'Comida':
-        return Colors.green.shade700;
+        return const Color(0xFF2E7D32);
       case 'Snack':
-        return Colors.redAccent;
+        return const Color(0xFFBE185D);
       case 'Cena':
-        return Colors.indigo;
+        return const Color(0xFF4338CA);
       default:
-        return Colors.teal;
+        return const Color(0xFF0D9488);
     }
   }
 
@@ -1110,10 +1110,10 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _indicadorLeyenda('Desayuno', Colors.orange, '🍳'),
-          _indicadorLeyenda('Comida', Colors.green.shade700, '🍲'),
-          _indicadorLeyenda('Snack', Colors.redAccent, '🍎'),
-          _indicadorLeyenda('Cena', Colors.indigo, '🌙'),
+          _indicadorLeyenda('Desayuno', const Color(0xFFD97706), '🍳'),
+          _indicadorLeyenda('Comida', const Color(0xFF2E7D32), '🍲'),
+          _indicadorLeyenda('Snack', const Color(0xFFBE185D), '🍎'),
+          _indicadorLeyenda('Cena', const Color(0xFF4338CA), '🌙'),
         ],
       ),
     );

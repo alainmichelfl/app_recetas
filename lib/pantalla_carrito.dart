@@ -31,6 +31,8 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   List<Map<String, dynamic>> _ultimosItems = [];
   int _ultimoTotalItems = -1;
   final Set<String> _categoriasColapsadas = {};
+  bool _modoSuperFocus = false;
+  String _filtroFocus = 'todos'; // 'todos', 'pendientes', 'comprados'
 
   @override
   void initState() {
@@ -184,14 +186,15 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   }
 
   static const List<Map<String, dynamic>> _ordenCategorias = [
-    {'nombre': 'Frutas y Verduras', 'icono': Icons.eco_outlined, 'color': Colors.green},
-    {'nombre': 'Carnes y Aves', 'icono': Icons.kebab_dining_outlined, 'color': Colors.red},
-    {'nombre': 'Pescados y Mariscos', 'icono': Icons.set_meal_outlined, 'color': Colors.teal},
-    {'nombre': 'Lácteos y Huevos', 'icono': Icons.egg_outlined, 'color': Colors.amber},
-    {'nombre': 'Panadería y Tortillería', 'icono': Icons.bakery_dining_outlined, 'color': Colors.orange},
-    {'nombre': 'Abarrotes y Alacena', 'icono': Icons.shelves, 'color': Colors.indigo},
-    {'nombre': 'Especias y Condimentos', 'icono': Icons.grain_outlined, 'color': Colors.brown},
-    {'nombre': 'Otros', 'icono': Icons.shopping_basket_outlined, 'color': Colors.blueGrey},
+    {'nombre': 'Frutas y Verduras', 'icono': Icons.eco_outlined, 'color': Colors.green, 'pasillo': 'Pasillo 1 (Entrada)'},
+    {'nombre': 'Panadería y Tortillería', 'icono': Icons.bakery_dining_outlined, 'color': Colors.orange, 'pasillo': 'Pasillo 2 (Horno)'},
+    {'nombre': 'Abarrotes y Alacena', 'icono': Icons.shelves, 'color': Colors.indigo, 'pasillo': 'Pasillo 3 (Alacena)'},
+    {'nombre': 'Especias y Condimentos', 'icono': Icons.grain_outlined, 'color': Colors.brown, 'pasillo': 'Pasillo 3 (Condimentos)'},
+    {'nombre': 'Carnes y Aves', 'icono': Icons.kebab_dining_outlined, 'color': Colors.red, 'pasillo': 'Pasillo 4 (Carnicería)'},
+    {'nombre': 'Pescados y Mariscos', 'icono': Icons.set_meal_outlined, 'color': Colors.teal, 'pasillo': 'Pasillo 4 (Pescadería)'},
+    {'nombre': 'Lácteos y Huevos', 'icono': Icons.egg_outlined, 'color': Colors.amber, 'pasillo': 'Pasillo 5 (Refrigerados)'},
+    {'nombre': 'Congelados', 'icono': Icons.ac_unit_outlined, 'color': Colors.cyan, 'pasillo': 'Pasillo 6 (Congeladores)'},
+    {'nombre': 'Otros', 'icono': Icons.shopping_basket_outlined, 'color': Colors.blueGrey, 'pasillo': 'Pasillo General'},
   ];
 
   Future<void> _compartirListaPorWhatsApp(
@@ -1482,6 +1485,32 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
+          // ⚡ Modo Supermercado Focus (Una Sola Mano)
+          IconButton(
+            tooltip: _modoSuperFocus
+                ? 'Salir de Modo Focus'
+                : 'Modo Supermercado Focus (1 Mano)',
+            icon: Icon(
+              _modoSuperFocus ? Icons.flash_on : Icons.flash_on_outlined,
+              color: _modoSuperFocus ? Colors.amberAccent : Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                _modoSuperFocus = !_modoSuperFocus;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _modoSuperFocus
+                        ? '🛒 Modo Supermercado Focus Activado: Pasillos ordenados y botones gigantes para 1 sola mano.'
+                        : 'Modo Estándar restaurado.',
+                  ),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: _modoSuperFocus ? Colors.deepOrange : Colors.black87,
+                ),
+              );
+            },
+          ),
           // 🛒 Cotizar en Supermercados
           IconButton(
             tooltip: 'Cotizar en supermercados',
@@ -1530,6 +1559,10 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 final items = snapshot.data ?? [];
                 _ultimosItems = items;
                 _verificarYRecalcular(items.length);
+
+                if (_modoSuperFocus && items.isNotEmpty) {
+                  return _construirModoSuperFocus(items);
+                }
 
                 return Column(
                   children: [
@@ -1605,42 +1638,453 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 );
               },
             ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 12, top: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              offset: const Offset(0, -3),
-              blurRadius: 6,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Insumo'),
-                  onPressed: mostrarModalAgregarManual,
+      bottomNavigationBar: _modoSuperFocus
+          ? Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E2328),
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.fullscreen_exit_rounded),
+                      label: const Text('Salir de Focus'),
+                      onPressed: () => setState(() => _modoSuperFocus = false),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.inventory_2_outlined),
+                      label: const Text(
+                        'A Despensa',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _estaCargando ? null : transferirCompradosADespensa,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              padding: const EdgeInsets.only(bottom: 12, top: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    offset: const Offset(0, -3),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Insumo'),
+                        onPressed: mostrarModalAgregarManual,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.storefront),
+                        label: const Text('Cotizar Súper'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepOrange,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _estaCargando ? null : mostrarModalCotizaciones,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.storefront),
-                  label: const Text('Cotizar Súper'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepOrange,
-                    foregroundColor: Colors.white,
+            ),
+    );
+  }
+
+  Widget _construirModoSuperFocus(List<Map<String, dynamic>> items) {
+    final int total = items.length;
+    final int comprados = items.where((i) => i['comprado'] == true).length;
+    final int pendientes = total - comprados;
+    final double progreso = total > 0 ? comprados / total : 0.0;
+
+    List<Map<String, dynamic>> itemsFiltrados = items;
+    if (_filtroFocus == 'pendientes') {
+      itemsFiltrados = items.where((i) => !(i['comprado'] ?? false)).toList();
+    } else if (_filtroFocus == 'comprados') {
+      itemsFiltrados = items.where((i) => i['comprado'] ?? false).toList();
+    }
+
+    final Map<String, List<Map<String, dynamic>>> itemsPorCategoria = {};
+    for (var c in _ordenCategorias) {
+      itemsPorCategoria[c['nombre'] as String] = [];
+    }
+    for (var item in itemsFiltrados) {
+      final cat = ConversorUnidades.determinarCategoria(item['nombre'] ?? '');
+      itemsPorCategoria.putIfAbsent(cat, () => []).add(item);
+    }
+
+    return Container(
+      color: const Color(0xFF14171A),
+      child: Column(
+        children: [
+          // Banner de progreso y control para una sola mano
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E2328),
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.amber.shade700.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade900.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.flash_on_rounded,
+                            color: Colors.amberAccent,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'MODO SUPERMERCADO FOCUS',
+                              style: TextStyle(
+                                color: Colors.amberAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Text(
+                              '$comprados de $total en el carrito',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${(progreso * 100).toInt()}%',
+                      style: TextStyle(
+                        color: progreso == 1.0 ? Colors.greenAccent : Colors.white70,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: progreso,
+                    minHeight: 8,
+                    backgroundColor: Colors.white12,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      progreso == 1.0 ? Colors.greenAccent : Colors.deepOrangeAccent,
+                    ),
                   ),
-                  onPressed: _estaCargando ? null : mostrarModalCotizaciones,
+                ),
+                const SizedBox(height: 10),
+                // Chips de filtro para cambiar de vista con el pulgar
+                Row(
+                  children: [
+                    _construirChipFiltroFocus('pendientes', 'Por Comprar ($pendientes)'),
+                    const SizedBox(width: 8),
+                    _construirChipFiltroFocus('todos', 'Todos ($total)'),
+                    const SizedBox(width: 8),
+                    _construirChipFiltroFocus('comprados', 'En Carrito ($comprados)'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Lista de Pasillos y Productos Gigantes
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 100, top: 8),
+              children: _construirSeccionesSupermercadoFocus(itemsPorCategoria),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirChipFiltroFocus(String clave, String texto) {
+    final bool activo = _filtroFocus == clave;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _filtroFocus = clave),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: activo ? Colors.amberAccent : Colors.white10,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            texto,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: activo ? Colors.black : Colors.white70,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _construirSeccionesSupermercadoFocus(
+    Map<String, List<Map<String, dynamic>>> itemsPorCategoria,
+  ) {
+    final List<Widget> widgets = [];
+    int pasilloNum = 1;
+
+    for (var catConfig in _ordenCategorias) {
+      final String nombreCat = catConfig['nombre'] as String;
+      final List<Map<String, dynamic>> itemsDeEstaCat =
+          itemsPorCategoria[nombreCat] ?? [];
+
+      if (itemsDeEstaCat.isEmpty) continue;
+
+      final String pasillo = catConfig['pasillo'] as String? ?? 'Pasillo $pasilloNum';
+      final IconData iconoCat = catConfig['icono'] as IconData;
+      final Color colorCat = catConfig['color'] as Color;
+      final int comprados = itemsDeEstaCat.where((i) => i['comprado'] == true).length;
+      final int total = itemsDeEstaCat.length;
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 6),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colorCat.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(iconoCat, color: colorCat, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pasillo.toUpperCase(),
+                      style: TextStyle(
+                        color: colorCat,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      nombreCat,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: comprados == total
+                      ? Colors.green.withValues(alpha: 0.2)
+                      : Colors.white10,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$comprados/$total',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: comprados == total ? Colors.greenAccent : Colors.white70,
+                  ),
                 ),
               ),
             ],
+          ),
+        ),
+      );
+
+      for (var item in itemsDeEstaCat) {
+        widgets.add(_construirItemFocusGigante(item));
+      }
+
+      pasilloNum++;
+    }
+
+    if (widgets.isEmpty) {
+      widgets.add(
+        const Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: Text(
+              'No hay productos en esta vista.',
+              style: TextStyle(color: Colors.white54, fontSize: 16),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _construirItemFocusGigante(Map<String, dynamic> item) {
+    final bool comprado = item['comprado'] ?? false;
+    final String nombre = item['nombre'] ?? '';
+    final cant = item['cantidad'];
+    final unidad = item['unidad_medida'] ?? '';
+    final int? idItem = item['id'];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: Material(
+        color: comprado
+            ? const Color(0xFF1E2328).withValues(alpha: 0.5)
+            : const Color(0xFF222831),
+        borderRadius: BorderRadius.circular(14),
+        elevation: comprado ? 0 : 2,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            if (idItem != null) {
+              alternarComprado(idItem, comprado);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                // Checkbox gigante táctil de 38px
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: comprado ? Colors.greenAccent.shade700 : Colors.white10,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: comprado ? Colors.greenAccent : Colors.white38,
+                      width: 2.2,
+                    ),
+                  ),
+                  child: comprado
+                      ? const Icon(Icons.check, color: Colors.white, size: 26)
+                      : null,
+                ),
+                const SizedBox(width: 14),
+                // Nombre del producto en letra grande y legible
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nombre,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: comprado ? Colors.white38 : Colors.white,
+                          decoration: comprado ? TextDecoration.lineThrough : null,
+                          decorationColor: Colors.white38,
+                          decorationThickness: 2,
+                        ),
+                      ),
+                      if (cant != null || unidad.toString().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          '${cant ?? ''} $unidad'.trim(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: comprado ? Colors.white30 : Colors.amberAccent.shade100,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Botón visual rápido "1-TAP"
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: comprado
+                        ? Colors.transparent
+                        : Colors.deepOrange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: comprado
+                          ? Colors.white10
+                          : Colors.deepOrange.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    comprado ? 'LISTO ✓' : 'TOCAR 👆',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: comprado ? Colors.white38 : Colors.deepOrangeAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

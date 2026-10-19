@@ -1,3 +1,5 @@
+import 'servicio_preferencias.dart';
+
 class UtensilioItem {
   final String id;
   final String nombre;
@@ -17,6 +19,20 @@ class UtensilioItem {
 }
 
 class UtensiliosCocina {
+  /// Carga la lista de IDs de utensilios activos desde preferencias
+  static Future<List<String>> cargarUtensiliosActivos() async {
+    final prefs = await ServicioPreferencias.obtenerPreferencias();
+    return prefs.utensilios;
+  }
+
+  /// Guarda la lista de IDs de utensilios activos en preferencias
+  static Future<void> guardarUtensiliosActivos(List<String> ids) async {
+    final prefs = await ServicioPreferencias.obtenerPreferencias();
+    await ServicioPreferencias.guardarPreferencias(
+      prefs.copyWith(utensilios: ids),
+    );
+  }
+
   static const List<UtensilioItem> catalogo = [
     UtensilioItem(
       id: 'sarten',
@@ -65,7 +81,7 @@ class UtensiliosCocina {
       icono: '🍟',
       descripcion: 'Cocción crujiente por convección rápida sin aceite',
       activoPorDefecto: false,
-      palabrasClave: ['air fryer', 'freidora de aire', 'canastilla de la freidora'],
+      palabrasClave: ['air fryer', 'airfryer', 'freidora de aire', 'canastilla de la freidora'],
     ),
     UtensilioItem(
       id: 'thermomix',

@@ -1829,6 +1829,15 @@ class ConversorUnidades {
       return 'Abarrotes y Alacena';
     }
 
+    // 8. Congelados (última parada en el supermercado)
+    if (n.contains('congelad') ||
+        n.contains('helado') ||
+        n.contains('nieve') ||
+        n.contains('hielo') ||
+        n.contains('paleta de hielo')) {
+      return 'Congelados';
+    }
+
     return 'Otros';
   }
 

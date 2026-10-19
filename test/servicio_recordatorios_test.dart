@@ -98,5 +98,71 @@ void main() {
       alerta = await ServicioRecordatorios.detectarAlertaDescongelacion(plan);
       expect(alerta, isNull);
     });
+
+    test('ConfiguracionRecordatorios valores por defecto y persistencia', () async {
+      final configDefault = await ServicioRecordatorios.obtenerConfiguracion();
+      expect(configDefault.alertaDescongelar, isTrue);
+      expect(configDefault.horaDescongelar, '20:00');
+      expect(configDefault.alertaMermaRefri, isTrue);
+      expect(configDefault.diasUmbralMerma, 4);
+      expect(configDefault.alertaAyunoIntermitente, isFalse);
+
+      final customConfig = const ConfiguracionRecordatorios(
+        alertaDescongelar: false,
+        horaDescongelar: '21:00',
+        alertaMermaRefri: true,
+        diasUmbralMerma: 5,
+        alertaAyunoIntermitente: true,
+        horaInicioVentana: '13:00',
+        horaFinVentana: '21:00',
+        minutosAnticipacionAyuno: 20,
+      );
+
+      await ServicioRecordatorios.guardarConfiguracion(customConfig);
+      final guardada = await ServicioRecordatorios.obtenerConfiguracion();
+      expect(guardada.alertaDescongelar, isFalse);
+      expect(guardada.horaDescongelar, '21:00');
+      expect(guardada.diasUmbralMerma, 5);
+      expect(guardada.alertaAyunoIntermitente, isTrue);
+      expect(guardada.horaInicioVentana, '13:00');
+      expect(guardada.horaFinVentana, '21:00');
+    });
+
+    test('calcularEstadoVentanaAyuno calcula estados de pre-apertura, abierta y pre-cierre', () {
+      const config = ConfiguracionRecordatorios(
+        alertaAyunoIntermitente: true,
+        horaInicioVentana: '12:00',
+        horaFinVentana: '20:00',
+        minutosAnticipacionAyuno: 30,
+      );
+
+      // 11:45 AM -> 15 min antes de abrir (pre-apertura)
+      final preApertura = ServicioRecordatorios.calcularEstadoVentanaAyuno(
+        config,
+        ahora: DateTime(2026, 10, 19, 11, 45),
+      );
+      expect(preApertura, contains('Apertura en 15 min'));
+
+      // 14:00 PM -> dentro de la ventana (abierta)
+      final abierta = ServicioRecordatorios.calcularEstadoVentanaAyuno(
+        config,
+        ahora: DateTime(2026, 10, 19, 14, 0),
+      );
+      expect(abierta, contains('Ventana de alimentación abierta'));
+
+      // 19:40 PM -> 20 min antes del cierre (pre-cierre)
+      final preCierre = ServicioRecordatorios.calcularEstadoVentanaAyuno(
+        config,
+        ahora: DateTime(2026, 10, 19, 19, 40),
+      );
+      expect(preCierre, contains('Cierre de ventana en 20 min'));
+
+      // 22:00 PM -> en período de ayuno
+      final ayuno = ServicioRecordatorios.calcularEstadoVentanaAyuno(
+        config,
+        ahora: DateTime(2026, 10, 19, 22, 0),
+      );
+      expect(ayuno, contains('En período de ayuno'));
+    });
   });
 }
