@@ -472,6 +472,22 @@ No incluyas markdown ni texto fuera del JSON.
   /// Identifica si un nombre de insumo corresponde a la Cava / Bar en Casa.
   static bool esItemDeCava(String nombre) {
     final n = _normalizarTexto(nombre);
+
+    // Evitar falsos positivos de alimentos comunes con la palabra blanco/tinto
+    if (n.contains('arroz') ||
+        n.contains('queso') ||
+        n.contains('pan ') ||
+        n.contains('huevo') ||
+        n.contains('vinagre') ||
+        n.contains('chocolate') ||
+        n.contains('frijol') ||
+        n.contains('cebolla') ||
+        n.contains('atun') ||
+        n.contains('pescado') ||
+        n.contains('salsa')) {
+      return false;
+    }
+
     const palabrasCava = [
       'vino',
       'tinto',

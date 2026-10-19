@@ -8,7 +8,7 @@ import 'pantalla_sommelier.dart';
 import 'servicio_ia.dart';
 import 'servicio_hogar.dart';
 import 'servicio_recordatorios.dart';
-import 'servicio_sommelier.dart';
+import 'servicio_zonas_despensa.dart';
 import 'menu_lateral.dart';
 
 class PantallaDespensa extends StatefulWidget {
@@ -22,7 +22,20 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
   final TextEditingController _itemController = TextEditingController();
   bool procesandoTicket = false;
   int _cantidadNueva = 1;
-  String _filtroCategoria = 'Todos';
+  String _filtroZona = 'Todos';
+  ZonaDespensa? _zonaParaAgregarManual;
+  Map<String, String> _overridesZonas = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarOverridesZonas();
+  }
+
+  Future<void> _cargarOverridesZonas() async {
+    final ov = await ServicioZonasDespensa.obtenerOverrides();
+    if (mounted) setState(() => _overridesZonas = ov);
+  }
 
   @override
   void dispose() {
@@ -44,14 +57,28 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
           : texto;
 
       final parsed = ConversorUnidades.parsearLineaIngrediente(textoFinal);
-      await Supabase.instance.client.from('despensa_usuario').insert({
+      final res = await Supabase.instance.client.from('despensa_usuario').insert({
         'nombre': parsed.nombre,
         'cantidad': parsed.cantidad,
         'fecha_ingreso': DateTime.now().toIso8601String().split('T')[0],
-      });
+      }).select();
+
+      if (_zonaParaAgregarManual != null) {
+        final itemGuardado = res.isNotEmpty ? res.first : {'nombre': parsed.nombre};
+        await ServicioZonasDespensa.asignarZona(
+          item: itemGuardado,
+          nuevaZona: _zonaParaAgregarManual!,
+        );
+        await _cargarOverridesZonas();
+      }
 
       _itemController.clear();
-      if (mounted) setState(() => _cantidadNueva = 1);
+      if (mounted) {
+        setState(() {
+          _cantidadNueva = 1;
+          _zonaParaAgregarManual = null;
+        });
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -62,6 +89,140 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
     } catch (e) {
       debugPrint('Error al agregar ingrediente: $e');
     }
+  }
+
+  Future<void> _cambiarZonaItem(dynamic item, ZonaDespensa nuevaZona) async {
+    await ServicioZonasDespensa.asignarZona(
+      item: item,
+      nuevaZona: nuevaZona,
+    );
+    await _cargarOverridesZonas();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${item['nombre']} guardado en ${nuevaZona.emoji} ${nuevaZona.nombre} 📍',
+        ),
+        backgroundColor: nuevaZona.color,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _mostrarModalCambiarZona(dynamic item) {
+    final zonaActual = ServicioZonasDespensa.resolverZona(item, _overridesZonas);
+    final String nombre = item['nombre']?.toString() ?? 'Ingrediente';
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: zonaActual.fondoColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(zonaActual.icono, color: zonaActual.color, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ubicación en tu Hogar 📍',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          Text(
+                            nombre,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Elige la zona física donde guardas este alimento:',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+                const SizedBox(height: 10),
+                ...ZonaDespensa.values.map((zona) {
+                  final bool esActual = zona == zonaActual;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: esActual ? zona.fondoColor : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: esActual ? zona.color : Colors.grey.shade200,
+                        width: esActual ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      leading: Text(zona.emoji, style: const TextStyle(fontSize: 22)),
+                      title: Text(
+                        zona.nombre,
+                        style: TextStyle(
+                          fontWeight: esActual ? FontWeight.bold : FontWeight.w600,
+                          color: esActual ? zona.color : Colors.black87,
+                        ),
+                      ),
+                      subtitle: Text(
+                        zona.descripcionCorta,
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      trailing: esActual
+                          ? Icon(Icons.check_circle_rounded, color: zona.color)
+                          : null,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _cambiarZonaItem(item, zona);
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _botonCantidad({
@@ -796,6 +957,117 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      'Zona:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ChoiceChip(
+                              visualDensity: VisualDensity.compact,
+                              label: const Text('Auto ⚡', style: TextStyle(fontSize: 11)),
+                              selected: _zonaParaAgregarManual == null,
+                              selectedColor: Colors.grey.shade800,
+                              labelStyle: TextStyle(
+                                color: _zonaParaAgregarManual == null
+                                    ? Colors.white
+                                    : Colors.black87,
+                                fontWeight: _zonaParaAgregarManual == null
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              onSelected: (val) {
+                                if (val) setState(() => _zonaParaAgregarManual = null);
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            ChoiceChip(
+                              visualDensity: VisualDensity.compact,
+                              label: const Text('❄️ Refri', style: TextStyle(fontSize: 11)),
+                              selected:
+                                  _zonaParaAgregarManual == ZonaDespensa.refrigerador,
+                              selectedColor: ZonaDespensa.refrigerador.color,
+                              labelStyle: TextStyle(
+                                color: _zonaParaAgregarManual ==
+                                        ZonaDespensa.refrigerador
+                                    ? Colors.white
+                                    : Colors.blue.shade900,
+                                fontWeight: _zonaParaAgregarManual ==
+                                        ZonaDespensa.refrigerador
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() => _zonaParaAgregarManual =
+                                      ZonaDespensa.refrigerador);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            ChoiceChip(
+                              visualDensity: VisualDensity.compact,
+                              label:
+                                  const Text('🧊 Congelador', style: TextStyle(fontSize: 11)),
+                              selected:
+                                  _zonaParaAgregarManual == ZonaDespensa.congelador,
+                              selectedColor: ZonaDespensa.congelador.color,
+                              labelStyle: TextStyle(
+                                color: _zonaParaAgregarManual ==
+                                        ZonaDespensa.congelador
+                                    ? Colors.white
+                                    : Colors.cyan.shade900,
+                                fontWeight: _zonaParaAgregarManual ==
+                                        ZonaDespensa.congelador
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() => _zonaParaAgregarManual =
+                                      ZonaDespensa.congelador);
+                                }
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                            ChoiceChip(
+                              visualDensity: VisualDensity.compact,
+                              label: const Text('🥫 Alacena', style: TextStyle(fontSize: 11)),
+                              selected: _zonaParaAgregarManual == ZonaDespensa.alacena,
+                              selectedColor: ZonaDespensa.alacena.color,
+                              labelStyle: TextStyle(
+                                color: _zonaParaAgregarManual == ZonaDespensa.alacena
+                                    ? Colors.white
+                                    : Colors.amber.shade900,
+                                fontWeight: _zonaParaAgregarManual ==
+                                        ZonaDespensa.alacena
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() =>
+                                      _zonaParaAgregarManual = ZonaDespensa.alacena);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -805,9 +1077,6 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
               if (mounted) setState(() {});
             },
           ),
-          _construirFiltrosDespensa(),
-          if (_filtroCategoria == 'Cava & Bar')
-            _construirBannerCavaBar(),
           Expanded(
             child: StreamBuilder(
               stream: Supabase.instance.client
@@ -824,258 +1093,86 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                 }
 
                 final despensaRaw = snapshot.data ?? [];
+                final Map<ZonaDespensa, int> conteos =
+                    ServicioZonasDespensa.contarPorZonas(
+                        despensaRaw, _overridesZonas);
                 final despensa = despensaRaw
-                    .where((item) =>
-                        _pasaFiltro((item['nombre'] ?? '').toString()))
+                    .where((item) => _pasaFiltro(item))
                     .toList();
-
-                if (despensa.isEmpty) {
-                  return RefreshIndicator(
-                    color: Colors.red.shade800,
-                    onRefresh: () async {
-                      if (mounted) setState(() {});
-                      await Future.delayed(const Duration(milliseconds: 300));
-                    },
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _filtroCategoria == 'Cava & Bar'
-                                      ? Icons.wine_bar
-                                      : Icons.kitchen_outlined,
-                                  size: 70,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 15),
-                                Text(
-                                  _filtroCategoria == 'Cava & Bar'
-                                      ? 'No tienes bebidas registradas en tu Cava'
-                                      : 'Tu despensa está vacía',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  _filtroCategoria == 'Cava & Bar'
-                                      ? 'Agrega vinos, cervezas o destilados tocando los botones de arriba'
-                                      : 'Agrega ingredientes o escanea tu ticket de compra',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final List despensaItems = despensa;
-                final porVencer = despensaItems.where((item) {
-                  final fStr = item['fecha_ingreso']?.toString();
-                  if (fStr == null) return false;
-                  final dt = DateTime.tryParse(fStr);
-                  if (dt == null) return false;
-                  return DateTime.now().difference(dt).inDays >= 4;
-                }).toList();
 
                 return Column(
                   children: [
-                    if (porVencer.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.amber.shade400,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.warning_amber_rounded,
-                              color: Colors.deepOrange,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '🚨 ${porVencer.length} ingrediente(s) por vencer',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Colors.brown.shade900,
-                                    ),
-                                  ),
-                                  Text(
-                                    porVencer.map((i) => i['nombre']).take(3).join(', '),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.brown.shade700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepOrange,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () {
-                                final listaNombres = porVencer
-                                    .map((i) => i['nombre'])
-                                    .join(', ');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PantallaChef(
-                                      ingredientesIniciales: listaNombres,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.auto_awesome, size: 16),
-                              label: const Text(
-                                'Rescatar',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    Expanded(
-                      child: RefreshIndicator(
-                        color: Colors.red.shade800,
-                        onRefresh: () async {
-                          if (mounted) setState(() {});
-                          await Future.delayed(const Duration(milliseconds: 300));
-                        },
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                          itemCount: despensaItems.length,
-                        itemBuilder: (context, index) {
-                          final item = despensaItems[index];
-                          final idItem = item['id_item'];
-                          final nombre = item['nombre'] ?? '';
-                          final cant = item['cantidad'];
-                          final cantidadTexto =
-                              ConversorUnidades.formatearParaDespensa(nombre, cant);
-
-                          final fStr = item['fecha_ingreso']?.toString();
-                          final dt = fStr != null ? DateTime.tryParse(fStr) : null;
-                          final int dias = dt != null ? DateTime.now().difference(dt).inDays : 0;
-
-                          Color semaforoColor = Colors.green;
-                          String semaforoTexto = 'Fresco 🟢';
-                          if (dias >= 7) {
-                            semaforoColor = Colors.red.shade700;
-                            semaforoTexto = '¡Por vencer! (${dias}d) 🔴';
-                          } else if (dias >= 4) {
-                            semaforoColor = Colors.orange.shade800;
-                            semaforoTexto = 'Consumir pronto (${dias}d) 🟡';
-                          }
-
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: semaforoColor.withValues(alpha: 0.1),
-                                child: Icon(Icons.inventory_2, color: semaforoColor),
-                              ),
-                              title: Text(
-                                nombre,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              subtitle: Row(
-                                children: [
-                                  Text(
-                                    cantidadTexto,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '• $semaforoTexto',
-                                    style: TextStyle(
-                                      color: semaforoColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _botonCantidad(
-                                    icono: Icons.remove,
-                                    tooltip: 'Disminuir cantidad',
-                                    onPressed: () =>
-                                        _ajustarCantidad(item, -1),
-                                  ),
-                                  _botonCantidad(
-                                    icono: Icons.add,
-                                    tooltip: 'Aumentar cantidad',
-                                    onPressed: () =>
-                                        _ajustarCantidad(item, 1),
-                                  ),
-                                  IconButton(
-                                    visualDensity: VisualDensity.compact,
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.redAccent,
-                                    ),
-                                    onPressed: () => _eliminarItem(idItem),
-                                  ),
-                                ],
-                              ),
-                              onTap: () => _editarCantidadManual(item),
-                            ),
-                          );
-                        },
-                      ),
+                    _construirFiltrosZonas(conteos, despensaRaw.length),
+                    if (_filtroZona == 'Todos' && despensaRaw.isNotEmpty)
+                      _construirBarraResumenZonas(conteos, despensaRaw.length),
+                    _construirBannerZona(
+                      _filtroZona,
+                      _filtroZona == 'congelador'
+                          ? (conteos[ZonaDespensa.congelador] ?? 0)
+                          : (_filtroZona == 'refrigerador'
+                              ? (conteos[ZonaDespensa.refrigerador] ?? 0)
+                              : (_filtroZona == 'cava'
+                                  ? (conteos[ZonaDespensa.cava] ?? 0)
+                                  : (conteos[ZonaDespensa.alacena] ?? 0))),
                     ),
-                  ),
+                    Expanded(
+                      child: despensa.isEmpty
+                          ? RefreshIndicator(
+                              color: Colors.red.shade800,
+                              onRefresh: () async {
+                                if (mounted) setState(() {});
+                                await Future.delayed(
+                                    const Duration(milliseconds: 300));
+                              },
+                              child: ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.height * 0.45,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            _filtroZona == 'cava'
+                                                ? Icons.wine_bar
+                                                : (_filtroZona == 'congelador'
+                                                    ? Icons.ac_unit_rounded
+                                                    : (_filtroZona == 'refrigerador'
+                                                        ? Icons.kitchen_rounded
+                                                        : Icons.inventory_2_outlined)),
+                                            size: 70,
+                                            color: Colors.grey[400],
+                                          ),
+                                          const SizedBox(height: 15),
+                                          Text(
+                                            _obtenerTituloVacioZona(_filtroZona),
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            _obtenerSubtituloVacioZona(_filtroZona),
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _construirListaDespensa(despensa),
+                    ),
                   ],
                 );
               },
@@ -1086,157 +1183,561 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
     );
   }
 
-  bool _pasaFiltro(String nombre) {
-    if (_filtroCategoria == 'Todos') return true;
-    if (_filtroCategoria == 'Cava & Bar') {
-      return ServicioSommelier.esItemDeCava(nombre);
-    }
-    final n = nombre.toLowerCase();
-    if (_filtroCategoria == 'Verduras & Frutas') {
-      return n.contains('jitomate') ||
-          n.contains('tomate') ||
-          n.contains('cebolla') ||
-          n.contains('ajo') ||
-          n.contains('limon') ||
-          n.contains('limón') ||
-          n.contains('zanahoria') ||
-          n.contains('papa') ||
-          n.contains('aguacate') ||
-          n.contains('lechuga') ||
-          n.contains('espinaca') ||
-          n.contains('cilantro') ||
-          n.contains('perejil') ||
-          n.contains('chile') ||
-          n.contains('calabac') ||
-          n.contains('fruta') ||
-          n.contains('manzana') ||
-          n.contains('platano') ||
-          n.contains('plátano') ||
-          n.contains('naranja') ||
-          n.contains('fresa') ||
-          n.contains('uva');
-    }
-    if (_filtroCategoria == 'Carnes & Proteínas') {
-      return n.contains('pollo') ||
-          n.contains('carne') ||
-          n.contains('res') ||
-          n.contains('puerco') ||
-          n.contains('cerdo') ||
-          n.contains('pescado') ||
-          n.contains('salmon') ||
-          n.contains('salmón') ||
-          n.contains('atun') ||
-          n.contains('atún') ||
-          n.contains('camaron') ||
-          n.contains('camarón') ||
-          n.contains('huevo') ||
-          n.contains('queso') ||
-          n.contains('jamon') ||
-          n.contains('jamón') ||
-          n.contains('tofu') ||
-          n.contains('lenteja');
-    }
-    if (_filtroCategoria == 'Alacena') {
-      return !ServicioSommelier.esItemDeCava(nombre) &&
-          !_esVerduraOProteina(n);
-    }
-    return true;
+  bool _pasaFiltro(dynamic item) {
+    if (_filtroZona == 'Todos') return true;
+    final zona = ServicioZonasDespensa.resolverZona(item, _overridesZonas);
+    return zona.id == _filtroZona;
   }
 
-  bool _esVerduraOProteina(String n) {
-    return n.contains('jitomate') ||
-        n.contains('tomate') ||
-        n.contains('cebolla') ||
-        n.contains('ajo') ||
-        n.contains('limon') ||
-        n.contains('limón') ||
-        n.contains('zanahoria') ||
-        n.contains('papa') ||
-        n.contains('aguacate') ||
-        n.contains('lechuga') ||
-        n.contains('espinaca') ||
-        n.contains('cilantro') ||
-        n.contains('perejil') ||
-        n.contains('chile') ||
-        n.contains('calabac') ||
-        n.contains('fruta') ||
-        n.contains('manzana') ||
-        n.contains('platano') ||
-        n.contains('plátano') ||
-        n.contains('naranja') ||
-        n.contains('pollo') ||
-        n.contains('carne') ||
-        n.contains('res') ||
-        n.contains('puerco') ||
-        n.contains('cerdo') ||
-        n.contains('pescado') ||
-        n.contains('salmon') ||
-        n.contains('salmón') ||
-        n.contains('atun') ||
-        n.contains('atún') ||
-        n.contains('camaron') ||
-        n.contains('camarón') ||
-        n.contains('huevo') ||
-        n.contains('queso') ||
-        n.contains('jamon') ||
-        n.contains('jamón');
-  }
-
-  Widget _construirFiltrosDespensa() {
-    final categorias = [
-      {'id': 'Todos', 'label': 'Todos', 'icon': Icons.all_inbox_rounded},
-      {'id': 'Cava & Bar', 'label': '🍷 Mi Cava & Bar', 'icon': Icons.wine_bar},
-      {'id': 'Verduras & Frutas', 'label': '🥦 Verduras', 'icon': Icons.eco},
-      {'id': 'Carnes & Proteínas', 'label': '🥩 Proteínas', 'icon': Icons.restaurant},
-      {'id': 'Alacena', 'label': '📦 Alacena', 'icon': Icons.inventory_2_outlined},
-    ];
-
+  Widget _construirFiltrosZonas(Map<ZonaDespensa, int> conteos, int total) {
     return Container(
       height: 48,
       margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListView.separated(
+      child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: categorias.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final cat = categorias[index];
-          final String catId = cat['id'] as String;
-          final bool seleccionada = _filtroCategoria == catId;
-          final bool esCava = catId == 'Cava & Bar';
-
-          return ChoiceChip(
+        children: [
+          ChoiceChip(
             label: Text(
-              cat['label'] as String,
+              'Todos ($total)',
               style: TextStyle(
-                fontWeight: seleccionada ? FontWeight.bold : FontWeight.normal,
-                color: seleccionada
-                    ? Colors.white
-                    : (esCava ? const Color(0xFF5B1228) : Colors.black87),
-                fontSize: 13,
+                fontWeight: _filtroZona == 'Todos' ? FontWeight.bold : FontWeight.normal,
+                color: _filtroZona == 'Todos' ? Colors.white : Colors.black87,
+                fontSize: 12,
               ),
             ),
-            selected: seleccionada,
-            selectedColor: esCava ? const Color(0xFF5B1228) : Colors.red.shade700,
-            backgroundColor: esCava ? const Color(0xFFFBECEF) : Colors.grey.shade100,
+            selected: _filtroZona == 'Todos',
+            selectedColor: Colors.red.shade700,
+            backgroundColor: Colors.grey.shade100,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                color: esCava
-                    ? const Color(0xFFB33951).withValues(alpha: 0.5)
-                    : (seleccionada ? Colors.transparent : Colors.grey.shade300),
+                color: _filtroZona == 'Todos' ? Colors.transparent : Colors.grey.shade300,
               ),
             ),
             onSelected: (val) {
-              if (val) {
-                setState(() => _filtroCategoria = catId);
-              }
+              if (val) setState(() => _filtroZona = 'Todos');
             },
-          );
-        },
+          ),
+          const SizedBox(width: 8),
+          ...ZonaDespensa.values.map((zona) {
+            final bool seleccionada = _filtroZona == zona.id;
+            final int count = conteos[zona] ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                avatar: Text(zona.emoji, style: const TextStyle(fontSize: 14)),
+                label: Text(
+                  '${zona.nombre} ($count)',
+                  style: TextStyle(
+                    fontWeight: seleccionada ? FontWeight.bold : FontWeight.w600,
+                    color: seleccionada ? Colors.white : zona.color,
+                    fontSize: 12,
+                  ),
+                ),
+                selected: seleccionada,
+                selectedColor: zona.color,
+                backgroundColor: zona.fondoColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: seleccionada
+                        ? Colors.transparent
+                        : zona.color.withValues(alpha: 0.35),
+                  ),
+                ),
+                onSelected: (val) {
+                  if (val) setState(() => _filtroZona = zona.id);
+                },
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
+
+  Widget _construirBarraResumenZonas(Map<ZonaDespensa, int> conteos, int total) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: ZonaDespensa.values.map((zona) {
+          final int count = conteos[zona] ?? 0;
+          return InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => setState(() => _filtroZona = zona.id),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              child: Row(
+                children: [
+                  Text(zona.emoji, style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 4),
+                  Text(
+                    zona.nombre,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: zona.fondoColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: zona.color.withValues(alpha: 0.3),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: zona.color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _construirBannerZona(String filtro, int cantidad) {
+    if (filtro == 'cava') {
+      return _construirBannerCavaBar();
+    }
+    if (filtro == 'congelador') {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.cyan.shade900, Colors.teal.shade800],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.cyan.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.ac_unit_rounded, color: Colors.cyanAccent, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🧊 Congelador Inteligente ($cantidad items)',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Text(
+                    'Porciones de Batch Cooking, carnes y verduras listas para semanas futuras.',
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (filtro == 'refrigerador') {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade900, Colors.indigo.shade800],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.kitchen_rounded, color: Colors.lightBlueAccent, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '❄️ Refrigerador ($cantidad items)',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Text(
+                    'Perecederos, lácteos y verduras frescas en monitoreo activo de vida útil.',
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (filtro == 'alacena') {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.amber.shade900, Colors.brown.shade800],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.inventory_2_rounded, color: Colors.amberAccent, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🥫 Alacena Seca ($cantidad items)',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Text(
+                    'Granos, pastas, especias y enlatados de larga conservación.',
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  String _obtenerTituloVacioZona(String filtro) {
+    switch (filtro) {
+      case 'cava':
+        return 'Tu Cava & Bar está vacía 🍾';
+      case 'congelador':
+        return 'Tu Congelador está vacío 🧊';
+      case 'refrigerador':
+        return 'Tu Refrigerador está vacío ❄️';
+      case 'alacena':
+        return 'Tu Alacena Seca está vacía 🥫';
+      default:
+        return 'Tu despensa está vacía 🧺';
+    }
+  }
+
+  String _obtenerSubtituloVacioZona(String filtro) {
+    switch (filtro) {
+      case 'cava':
+        return 'Agrega botellas de vino, cerveza o licores para recibir maridajes inteligentes.';
+      case 'congelador':
+        return 'Guarda tus porciones de batch cooking, carnes o verduras congeladas.';
+      case 'refrigerador':
+        return 'Agrega tus alimentos frescos y perecederos para monitorear su frescura.';
+      case 'alacena':
+        return 'Agrega granos, pastas, especias o enlatados de larga duración.';
+      default:
+        return 'Agrega tus primeros ingredientes arriba o escanea un ticket de compra.';
+    }
+  }
+
+  Widget _construirListaDespensa(List despensaItems) {
+    final porVencer = despensaItems.where((item) {
+      final fStr = item['fecha_ingreso']?.toString();
+      if (fStr == null) return false;
+      final dt = DateTime.tryParse(fStr);
+      if (dt == null) return false;
+      return DateTime.now().difference(dt).inDays >= 4;
+    }).toList();
+
+    return Column(
+      children: [
+        if (porVencer.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.amber.shade400,
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.deepOrange,
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '🚨 ${porVencer.length} ingrediente(s) por vencer',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.brown.shade900,
+                        ),
+                      ),
+                      Text(
+                        porVencer.map((i) => i['nombre']).take(3).join(', '),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.brown.shade700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    final listaNombres = porVencer
+                        .map((i) => i['nombre'])
+                        .join(', ');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PantallaChef(
+                          ingredientesIniciales: listaNombres,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.auto_awesome, size: 16),
+                  label: const Text(
+                    'Rescatar',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: RefreshIndicator(
+            color: Colors.red.shade800,
+            onRefresh: () async {
+              if (mounted) setState(() {});
+              await Future.delayed(const Duration(milliseconds: 300));
+            },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
+              itemCount: despensaItems.length,
+              itemBuilder: (context, index) {
+                final item = despensaItems[index];
+                final idItem = item['id_item'];
+                final nombre = item['nombre'] ?? '';
+                final cant = item['cantidad'];
+                final cantidadTexto =
+                    ConversorUnidades.formatearParaDespensa(nombre, cant);
+
+                final fStr = item['fecha_ingreso']?.toString();
+                final dt = fStr != null ? DateTime.tryParse(fStr) : null;
+                final int dias = dt != null ? DateTime.now().difference(dt).inDays : 0;
+
+                Color semaforoColor = Colors.green;
+                String semaforoTexto = 'Fresco 🟢';
+                if (dias >= 7) {
+                  semaforoColor = Colors.red.shade700;
+                  semaforoTexto = '¡Por vencer! (${dias}d) 🔴';
+                } else if (dias >= 4) {
+                  semaforoColor = Colors.orange.shade800;
+                  semaforoTexto = 'Consumir pronto (${dias}d) 🟡';
+                }
+
+                final zona = ServicioZonasDespensa.resolverZona(item, _overridesZonas);
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: zona.fondoColor,
+                      child: Icon(zona.icono, color: zona.color, size: 22),
+                    ),
+                    title: Text(
+                      nombre,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Text(
+                              cantidadTexto,
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '• $semaforoTexto',
+                              style: TextStyle(
+                                color: semaforoColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => _mostrarModalCambiarZona(item),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: zona.fondoColor,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: zona.color.withValues(alpha: 0.35),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(zona.emoji, style: const TextStyle(fontSize: 11)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  zona.nombre,
+                                  style: TextStyle(
+                                    color: zona.color,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Icon(Icons.arrow_drop_down, size: 14, color: zona.color),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _botonCantidad(
+                          icono: Icons.remove,
+                          tooltip: 'Disminuir cantidad',
+                          onPressed: () =>
+                              _ajustarCantidad(item, -1),
+                        ),
+                        _botonCantidad(
+                          icono: Icons.add,
+                          tooltip: 'Aumentar cantidad',
+                          onPressed: () =>
+                              _ajustarCantidad(item, 1),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                          ),
+                          onPressed: () => _eliminarItem(idItem),
+                        ),
+                      ],
+                    ),
+                    onTap: () => _editarCantidadManual(item),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
 
   Widget _construirBannerCavaBar() {
     final botellasComunes = [
