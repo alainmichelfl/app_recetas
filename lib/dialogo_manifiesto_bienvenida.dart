@@ -155,7 +155,7 @@ class _DialogoManifiestoBienvenidaState
                               ),
                             ),
                             child: Text(
-                              'MANIFIESTO • ${_paginaActual + 1} de 3',
+                              'MANIFIESTO • ${_paginaActual + 1} de 4',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -187,7 +187,8 @@ class _DialogoManifiestoBienvenidaState
                         children: [
                           _construirTarjeta1Manifiesto(context),
                           _construirTarjeta2ChefIA(context),
-                          _construirTarjeta3WellnessYFinanzas(context),
+                          _construirTarjeta3Wellness(context),
+                          _construirTarjeta4Finanzas(context),
                         ],
                       ),
                     ),
@@ -200,7 +201,7 @@ class _DialogoManifiestoBienvenidaState
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(3, (index) {
+                            children: List.generate(4, (index) {
                               final bool activa = _paginaActual == index;
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 250),
@@ -242,7 +243,7 @@ class _DialogoManifiestoBienvenidaState
                               const Spacer(),
                               ElevatedButton(
                                 onPressed: () {
-                                  if (_paginaActual < 2) {
+                                  if (_paginaActual < 3) {
                                     _pageController.nextPage(
                                       duration:
                                           const Duration(milliseconds: 300),
@@ -270,7 +271,7 @@ class _DialogoManifiestoBienvenidaState
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      _paginaActual == 2
+                                      _paginaActual == 3
                                           ? '¡A Cocinar! 🚀'
                                           : 'Siguiente',
                                       style: GoogleFonts.poppins(
@@ -280,7 +281,7 @@ class _DialogoManifiestoBienvenidaState
                                     ),
                                     const SizedBox(width: 6),
                                     Icon(
-                                      _paginaActual == 2
+                                      _paginaActual == 3
                                           ? Icons.check_circle_outline
                                           : Icons.arrow_forward_rounded,
                                       size: 18,
@@ -419,10 +420,12 @@ class _DialogoManifiestoBienvenidaState
               ),
             ),
             child: Text(
-              'No somos un recetario más:\nsomos tu asistente culinario inteligente, wellness & fitness tracker.',
+              'No somos otro recetario aburrido que se queda olvidado:\n'
+              'Somos tu asistente culinario con IA, coach de nutrición y wellness, y el guardián de tus finanzas.\n\n'
+              '¡Cocina en tiempo récord, come delicioso, cuida tu salud y ahorra miles de pesos al mes!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
                 height: 1.4,
@@ -457,7 +460,7 @@ class _DialogoManifiestoBienvenidaState
   }
 
   // ==========================================================
-  // 🎴 TARJETA 2: EL ASISTENTE CULINARIO IA & MANOS LIBRES
+  // 🎴 TARJETA 2: EL ASISTENTE CULINARIO IA & BATCH COOKING
   // ==========================================================
   Widget _construirTarjeta2ChefIA(BuildContext context) {
     return SingleChildScrollView(
@@ -467,7 +470,7 @@ class _DialogoManifiestoBienvenidaState
         children: [
           Center(
             child: Text(
-              '🍳 PILAR 1: ASISTENCIA CULINARIA',
+              '🍳 PILAR 1: ASISTENCIA CULINARIA & IA',
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -479,7 +482,7 @@ class _DialogoManifiestoBienvenidaState
           const SizedBox(height: 6),
           Center(
             child: Text(
-              'Cocina sin estrés ni manos sucias',
+              'Cocina en tiempo récord sin estrés',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 18,
@@ -495,7 +498,16 @@ class _DialogoManifiestoBienvenidaState
             colorIcono: Colors.amber,
             titulo: 'Chef IA con tu Despensa',
             descripcion:
-                '¿Qué tienes hoy? Inventa platillos deliciosos al instante con lo que ya compraste, sin tirar comida.',
+                '¿Qué tienes hoy en el refri? Genera recetas de autor al instante con tus insumos reales, sin tirar comida.',
+          ),
+          const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.kitchen_outlined,
+            colorIcono: Colors.orangeAccent,
+            titulo: 'Batch Cooking Dominical (2h)',
+            descripcion:
+                '¡Cocina todo tu menú semanal en solo 2 horas! 4 bloques guiados de 30 min, cronómetro y reglas de conservación.',
           ),
           const SizedBox(height: 12),
 
@@ -521,9 +533,9 @@ class _DialogoManifiestoBienvenidaState
   }
 
   // ==========================================================
-  // 🎴 TARJETA 3: WELLNESS, FITNESS TRACKER & BOLSILLO
+  // 🎴 TARJETA 3: WELLNESS, FITNESS TRACKER & SOMMELIER
   // ==========================================================
-  Widget _construirTarjeta3WellnessYFinanzas(BuildContext context) {
+  Widget _construirTarjeta3Wellness(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Column(
@@ -531,7 +543,7 @@ class _DialogoManifiestoBienvenidaState
         children: [
           Center(
             child: Text(
-              '🥗 PILAR 2: WELLNESS & BOLSILLO',
+              '🥗 PILAR 2: WELLNESS & FITNESS TRACKER',
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -543,7 +555,7 @@ class _DialogoManifiestoBienvenidaState
           const SizedBox(height: 6),
           Center(
             child: Text(
-              'Salud a tu medida y ahorro real',
+              'Tu salud a tu medida y metas biológicas',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 18,
@@ -557,27 +569,91 @@ class _DialogoManifiestoBienvenidaState
           _construirFilaBeneficio(
             icono: Icons.fitness_center_rounded,
             colorIcono: Colors.greenAccent,
-            titulo: 'Fitness & Nutrición Personalizada',
+            titulo: 'Fitness & Macros Exactos (TDEE)',
             descripcion:
-                'Metas en calorías y macros (proteína, carbos, grasas). Planes Keto, Déficit calórico o Apto para diabetes.',
+                'Cálculo metabólico de calorías, proteínas, carbos y grasas. Planes Déficit calórico, Volumen, Keto o Apto diabetes.',
           ),
           const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.timelapse_rounded,
+            colorIcono: Colors.cyanAccent,
+            titulo: 'Tracker de Ayuno Intermitente',
+            descripcion:
+                'Monitorea tus ventanas 16:8, 14:10 o 18:6 con fases biológicas en tiempo real (digestión, quema de grasa y autofagia).',
+          ),
+          const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.wine_bar_rounded,
+            colorIcono: Colors.purpleAccent,
+            titulo: 'Cava en Casa & Sommelier IA',
+            descripcion:
+                'Digitaliza tus vinos y licores para maridajes ideales o menús maridados de 3 tiempos como en restaurante.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // 🎴 TARJETA 4: FINANZAS DEL HOGAR, CLUB DEL SÚPER & CERO MERMA
+  // ==========================================================
+  Widget _construirTarjeta4Finanzas(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              '🛒 PILAR 3: FINANZAS & CLUB DEL SÚPER',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFFB300),
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              'Ahorra más de \$3,000 MXN al mes',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
 
           _construirFilaBeneficio(
             icono: Icons.compare_arrows_rounded,
             colorIcono: Colors.lightBlueAccent,
             titulo: 'Cotizador Multi-Supermercado',
             descripcion:
-                'Compara tu lista en Walmart, Soriana y La Comer para ahorrar \$300-\$600 MXN en cada súper.',
+                'Compara tu lista en Walmart, Soriana, La Comer y Central de Abasto. ¡Ahorra \$300-\$600 MXN en cada ida al súper!',
           ),
           const SizedBox(height: 12),
 
           _construirFilaBeneficio(
-            icono: Icons.family_restroom_rounded,
-            colorIcono: Colors.purpleAccent,
-            titulo: 'Hogar Familiar Compartido',
+            icono: Icons.eco_rounded,
+            colorIcono: Colors.greenAccent,
+            titulo: 'Reto Antidesperdicio Cero Merma',
             descripcion:
-                'Conecta a tu pareja y familia con el código CASA-XXXX para sincronizar despensa y compras en tiempo real.',
+                'Cocina en casa, rescata comida por vencer y gana insignias de honor (de Guardián a Inversionista Cero Merma).',
+          ),
+          const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.savings_rounded,
+            colorIcono: Colors.amberAccent,
+            titulo: 'Ahorro vs Delivery & Hogar Familiar',
+            descripcion:
+                'Descubre cuánto dinero retienes al no pedir por delivery y sincroniza despensa y compras con tu familia (CASA-XXXX).',
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'conversor_unidades.dart';
 import 'pantalla_detalle_receta.dart';
@@ -53,6 +54,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   final Set<String> _ingredientesSeleccionados = {};
   List<String> _ingredientesDespensa = [];
 
+  // 💡 Tarjeta explicativa de inicio (4 Pilares)
+  bool _mostrarBannerInicioExplicativo = true;
+
   @override
   void initState() {
     super.initState();
@@ -60,11 +64,36 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       _filtroAudiencia = widget.filtroInicial!;
     }
     cargarRecetas();
+    _cargarPreferenciaBannerInicio();
     _searchController.addListener(_filtrarRecetas);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _verificarYMostrarAgradecimiento();
       DialogoManifiestoBienvenida.verificarYMostrar(context);
     });
+  }
+
+  Future<void> _cargarPreferenciaBannerInicio() async {
+    final prefs = await SharedPreferences.getInstance();
+    final oculto = prefs.getBool('banner_inicio_explicativo_oculto_v2') ?? false;
+    if (mounted) {
+      setState(() => _mostrarBannerInicioExplicativo = !oculto);
+    }
+  }
+
+  Future<void> _ocultarBannerInicioExplicativo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('banner_inicio_explicativo_oculto_v2', true);
+    if (mounted) {
+      setState(() => _mostrarBannerInicioExplicativo = false);
+    }
+  }
+
+  Future<void> _reactivarBannerInicioExplicativo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('banner_inicio_explicativo_oculto_v2', false);
+    if (mounted) {
+      setState(() => _mostrarBannerInicioExplicativo = true);
+    }
   }
 
   @override
@@ -143,24 +172,31 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             ),
             const SizedBox(height: 14),
             _construirBeneficioItem(
-              Icons.restaurant_menu_outlined,
+              Icons.smart_toy_outlined,
               Colors.redAccent,
-              'Recetas deliciosas y saludables',
-              'Con macronutrientes, calorías y modo cocina paso a paso.',
+              'Asistente Culinario IA & Batch Cooking (2h)',
+              'Chef con tu despensa, Copiloto Thermomix & Air Fryer, voz manos libres y menú semanal en 2 horas.',
             ),
             const SizedBox(height: 10),
             _construirBeneficioItem(
-              Icons.auto_awesome,
-              Colors.deepPurpleAccent,
-              'Chef IA Inteligente',
-              'Completa tus menús semanales en un solo clic respetando tus gustos.',
+              Icons.fitness_center_outlined,
+              Colors.teal,
+              'Wellness, Macros & Ayuno Intermitente',
+              'Cálculo metabólico TDEE, déficit calórico, keto, apto diabetes y fases biológicas en tiempo real.',
             ),
             const SizedBox(height: 10),
             _construirBeneficioItem(
               Icons.savings_outlined,
               Colors.green,
-              'Ahorro en el supermercado',
-              'Cotiza tu carrito en vivo en Walmart, Soriana, La Comer y Central de Abasto.',
+              'Finanzas, Club del Súper & Cero Merma',
+              'Cotiza en Walmart, Soriana y La Comer, gana insignias antidesperdicio y ahorra +\$3,000 MXN/mes vs delivery.',
+            ),
+            const SizedBox(height: 10),
+            _construirBeneficioItem(
+              Icons.family_restroom_outlined,
+              Colors.deepPurpleAccent,
+              'Despensa Inteligente & Hogar Compartido',
+              'Sincroniza despensa y compras en vivo con tu pareja y familia mediante el código CASA-XXXX.',
             ),
           ],
         ),
@@ -1484,8 +1520,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
           IconButton(
             icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
-            tooltip: '💡 Nuestro Manifiesto: Conoce la App',
+            tooltip: '💡 Manifiesto y Tarjetas: Conoce la App',
             onPressed: () {
+              _reactivarBannerInicioExplicativo();
               DialogoManifiestoBienvenida.verificarYMostrar(context, forzar: true);
             },
           ),
@@ -1735,7 +1772,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     child: recetasFiltradas.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(15),
                             children: [
+                              if (_mostrarBannerInicioExplicativo &&
+                                  _searchController.text.trim().isEmpty &&
+                                  _ingredientesSeleccionados.isEmpty)
+                                _construirTarjetaExplicativaInicio(),
                               SizedBox(
                                 height: MediaQuery.of(context).size.height * 0.45,
                                 child: Center(
@@ -1761,13 +1803,27 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                               ),
                             ],
                           )
-                        : ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.all(15),
-                            itemCount: recetasFiltradas.length,
-                    itemBuilder: (context, index) {
-                      final receta = recetasFiltradas[index];
-                      final titulo = receta['titulo'] ?? 'Sin título';
+                        : Builder(
+                            builder: (context) {
+                              final bool mostrarBanner =
+                                  _mostrarBannerInicioExplicativo &&
+                                  _searchController.text.trim().isEmpty &&
+                                  _ingredientesSeleccionados.isEmpty;
+                              final int totalItems = recetasFiltradas.length +
+                                  (mostrarBanner ? 1 : 0);
+
+                              return ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.all(15),
+                                itemCount: totalItems,
+                                itemBuilder: (context, index) {
+                                  if (mostrarBanner && index == 0) {
+                                    return _construirTarjetaExplicativaInicio();
+                                  }
+                                  final int indiceReceta =
+                                      mostrarBanner ? index - 1 : index;
+                                  final receta = recetasFiltradas[indiceReceta];
+                                  final titulo = receta['titulo'] ?? 'Sin título';
                       final imagen = receta['imagen_url'];
                       final tipo = receta['tipo_comida'] ?? 'General';
                       final descripcion =
@@ -2161,8 +2217,291 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                         ),
                       );
                     },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  // 🎴 TARJETA EXPLICATIVA DE INICIO: LOS 4 PILARES DE LA APP
+  // ==========================================================
+  Widget _construirTarjetaExplicativaInicio() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF23252E), Color(0xFF16171D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
+          width: 1.4,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD32F2F).withValues(alpha: 0.14),
+            blurRadius: 18,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cabecera con título e ícono de cierre
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 4),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFD32F2F).withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text('🍅🧅', style: TextStyle(fontSize: 18)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¿CÓMO FUNCIONA LA APP?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFFFB300),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        'Los 4 Pilares de Jitomate y Cebolla',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
+                  tooltip: 'Ocultar tarjeta',
+                  onPressed: _ocultarBannerInicioExplicativo,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Mucho más que un recetario: tu asistente culinario con IA, wellness y finanzas del hogar.',
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: Colors.white70,
+                height: 1.35,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Carrusel horizontal de las 4 tarjetas explicativas
+          SizedBox(
+            height: 140,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              children: [
+                _construirMiniTarjetaPilar(
+                  icono: Icons.smart_toy_outlined,
+                  colorIcono: Colors.amber,
+                  numero: '01',
+                  titulo: 'Asistencia IA & Batch',
+                  descripcion:
+                      'Chef con tu refri, Copiloto Thermomix/Air Fryer y cocina semanal en 2h.',
+                  etiqueta: 'Chef & Batch Cooking',
+                ),
+                _construirMiniTarjetaPilar(
+                  icono: Icons.fitness_center_rounded,
+                  colorIcono: Colors.greenAccent,
+                  numero: '02',
+                  titulo: 'Wellness & Macros',
+                  descripcion:
+                      'Metas TDEE, déficit calórico, keto y reloj de ayuno en tiempo real.',
+                  etiqueta: 'Salud & Nutrición',
+                ),
+                _construirMiniTarjetaPilar(
+                  icono: Icons.compare_arrows_rounded,
+                  colorIcono: Colors.lightBlueAccent,
+                  numero: '03',
+                  titulo: 'Cotizador de Súper',
+                  descripcion:
+                      'Walmart vs Soriana vs La Comer. Ahorra +\$3,000 MXN/mes vs delivery.',
+                  etiqueta: 'Club del Súper',
+                ),
+                _construirMiniTarjetaPilar(
+                  icono: Icons.eco_rounded,
+                  colorIcono: Colors.tealAccent,
+                  numero: '04',
+                  titulo: 'Cero Merma & Hogar',
+                  descripcion:
+                      'Racha antidesperdicio con insignias y despensa sincronizada (CASA-XXXX).',
+                  etiqueta: 'Desperdicio Cero',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Botones inferiores de acción
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      DialogoManifiestoBienvenida.verificarYMostrar(
+                        context,
+                        forzar: true,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD32F2F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 4,
+                      shadowColor:
+                          const Color(0xFFD32F2F).withValues(alpha: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.rocket_launch_rounded, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Ver Manifiesto Rebelde Completo 🔥',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _ocultarBannerInicioExplicativo,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white60,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: Text(
+                    'Ocultar',
+                    style: GoogleFonts.poppins(fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirMiniTarjetaPilar({
+    required IconData icono,
+    required Color colorIcono,
+    required String numero,
+    required String titulo,
+    required String descripcion,
+    required String etiqueta,
+  }) {
+    return Container(
+      width: 205,
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colorIcono.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icono, color: colorIcono, size: 16),
+              ),
+              const Spacer(),
+              Text(
+                numero,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white30,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Expanded(
+            child: Text(
+              descripcion,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                color: Colors.white70,
+                height: 1.3,
+              ),
+            ),
           ),
         ],
       ),
