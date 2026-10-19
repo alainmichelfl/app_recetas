@@ -2609,6 +2609,8 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           'Mi Planeador 📅',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: const Color(0xFF1E2022),
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month_outlined),

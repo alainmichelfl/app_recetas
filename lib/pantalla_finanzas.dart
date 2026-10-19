@@ -740,10 +740,10 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       ),
       body: _cargando
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepOrange),
+              child: CircularProgressIndicator(color: Color(0xFFD32F2F)),
             )
           : RefreshIndicator(
-              color: Colors.deepOrange,
+              color: const Color(0xFFD32F2F),
               onRefresh: _cargarTodoFinanzas,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),

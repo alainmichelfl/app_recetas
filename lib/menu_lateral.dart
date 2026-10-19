@@ -488,6 +488,68 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
+  Widget _construirMenuBienestarYFinanzasConSubmenu(BuildContext context) {
+    final bool esGrupoActivo = rutaActual == 'salud' || rutaActual == 'finanzas';
+    const Color colorGrupo = Color(0xFF00695C); // Verde Pino / Balance Bienestar
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: esGrupoActivo,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.health_and_safety_outlined,
+              color: esGrupoActivo ? Colors.white : colorGrupo,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            'Bienestar y Finanzas',
+            style: TextStyle(
+              fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
+              color: esGrupoActivo ? colorGrupo : Colors.black87,
+              fontSize: 15,
+            ),
+          ),
+          children: [
+            _construirSubItem(
+              context: context,
+              ruta: 'salud',
+              titulo: 'Mi Salud',
+              subtitulo: 'Calorías, macros e hidratación',
+              icono: Icons.favorite,
+              colorIcono: Colors.pinkAccent,
+              pantalla: () => const PantallaSalud(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'finanzas',
+              titulo: 'Mis Finanzas',
+              subtitulo: 'Presupuesto, gastos y tickets',
+              icono: Icons.account_balance_wallet,
+              colorIcono: Colors.indigo,
+              pantalla: () => const PantallaFinanzas(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
@@ -619,6 +681,7 @@ class MenuLateral extends StatelessWidget {
                   _construirMenuPlaneadorConSubmenu(context),
                   _construirMenuDespensaYComprasConSubmenu(context),
                   _construirMenuAsistentesIAConSubmenu(context),
+                  _construirMenuBienestarYFinanzasConSubmenu(context),
 
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -628,7 +691,7 @@ class MenuLateral extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: Text(
-                      'BIENESTAR Y AJUSTES',
+                      'AJUSTES Y COMUNIDAD',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -639,26 +702,10 @@ class MenuLateral extends StatelessWidget {
                   ),
                   _construirItem(
                     context: context,
-                    ruta: 'salud',
-                    titulo: 'Mi Salud',
-                    icono: Icons.favorite,
-                    colorIcono: Colors.pinkAccent,
-                    pantalla: () => const PantallaSalud(),
-                  ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'finanzas',
-                    titulo: 'Mis Finanzas',
-                    icono: Icons.account_balance_wallet,
-                    colorIcono: Colors.indigo,
-                    pantalla: () => const PantallaFinanzas(),
-                  ),
-                  _construirItem(
-                    context: context,
                     ruta: 'preferencias',
                     titulo: 'Mis Preferencias',
-                    icono: Icons.settings,
-                    colorIcono: Colors.blueGrey,
+                    icono: Icons.tune,
+                    colorIcono: const Color(0xFF455A64),
                     pantalla: () => const PantallaPreferencias(),
                   ),
                   ListTile(
@@ -716,12 +763,12 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.deepOrange.withValues(alpha: 0.15),
+                        color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.install_mobile,
-                        color: Colors.deepOrange,
+                        color: Color(0xFFD32F2F),
                         size: 20,
                       ),
                     ),
@@ -736,7 +783,7 @@ class MenuLateral extends StatelessWidget {
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.deepOrange.withValues(alpha: 0.15),
+                        color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -744,7 +791,7 @@ class MenuLateral extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Colors.deepOrange,
+                          color: Color(0xFFD32F2F),
                         ),
                       ),
                     ),

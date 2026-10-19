@@ -1475,7 +1475,12 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text('Lista de Compras'),
+        title: const Text(
+          'Lista de Compras 🛒',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1E2022),
+        foregroundColor: Colors.white,
         actions: [
           // 🛒 Cotizar en Supermercados
           IconButton(

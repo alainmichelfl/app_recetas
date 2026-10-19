@@ -398,7 +398,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     const Row(
                       children: [
                         Icon(Icons.kitchen_rounded,
-                            color: Colors.deepOrange, size: 24),
+                            color: Color(0xFFD32F2F), size: 24),
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -483,7 +483,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                         const SizedBox(width: 8),
                         IconButton(
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
+                            backgroundColor: const Color(0xFFD32F2F),
                             foregroundColor: Colors.white,
                           ),
                           icon: const Icon(Icons.add, size: 20),
@@ -611,7 +611,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                           flex: 2,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepOrange,
+                              backgroundColor: const Color(0xFFD32F2F),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -665,8 +665,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.orange[800]!,
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFD32F2F),
               onPrimary: Colors.white,
               onSurface: Colors.black87,
             ),
@@ -734,7 +734,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            Icon(Icons.auto_fix_high, color: Colors.orange),
+            Icon(Icons.auto_fix_high, color: Color(0xFFD32F2F)),
             SizedBox(width: 10),
             Expanded(child: Text('Pulir con IA ✨')),
           ],
@@ -749,7 +749,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange[800],
+              backgroundColor: const Color(0xFFD32F2F),
               foregroundColor: Colors.white,
             ),
             onPressed: () {
@@ -843,7 +843,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               ),
               title: const Row(
                 children: [
-                  Icon(Icons.auto_fix_high, color: Colors.orange),
+                  Icon(Icons.auto_fix_high, color: Color(0xFFD32F2F)),
                   SizedBox(width: 10),
                   Expanded(child: Text('Perfeccionando Recetas')),
                 ],
@@ -854,8 +854,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 children: [
                   LinearProgressIndicator(
                     value: progreso,
-                    color: Colors.orange,
-                    backgroundColor: Colors.orange.shade100,
+                    color: const Color(0xFFD32F2F),
+                    backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.15),
                   ),
                   const SizedBox(height: 15),
                   Text(
@@ -1109,8 +1109,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 const SizedBox(height: 20),
                 ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Colors.orange.withValues(alpha: 0.15),
-                    child: const Icon(Icons.camera_alt, color: Colors.orange),
+                    backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                    child: const Icon(Icons.camera_alt, color: Color(0xFFD32F2F)),
                   ),
                   title: const Text(
                     'Tomar foto con la cámara',
@@ -1185,7 +1185,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: Colors.orange),
+                CircularProgressIndicator(color: Color(0xFFD32F2F)),
                 SizedBox(height: 15),
                 Text(
                   'Digitalizando receta con IA... 🔍✨',
@@ -1296,7 +1296,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[800],
+                backgroundColor: const Color(0xFFD32F2F),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1514,7 +1514,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 value: 'carga_mensual',
                 child: Row(
                   children: [
-                    Icon(Icons.rocket_launch, color: Colors.deepOrange),
+                    Icon(Icons.rocket_launch, color: Color(0xFFD32F2F)),
                     SizedBox(width: 10),
                     Text('Carga Masiva Mensual (20 IA) 🚀'),
                   ],
@@ -1524,7 +1524,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 value: 'sanitizar',
                 child: Row(
                   children: [
-                    Icon(Icons.auto_fix_high, color: Colors.orange),
+                    Icon(Icons.auto_fix_high, color: Color(0xFFD32F2F)),
                     SizedBox(width: 10),
                     Text('Pulir ortografía y formato ✨'),
                   ],
@@ -1727,10 +1727,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           Expanded(
             child: cargando
                 ? const Center(
-                    child: CircularProgressIndicator(color: Colors.orange),
+                    child: CircularProgressIndicator(color: Color(0xFFD32F2F)),
                   )
                 : RefreshIndicator(
-                    color: Colors.orange.shade800,
+                    color: const Color(0xFFD32F2F),
                     onRefresh: cargarRecetas,
                     child: recetasFiltradas.isEmpty
                         ? ListView(
@@ -1809,12 +1809,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       return Container(
                                         width: 60,
                                         height: 60,
-                                        color: Colors.orange.withValues(
-                                          alpha: 0.1,
+                                        color: const Color(0xFFD32F2F).withValues(
+                                          alpha: 0.08,
                                         ),
                                         child: const Icon(
                                           Icons.restaurant,
-                                          color: Colors.orange,
+                                          color: Color(0xFFD32F2F),
                                         ),
                                       );
                                     },
@@ -1822,10 +1822,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 : Container(
                                     width: 60,
                                     height: 60,
-                                    color: Colors.orange.withValues(alpha: 0.1),
+                                    color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
                                     child: const Icon(
                                       Icons.restaurant,
-                                      color: Colors.orange,
+                                      color: Color(0xFFD32F2F),
                                     ),
                                   ),
                           ),
@@ -1850,14 +1850,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.withValues(alpha: 0.1),
+                                      color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       tipo,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 11,
-                                        color: Colors.orange[800],
+                                        color: Color(0xFFD32F2F),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

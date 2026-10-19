@@ -30,7 +30,7 @@ class PantallaDetalleReceta extends StatefulWidget {
 }
 
 class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
-  final Color naranjaZanahoria = const Color(0xFFF57C00);
+  final Color naranjaZanahoria = const Color(0xFFD32F2F);
   final Color rojoJitomate = const Color(0xFFD32F2F);
 
   int porcionesOriginales = 1;
