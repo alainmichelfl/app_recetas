@@ -424,26 +424,61 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
             pinned: true,
             backgroundColor: const Color(0xFF1E2022),
             foregroundColor: Colors.white,
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withValues(alpha: 0.45),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  tooltip: 'Regresar a recetas',
-                  onPressed: () => Navigator.pop(context),
+            leadingWidth: 64,
+            leading: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(22),
+                  onTap: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      Navigator.of(context).pushReplacementNamed('/');
+                    }
+                  },
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white30, width: 1.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black45,
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ),
             ),
             actions: [
               IconButton(
-                icon: Icon(
-                  _registroCocina != null
-                      ? Icons.check_circle
-                      : Icons.check_circle_outline,
-                  color: _registroCocina != null
-                      ? Colors.lightGreenAccent
-                      : Colors.white,
+                icon: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30, width: 1.0),
+                  ),
+                  child: Icon(
+                    _registroCocina != null
+                        ? Icons.check_circle
+                        : Icons.check_circle_outline,
+                    color: _registroCocina != null
+                        ? Colors.lightGreenAccent
+                        : Colors.white,
+                    size: 20,
+                  ),
                 ),
                 tooltip: _registroCocina != null
                     ? '¡Ya preparada ${_registroCocina!.veces} ${_registroCocina!.veces == 1 ? "vez" : "veces"}! (Toca para volver a marcar)'
@@ -452,7 +487,15 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               ),
               if (_puedeEliminar)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.white),
+                  icon: Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white30, width: 1.0),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                  ),
                   tooltip: ServicioAdmin.esAdmin()
                       ? 'Eliminar receta (Administrador)'
                       : 'Eliminar mi receta',
@@ -460,12 +503,25 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsetsDirectional.only(
+                start: 72,
+                end: 72,
+                bottom: 16,
+              ),
               title: Text(
                 widget.titulo,
                 style: const TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                  fontSize: 16,
+                  shadows: [
+                    Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
+                    Shadow(color: Colors.black, blurRadius: 20),
+                    Shadow(color: Colors.black, blurRadius: 4),
+                  ],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
               background: Stack(
@@ -474,20 +530,38 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                   widget.imagenUrl != null && widget.imagenUrl!.isNotEmpty
                       ? Image.network(widget.imagenUrl!, fit: BoxFit.cover)
                       : Container(
-                          color: naranjaZanahoria.withValues(alpha: 0.2),
-                          child: Icon(
+                          color: const Color(0xFF1E2022),
+                          child: const Icon(
                             Icons.restaurant,
                             size: 80,
-                            color: naranjaZanahoria,
+                            color: Colors.white38,
                           ),
                         ),
+                  // Scrim general para evitar contrastes extremos en imágenes claras
+                  Container(color: Colors.black.withValues(alpha: 0.20)),
+                  // Gradiente superior para botones
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [Colors.black87, Colors.transparent],
+                      ),
+                    ),
+                  ),
+                  // Gradiente inferior profundo y amplio para el título
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
-                        colors: [Colors.black87, Colors.transparent],
-                        stops: [0.0, 0.4],
+                        colors: [
+                          Colors.black,
+                          Colors.black87,
+                          Colors.black45,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.35, 0.65, 1.0],
                       ),
                     ),
                   ),
@@ -503,6 +577,18 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // 🏷️ TÍTULO PRINCIPAL DESTACADO EN LA FICHA
+                  Text(
+                    widget.titulo,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E2022),
+                      letterSpacing: -0.5,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // 🍳 BANNER DE RECETA YA COCINADA / PREPARADA
                   if (_registroCocina != null) ...[
                     Container(
