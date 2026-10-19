@@ -23,6 +23,8 @@ import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'servicio_recordatorios.dart';
 import 'servicio_exportar_calendario.dart';
+import 'dialogo_batch_cooking.dart';
+import 'servicio_finanzas_domesticas.dart';
 import 'menu_lateral.dart';
 
 // Constante global de primer nivel para evitar errores de null en Hot Reload
@@ -742,6 +744,103 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     );
   }
 
+  /// 🍱 Asistente de Batch Cooking & Prep Day Dominical
+  Widget _construirBannerBatchCooking() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF263238), Color(0xFF1E2022)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            DialogoBatchCooking.mostrar(
+              context,
+              planSemanal: miPlan,
+              objetivoNutricional: objetivoActivo,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.soup_kitchen, color: Colors.orangeAccent, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Batch Cooking Dominical 🍱',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amberAccent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Prep Day 2h',
+                              style: TextStyle(
+                                color: Colors.amberAccent,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        miPlan.isNotEmpty
+                            ? 'Prepara en bloque tus comidas (${miPlan.length} agendadas) y ahorra 10h entre semana.'
+                            : 'Guía de 2 horas para cocinar bases, proteínas y ensaladas en bloque.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 14),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> cargarPlan() async {
     setState(() => cargando = true);
     try {
@@ -836,6 +935,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       idPlaneador: idPlaneador,
       origen: 'planeador',
     );
+
+    // 🏆 P25: Sumar automáticamente a la racha del Reto Cero Merma
+    ServicioFinanzasDomesticas.registrarDiaSinDesperdicio(
+      razon: 'Receta cocinada: $titulo',
+    ).ignore();
 
     List<String> descontados = [];
     if (resultado == 'marcar_y_descontar') {
@@ -2613,6 +2717,15 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.soup_kitchen),
+            tooltip: 'Batch Cooking Dominical 🍱',
+            onPressed: () => DialogoBatchCooking.mostrar(
+              context,
+              planSemanal: miPlan,
+              objetivoNutricional: objetivoActivo,
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_month_outlined),
             tooltip: 'Calendario de Comidas',
             onPressed: () => Navigator.push(
@@ -2819,6 +2932,8 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                           ],
                         ),
                         const SizedBox(height: 10),
+                        // 🍱 Asistente de Batch Cooking Dominical (Prep Day 2h)
+                        _construirBannerBatchCooking(),
                         // 💡 Banner de Recordatorio de Despensa
                         Container(
                           padding: const EdgeInsets.all(12),

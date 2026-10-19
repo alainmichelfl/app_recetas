@@ -1,4 +1,74 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'servicio_historial_cocina.dart';
+
+/// Insignia desbloqueable del Reto Culinario Antidesperdicio
+class InsigniaZeroWaste {
+  final String id;
+  final String titulo;
+  final String subtitulo;
+  final int diasRequeridos;
+  final IconData icono;
+  final Color color;
+  final bool desbloqueada;
+
+  const InsigniaZeroWaste({
+    required this.id,
+    required this.titulo,
+    required this.subtitulo,
+    required this.diasRequeridos,
+    required this.icono,
+    required this.color,
+    required this.desbloqueada,
+  });
+}
+
+/// Estado actual de la racha antidesperdicio y gamificación
+class EstadoRachaZeroWaste {
+  final int diasRacha;
+  final int recordHistorico;
+  final bool registradoHoy;
+  final List<InsigniaZeroWaste> insignias;
+  final InsigniaZeroWaste? proximaInsignia;
+  final double progresoProxima; // 0.0 a 1.0
+  final int diasFaltantesProxima;
+  final double ahorroEstimadoAcumulado;
+
+  const EstadoRachaZeroWaste({
+    required this.diasRacha,
+    required this.recordHistorico,
+    required this.registradoHoy,
+    required this.insignias,
+    this.proximaInsignia,
+    required this.progresoProxima,
+    required this.diasFaltantesProxima,
+    required this.ahorroEstimadoAcumulado,
+  });
+}
+
+/// Desafío mensual de ahorro familiar ("Club del Súper")
+class DesafioAhorroMensual {
+  final double metaAhorroMensual;
+  final double ahorroLogradoMes;
+  final double porcentajeCumplido; // 0 a 100%+
+  final int diasRestantesMes;
+  final int comidasCaserasMes;
+  final String estadoMensaje;
+  final String metafora;
+
+  const DesafioAhorroMensual({
+    required this.metaAhorroMensual,
+    required this.ahorroLogradoMes,
+    required this.porcentajeCumplido,
+    required this.diasRestantesMes,
+    required this.comidasCaserasMes,
+    required this.estadoMensaje,
+    required this.metafora,
+  });
+}
 
 /// Modelo de artículo con costo por gramo de proteína
 class ItemProteina {
@@ -310,4 +380,265 @@ class ServicioFinanzasDomesticas {
       ),
     ];
   }
+
+  // =========================================================================
+  // 4. RETO CULINARIO ANTIDESPERDICIO (ZERO-WASTE STREAK & INSIGNIAS)
+  // =========================================================================
+
+  static const String _keyRachaActual = 'zero_waste_racha_actual_v1';
+  static const String _keyRecordHistorico = 'zero_waste_record_historico_v1';
+  static const String _keyUltimaFecha = 'zero_waste_ultima_fecha_v1';
+  static const String _keyMetaAhorroMensual = 'meta_ahorro_mensual_familiar_v1';
+
+  /// Catálogo de las 4 insignias del Reto Antidesperdicio
+  static List<InsigniaZeroWaste> _catalogoInsignias(int diasEfectivos) {
+    return [
+      InsigniaZeroWaste(
+        id: 'guardian_despensa',
+        titulo: 'Guardián de la Despensa 🛡️',
+        subtitulo: '3 días continuos cocinando sin merma',
+        diasRequeridos: 3,
+        icono: Icons.shield_outlined,
+        color: const Color(0xFF2E7D32), // Verde bosque
+        desbloqueada: diasEfectivos >= 3,
+      ),
+      InsigniaZeroWaste(
+        id: 'chef_consciente',
+        titulo: 'Chef Consciente 🌱',
+        subtitulo: '7 días continuos de aprovechamiento total',
+        diasRequeridos: 7,
+        icono: Icons.eco_outlined,
+        color: const Color(0xFF00897B), // Teal esmeralda
+        desbloqueada: diasEfectivos >= 7,
+      ),
+      InsigniaZeroWaste(
+        id: 'maestro_cero_merma',
+        titulo: 'Maestro Cero Merma 🏆',
+        subtitulo: '14 días de maestría culinaria sin desperdicio',
+        diasRequeridos: 14,
+        icono: Icons.emoji_events_outlined,
+        color: const Color(0xFFF57C00), // Ámbar dorado
+        desbloqueada: diasEfectivos >= 14,
+      ),
+      InsigniaZeroWaste(
+        id: 'inversionista_super',
+        titulo: 'Inversionista del Súper 💰',
+        subtitulo: '30 días optimizando el patrimonio de tu cocina',
+        diasRequeridos: 30,
+        icono: Icons.savings_outlined,
+        color: const Color(0xFF6A1B9A), // Púrpura real
+        desbloqueada: diasEfectivos >= 30,
+      ),
+    ];
+  }
+
+  static String _formatearFechaSimple(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  /// Obtiene el estado actual de la racha antidesperdicio
+  static Future<EstadoRachaZeroWaste> obtenerEstadoRachaZeroWaste() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int savedRacha = prefs.getInt(_keyRachaActual) ?? 0;
+    final int recordHistorico = prefs.getInt(_keyRecordHistorico) ?? savedRacha;
+    final String? ultimaFechaStr = prefs.getString(_keyUltimaFecha);
+
+    final hoy = DateTime.now();
+    final fechaHoy = DateTime(hoy.year, hoy.month, hoy.day);
+
+    int diasRacha = savedRacha;
+    bool registradoHoy = false;
+
+    if (ultimaFechaStr != null && ultimaFechaStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(ultimaFechaStr);
+      if (parsed != null) {
+        final fechaUltima = DateTime(parsed.year, parsed.month, parsed.day);
+        final diff = fechaHoy.difference(fechaUltima).inDays;
+
+        if (diff == 0) {
+          registradoHoy = true;
+          diasRacha = savedRacha;
+        } else if (diff == 1) {
+          // Racha vigente de ayer, aún pendiente de registrar hoy
+          registradoHoy = false;
+          diasRacha = savedRacha;
+        } else {
+          // Se rompió la racha al pasar más de 1 día sin registrar
+          registradoHoy = false;
+          diasRacha = 0;
+          await prefs.setInt(_keyRachaActual, 0);
+        }
+      }
+    } else {
+      diasRacha = 0;
+      registradoHoy = false;
+    }
+
+    final int diasParaInsignias = max(diasRacha, recordHistorico);
+    final insignias = _catalogoInsignias(diasParaInsignias);
+
+    // Calcular la próxima insignia por desbloquear
+    InsigniaZeroWaste? proxima;
+    for (var ins in insignias) {
+      if (!ins.desbloqueada) {
+        proxima = ins;
+        break;
+      }
+    }
+
+    double progresoProxima = 1.0;
+    int diasFaltantes = 0;
+    if (proxima != null) {
+      diasFaltantes = max(0, proxima.diasRequeridos - diasRacha);
+      progresoProxima = (diasRacha / proxima.diasRequeridos).clamp(0.0, 1.0);
+    }
+
+    // Ahorro estimado: cada día cocinando en casa sin merma genera un promedio de $85 MXN
+    final double ahorroEstimado = diasRacha * 85.0;
+
+    return EstadoRachaZeroWaste(
+      diasRacha: diasRacha,
+      recordHistorico: max(recordHistorico, diasRacha),
+      registradoHoy: registradoHoy,
+      insignias: insignias,
+      proximaInsignia: proxima,
+      progresoProxima: progresoProxima,
+      diasFaltantesProxima: diasFaltantes,
+      ahorroEstimadoAcumulado: ahorroEstimado,
+    );
+  }
+
+  /// Registra un día de cocina sin merma / desperdicio, avanzando la racha
+  static Future<EstadoRachaZeroWaste> registrarDiaSinDesperdicio({String? razon}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final int savedRacha = prefs.getInt(_keyRachaActual) ?? 0;
+    final int recordHistorico = prefs.getInt(_keyRecordHistorico) ?? savedRacha;
+    final String? ultimaFechaStr = prefs.getString(_keyUltimaFecha);
+
+    final hoy = DateTime.now();
+    final fechaHoy = DateTime(hoy.year, hoy.month, hoy.day);
+    final fechaHoyStr = _formatearFechaSimple(fechaHoy);
+
+    int nuevaRacha = 1;
+
+    if (ultimaFechaStr != null && ultimaFechaStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(ultimaFechaStr);
+      if (parsed != null) {
+        final fechaUltima = DateTime(parsed.year, parsed.month, parsed.day);
+        final diff = fechaHoy.difference(fechaUltima).inDays;
+
+        if (diff == 0) {
+          // Ya fue registrado hoy
+          return await obtenerEstadoRachaZeroWaste();
+        } else if (diff == 1) {
+          // Día consecutivo: suma a la racha
+          nuevaRacha = savedRacha + 1;
+        } else {
+          // Se reinicia la racha a 1 día
+          nuevaRacha = 1;
+        }
+      }
+    }
+
+    final nuevoRecord = max(recordHistorico, nuevaRacha);
+    await prefs.setInt(_keyRachaActual, nuevaRacha);
+    await prefs.setInt(_keyRecordHistorico, nuevoRecord);
+    await prefs.setString(_keyUltimaFecha, fechaHoyStr);
+
+    return await obtenerEstadoRachaZeroWaste();
+  }
+
+  /// Reinicia la racha a ceros (para pruebas o reinicio voluntario)
+  static Future<void> reiniciarRachaZeroWaste() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyRachaActual);
+    await prefs.remove(_keyUltimaFecha);
+  }
+
+  // =========================================================================
+  // 5. DESAFÍO DE AHORRO FAMILIAR A 30 DÍAS ("CLUB DEL SÚPER")
+  // =========================================================================
+
+  /// Obtiene la meta mensual configurada (default $3,000 MXN)
+  static Future<double> obtenerMetaAhorroMensual() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_keyMetaAhorroMensual) ?? 3000.0;
+  }
+
+  /// Guarda una nueva meta de ahorro mensual
+  static Future<void> guardarMetaAhorroMensual(double nuevaMeta) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyMetaAhorroMensual, max(500.0, nuevaMeta));
+  }
+
+  /// Obtiene el progreso del desafío familiar a 30 días
+  static Future<DesafioAhorroMensual> obtenerDesafioAhorroMensual({
+    double? gastoSemanalActual,
+    int? comidasMes,
+  }) async {
+    final double meta = await obtenerMetaAhorroMensual();
+    final hoy = DateTime.now();
+    final diasEnMes = DateTime(hoy.year, hoy.month + 1, 0).day;
+    final int diasRestantes = max(0, diasEnMes - hoy.day);
+
+    int totalComidasCaseras = comidasMes ?? 0;
+    if (comidasMes == null) {
+      try {
+        final todos = await ServicioHistorialCocina.obtenerTodos();
+        totalComidasCaseras = todos
+            .where((r) => r.fecha.year == hoy.year && r.fecha.month == hoy.month)
+            .fold<int>(0, (acc, r) => acc + r.veces);
+      } catch (e) {
+        totalComidasCaseras = 0;
+      }
+    }
+
+    // Ahorro promedio por platillo preparado en casa vs delivery ($140 - $55 = ~$85 MXN)
+    final double ahorroPorPlatillos = totalComidasCaseras * 85.0;
+
+    // Si hay un costo de súper semanal activo, comparar también su ahorro prorrateado
+    double ahorroProyectadoSemanal = 0.0;
+    if (gastoSemanalActual != null && gastoSemanalActual > 0) {
+      final res = calcularAhorroVsDelivery(
+        costoTotalSuper: gastoSemanalActual,
+        comidasPlaneadas: 14,
+      );
+      final double ahorroSem = (res['ahorroSemanal'] as num?)?.toDouble() ?? 0.0;
+      ahorroProyectadoSemanal = ahorroSem * (hoy.day / 7.0);
+    }
+
+    final double ahorroTotalMes = max(ahorroPorPlatillos, ahorroProyectadoSemanal);
+    final double porcentaje = meta > 0 ? (ahorroTotalMes / meta) * 100.0 : 0.0;
+
+    String mensaje;
+    String metafora;
+
+    if (porcentaje >= 100.0) {
+      mensaje = '¡META CUMPLIDA! 🎉 Tu familia superó el desafío mensual de ahorro.';
+      metafora = '¡Con +\$${ahorroTotalMes.toStringAsFixed(0)} MXN cubrieron el súper de dos semanas completas! 🛒✨';
+    } else if (porcentaje >= 75.0) {
+      mensaje = '¡Están en la recta final! 🚀 ${porcentaje.toStringAsFixed(0)}% de la meta lograda.';
+      metafora = '¡Faltan solo \$${(meta - ahorroTotalMes).clamp(0.0, meta).toStringAsFixed(0)} MXN para completar el desafío del mes!';
+    } else if (porcentaje >= 40.0) {
+      mensaje = '¡Excelente ritmo familiar! 📈 Llevan el ${porcentaje.toStringAsFixed(0)}% acumulado.';
+      metafora = '¡Han evitado el sobrecosto de delivery preparando comida casera de calidad!';
+    } else {
+      mensaje = '¡Desafío activo! Cada comida en casa suma a la alcancía familiar 🐷';
+      metafora = 'Meta familiar: \$${meta.toStringAsFixed(0)} MXN. ¡Aún quedan $diasRestantes días para alcanzarla!';
+    }
+
+    return DesafioAhorroMensual(
+      metaAhorroMensual: meta,
+      ahorroLogradoMes: ahorroTotalMes,
+      porcentajeCumplido: porcentaje,
+      diasRestantesMes: diasRestantes,
+      comidasCaserasMes: totalComidasCaseras,
+      estadoMensaje: mensaje,
+      metafora: metafora,
+    );
+  }
 }
+

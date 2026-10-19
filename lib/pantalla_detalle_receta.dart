@@ -9,6 +9,7 @@ import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'servicio_copiloto_cocina.dart';
+import 'servicio_finanzas_domesticas.dart';
 import 'servicio_sommelier.dart';
 
 class PantallaDetalleReceta extends StatefulWidget {
@@ -1156,6 +1157,12 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
       titulo: widget.titulo,
       origen: 'detalle',
     );
+
+    // 🏆 P25: Sumar automáticamente a la racha del Reto Cero Merma
+    ServicioFinanzasDomesticas.registrarDiaSinDesperdicio(
+      razon: 'Receta cocinada: ${widget.titulo}',
+    ).ignore();
+
     if (mounted) {
       setState(() => _registroCocina = nuevoRegistro);
     }

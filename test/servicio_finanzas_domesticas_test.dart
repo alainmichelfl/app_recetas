@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_recetas/servicio_finanzas_domesticas.dart';
 
 void main() {
@@ -131,4 +132,78 @@ void main() {
       expect(texto, contains('3450.00'));
     });
   });
+
+  group('ServicioFinanzasDomesticas - Reto Antidesperdicio Cero Merma (P25)', () {
+    setUp(() {
+      // Mock inicial de SharedPreferences
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('Inicia con racha 0 y desbloquea insignias conforme avanza la racha', () async {
+      final inicial = await ServicioFinanzasDomesticas.obtenerEstadoRachaZeroWaste();
+      expect(inicial.diasRacha, equals(0));
+      expect(inicial.registradoHoy, isFalse);
+      expect(inicial.insignias.length, equals(4));
+      expect(inicial.proximaInsignia?.id, equals('guardian_despensa'));
+
+      // Registrar día 1
+      final dia1 = await ServicioFinanzasDomesticas.registrarDiaSinDesperdicio(razon: 'Día 1');
+      expect(dia1.diasRacha, equals(1));
+      expect(dia1.registradoHoy, isTrue);
+      expect(dia1.ahorroEstimadoAcumulado, equals(85.0));
+
+      // Re-consultar hoy no debe duplicar la racha
+      final dia1Bis = await ServicioFinanzasDomesticas.registrarDiaSinDesperdicio(razon: 'Día 1 otra vez');
+      expect(dia1Bis.diasRacha, equals(1));
+    });
+
+    test('Insignias del catálogo tienen metas calibradas en 3, 7, 14 y 30 días', () async {
+      final estado = await ServicioFinanzasDomesticas.obtenerEstadoRachaZeroWaste();
+      final insignias = estado.insignias;
+
+      expect(insignias[0].diasRequeridos, equals(3));
+      expect(insignias[0].titulo, contains('Guardián'));
+
+      expect(insignias[1].diasRequeridos, equals(7));
+      expect(insignias[1].titulo, contains('Chef Consciente'));
+
+      expect(insignias[2].diasRequeridos, equals(14));
+      expect(insignias[2].titulo, contains('Maestro Cero Merma'));
+
+      expect(insignias[3].diasRequeridos, equals(30));
+      expect(insignias[3].titulo, contains('Inversionista del Súper'));
+    });
+  });
+
+  group('ServicioFinanzasDomesticas - Club del Súper y Ahorro Mensual (P25)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('Meta por defecto es \$3,000 MXN y permite personalizarse', () async {
+      final metaDefault = await ServicioFinanzasDomesticas.obtenerMetaAhorroMensual();
+      expect(metaDefault, equals(3000.0));
+
+      await ServicioFinanzasDomesticas.guardarMetaAhorroMensual(4500.0);
+      final metaActualizada = await ServicioFinanzasDomesticas.obtenerMetaAhorroMensual();
+      expect(metaActualizada, equals(4500.0));
+    });
+
+    test('Calcula progreso de meta mensual y porcentaje cumplido correctamente', () async {
+      // 10 comidas caseras preparadas este mes
+      final desafio = await ServicioFinanzasDomesticas.obtenerDesafioAhorroMensual(
+        comidasMes: 10,
+      );
+
+      expect(desafio.metaAhorroMensual, equals(3000.0));
+      expect(desafio.comidasCaserasMes, equals(10));
+      // 10 platillos * $85 ahorro = $850 MXN
+      expect(desafio.ahorroLogradoMes, equals(850.0));
+      expect(desafio.porcentajeCumplido, closeTo(28.33, 0.5));
+      expect(desafio.diasRestantesMes, greaterThanOrEqualTo(0));
+      expect(desafio.estadoMensaje, isNotEmpty);
+      expect(desafio.metafora, isNotEmpty);
+    });
+  });
 }
+

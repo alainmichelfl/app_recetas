@@ -60,6 +60,12 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   double _capitalEnRiesgo = 0.0;
   String _filtroProteina = 'Todos';
 
+  // 🏆 P25: Reto Culinario Antidesperdicio (Zero-Waste Streak & Insignias)
+  EstadoRachaZeroWaste? _estadoRacha;
+
+  // 🎯 P25: Desafío de Ahorro Familiar a 30 Días ("Club del Súper")
+  DesafioAhorroMensual? _desafioAhorro;
+
   @override
   void initState() {
     super.initState();
@@ -252,6 +258,12 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       _insumosEnRiesgo = enRiesgo;
       _capitalEnRiesgo = enRiesgo.fold<double>(0.0, (acc, item) => acc + item.precioEstimado);
 
+      // 🏆 P25: Reto Antidesperdicio y Club del Súper
+      _estadoRacha = await ServicioFinanzasDomesticas.obtenerEstadoRachaZeroWaste();
+      _desafioAhorro = await ServicioFinanzasDomesticas.obtenerDesafioAhorroMensual(
+        gastoSemanalActual: _costoSemanaActual,
+      );
+
       if (mounted) setState(() => _cargando = false);
     } catch (e) {
       debugPrint('Error al cargar pantalla de finanzas: $e');
@@ -332,6 +344,126 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
         ],
       ),
     );
+  }
+
+  Future<void> _extenderRachaZeroWaste() async {
+    final nuevoEstado = await ServicioFinanzasDomesticas.registrarDiaSinDesperdicio(
+      razon: 'Registro manual en Finanzas',
+    );
+    if (!mounted) return;
+    setState(() => _estadoRacha = nuevoEstado);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '🔥 ¡Racha extendida a ${nuevoEstado.diasRacha} días sin merma! Sigues protegiendo tu economía familiar 🥗👏',
+        ),
+        backgroundColor: Colors.teal.shade800,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _abrirAjusteMetaDesafio() {
+    final double metaActual = _desafioAhorro?.metaAhorroMensual ?? 3000.0;
+    final ctrl = TextEditingController(text: metaActual.toStringAsFixed(0));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.flag_circle_outlined, color: Colors.teal),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Meta del Club del Súper 🎯',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Define el ahorro mensual que tu hogar desea alcanzar cocinando en casa en vez de pedir por delivery:',
+                style: TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [2000.0, 3000.0, 4500.0, 6000.0].map((m) {
+                  final seleccionada = (double.tryParse(ctrl.text) == m);
+                  return ActionChip(
+                    label: Text('\$${m.toStringAsFixed(0)}'),
+                    backgroundColor: seleccionada ? Colors.teal.shade100 : Colors.grey.shade100,
+                    side: BorderSide(color: seleccionada ? Colors.teal : Colors.grey.shade300),
+                    onPressed: () {
+                      setDialogState(() {
+                        ctrl.text = m.toStringAsFixed(0);
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  prefixText: '\$ ',
+                  suffixText: 'MXN',
+                  labelText: 'Meta mensual familiar',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final val = double.tryParse(ctrl.text.trim());
+                if (val != null && val >= 500) {
+                  await ServicioFinanzasDomesticas.guardarMetaAhorroMensual(val);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _cargarTodoFinanzas();
+                }
+              },
+              child: const Text('Guardar Meta'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _compartirDesafioAhorro() async {
+    final desafio = _desafioAhorro;
+    if (desafio == null) return;
+    final buffer = StringBuffer();
+    buffer.writeln('🎯 *CLUB DEL SÚPER: DESAFÍO DE AHORRO FAMILIAR* 🥗💰');
+    buffer.writeln('App: *Jitomate y Cebolla* (www.jitomateycebolla.com)');
+    buffer.writeln('────────────────────────');
+    buffer.writeln('🏆 *Meta Mensual Familiar:* \$${desafio.metaAhorroMensual.toStringAsFixed(0)} MXN');
+    buffer.writeln('📈 *Ahorro Acumulado:* +\$${desafio.ahorroLogradoMes.toStringAsFixed(0)} MXN (${desafio.porcentajeCumplido.toStringAsFixed(0)}%)');
+    buffer.writeln('🍽️ *Comidas Caseras Preparadas:* ${desafio.comidasCaserasMes} platillos');
+    buffer.writeln('⏳ *Días restantes del mes:* ${desafio.diasRestantesMes} días');
+    buffer.writeln('────────────────────────');
+    buffer.writeln('💡 ${desafio.metafora}');
+    buffer.writeln('💪 _"Cocinar en familia es salud física y multiplicación patrimonial."_');
+    await SharePlus.instance.share(ShareParams(text: buffer.toString()));
   }
 
   Future<void> _exportarEstadoCuentaCulinario() async {
@@ -855,11 +987,19 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                   _construirTermometroPresupuesto(),
                   const SizedBox(height: 16),
 
-                  // 2. MONITOR DE DINERO EN RIESGO DE DESPERDICIO (RESCATE CULINARIO P24)
+                  // 2. DESAFÍO DE AHORRO FAMILIAR A 30 DÍAS ("CLUB DEL SÚPER" P25)
+                  _construirDesafioAhorroMensual(),
+                  const SizedBox(height: 16),
+
+                  // 3. MONITOR DE DINERO EN RIESGO DE DESPERDICIO (RESCATE CULINARIO P24)
                   _construirMonitorRiesgoDesperdicio(),
                   const SizedBox(height: 16),
 
-                  // 3. CENTRO DE AHORRO DOMÉSTICO VS DELIVERY (P24)
+                  // 4. RETO CULINARIO ANTIDESPERDICIO (ZERO-WASTE STREAK P25)
+                  _construirRetoZeroWasteStreak(),
+                  const SizedBox(height: 16),
+
+                  // 5. CENTRO DE AHORRO DOMÉSTICO VS DELIVERY (P24)
                   _construirCentroAhorroDomestico(),
                   const SizedBox(height: 16),
 
@@ -1089,6 +1229,189 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     );
   }
 
+  // 🎯 WIDGET P25: DESAFÍO DE AHORRO FAMILIAR A 30 DÍAS ("CLUB DEL SÚPER")
+  Widget _construirDesafioAhorroMensual() {
+    final desafio = _desafioAhorro;
+    if (desafio == null) return const SizedBox.shrink();
+
+    final double ratio = (desafio.porcentajeCumplido / 100.0).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.teal.shade200, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.teal.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.flag_circle_rounded, color: Colors.teal, size: 22),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Club del Súper: Meta 30 Días',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: _abrirAjusteMetaDesafio,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, size: 14, color: Colors.teal.shade800),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Ajustar Meta',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.teal.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Medidor de progreso visual
+          Row(
+            children: [
+              // Indicador circular de porcentaje
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 68,
+                    height: 68,
+                    child: CircularProgressIndicator(
+                      value: ratio,
+                      strokeWidth: 7,
+                      backgroundColor: Colors.teal.shade50,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        ratio >= 1.0 ? Colors.amber.shade700 : Colors.teal,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${desafio.porcentajeCumplido.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '+\$${desafio.ahorroLogradoMes.toStringAsFixed(0)} MXN',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade900,
+                      ),
+                    ),
+                    Text(
+                      'de \$${desafio.metaAhorroMensual.toStringAsFixed(0)} MXN meta este mes',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${desafio.comidasCaserasMes} comidas caseras • ${desafio.diasRestantesMes} días restantes',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Metáfora de impacto
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE0F2F1), // Teal suave
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.savings_outlined, color: Colors.teal, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    desafio.metafora,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.teal.shade900,
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Botón compartir progreso
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.teal.shade800,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              ),
+              icon: const Icon(Icons.share, size: 16),
+              label: const Text(
+                'Compartir logro familiar 📱',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              onPressed: _compartirDesafioAhorro,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 🍳 WIDGET P24: MONITOR DE MERMA Y RESCATE CULINARIO
   Widget _construirMonitorRiesgoDesperdicio() {
     if (_insumosEnRiesgo.isEmpty) {
@@ -1238,6 +1561,211 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // 🏆 WIDGET P25: RETO CULINARIO ANTIDESPERDICIO (ZERO-WASTE STREAK & GAMIFICACIÓN)
+  Widget _construirRetoZeroWasteStreak() {
+    final racha = _estadoRacha;
+    if (racha == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.local_fire_department, color: Colors.deepOrange, size: 22),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Reto Cero Merma 🏆',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.deepOrange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.deepOrange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const Text('🔥 ', style: TextStyle(fontSize: 12)),
+                    Text(
+                      '${racha.diasRacha} Días',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                        color: Colors.deepOrange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Text(
+            racha.diasRacha > 0
+                ? '¡Llevas ${racha.diasRacha} días continuos cocinando sin merma! Ahorro estimado: +\$${racha.ahorroEstimadoAcumulado.toStringAsFixed(0)} MXN protegidos de la basura 🛡️'
+                : 'Cocina hoy en casa aprovechando tus ingredientes de la despensa para iniciar tu racha antidesperdicio.',
+            style: const TextStyle(fontSize: 12.5, color: Colors.black87, height: 1.3),
+          ),
+          const SizedBox(height: 14),
+
+          // Próxima insignia y barra de progreso
+          if (racha.proximaInsignia != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Próximo hito: ${racha.proximaInsignia!.titulo}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                Text(
+                  '${racha.diasFaltantesProxima} días restantes',
+                  style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: racha.progresoProxima,
+                minHeight: 7,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation<Color>(racha.proximaInsignia!.color),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          // Carrusel de las 4 insignias
+          SizedBox(
+            height: 94,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: racha.insignias.map((ins) {
+                final bool desbloqueada = ins.desbloqueada;
+                return Container(
+                  width: 110,
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: desbloqueada ? ins.color.withValues(alpha: 0.08) : Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: desbloqueada ? ins.color : Colors.grey.shade300,
+                      width: desbloqueada ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        desbloqueada ? ins.icono : Icons.lock_outline,
+                        color: desbloqueada ? ins.color : Colors.grey.shade400,
+                        size: 24,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        ins.titulo.split(' ').take(2).join(' '),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: desbloqueada ? ins.color : Colors.grey.shade600,
+                        ),
+                      ),
+                      Text(
+                        '${ins.diasRequeridos} días',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: desbloqueada ? Colors.black87 : Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Botón para sumar a la racha
+          if (racha.registradoHoy)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.green.shade300),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green.shade700, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    '¡Racha de hoy registrada! Cocinaste sin merma ✅',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green.shade900,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 42),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.local_fire_department, size: 18),
+              label: const Text(
+                '¡Cociné sin merma hoy! 🔥 Sumar a mi Racha',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: _extenderRachaZeroWaste,
+            ),
         ],
       ),
     );
