@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'conversor_unidades.dart';
 import 'menu_lateral.dart';
+import 'pantalla_chef.dart';
 import 'servicio_cotizador.dart';
+import 'servicio_finanzas_domesticas.dart';
 import 'servicio_ia.dart';
 import 'servicio_preferencias.dart';
 
@@ -51,6 +54,11 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
   int _totalItemsDespensa = 0;
   String _articuloMayorValor = 'Sin datos';
   List<Map<String, dynamic>> _ultimosIngresos = [];
+
+  // 🛡️ P24: Suite Financiera y Ahorro Doméstico
+  List<InsumoEnRiesgo> _insumosEnRiesgo = [];
+  double _capitalEnRiesgo = 0.0;
+  String _filtroProteina = 'Todos';
 
   @override
   void initState() {
@@ -239,6 +247,11 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       _gastoSemanalRegistrado = gastoSemanal;
       _ultimosIngresos = itemsDespensa.cast<Map<String, dynamic>>();
 
+      // 🛡️ P24: Detectar insumos perecederos en riesgo para Rescate Culinario
+      final enRiesgo = ServicioFinanzasDomesticas.detectarInsumosEnRiesgo(_ultimosIngresos);
+      _insumosEnRiesgo = enRiesgo;
+      _capitalEnRiesgo = enRiesgo.fold<double>(0.0, (acc, item) => acc + item.precioEstimado);
+
       if (mounted) setState(() => _cargando = false);
     } catch (e) {
       debugPrint('Error al cargar pantalla de finanzas: $e');
@@ -315,6 +328,90 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               }
             },
             child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportarEstadoCuentaCulinario() async {
+    final ahorroData = ServicioFinanzasDomesticas.calcularAhorroVsDelivery(
+      costoTotalSuper: _costoSemanaActual,
+      comidasPlaneadas: _comidasPlaneadas,
+    );
+
+    final reporte = ReporteFinancieroHogar(
+      presupuestoSemanal: _presupuestoSemanal,
+      costoSuperSemanal: _costoSemanaActual,
+      costoPorPlatillo: (ahorroData['costoPorPlatillo'] as num?)?.toDouble() ?? 0.0,
+      comidasPlaneadas: _comidasPlaneadas > 0 ? _comidasPlaneadas : 14,
+      ahorroSemanalVsDelivery: (ahorroData['ahorroSemanal'] as num?)?.toDouble() ?? 0.0,
+      proyeccionAhorroMensual: (ahorroData['ahorroMensual'] as num?)?.toDouble() ?? 0.0,
+      proyeccionAhorroAnual: (ahorroData['ahorroAnual'] as num?)?.toDouble() ?? 0.0,
+      capitalDespensa: _capitalDespensa,
+      capitalEnRiesgoDesperdicio: _capitalEnRiesgo,
+      insumosEnRiesgo: _insumosEnRiesgo,
+    );
+
+    final textoFormateado = reporte.formatearParaCompartir();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.assessment_outlined, color: Color(0xFFD32F2F)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Estado de Cuenta Culinario',
+                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Reporte listo para compartir con tu familia o pareja sobre el ahorro generado al cocinar en casa:',
+                style: TextStyle(fontSize: 12.5, color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: SelectableText(
+                  textoFormateado,
+                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace', height: 1.35),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.share, size: 17),
+            label: const Text('Compartir por WhatsApp 📱'),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await SharePlus.instance.share(ShareParams(text: textoFormateado));
+            },
           ),
         ],
       ),
@@ -715,6 +812,11 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: 'Exportar Estado de Cuenta Culinario',
+            onPressed: _exportarEstadoCuentaCulinario,
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Limpiar información o histórico',
             onPressed: _confirmarLimpiarFinanzas,
@@ -753,23 +855,31 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                   _construirTermometroPresupuesto(),
                   const SizedBox(height: 16),
 
-                  // 2. MÉTRICAS DE AHORRO Y ROI (Costo por platillo vs Restaurantes)
-                  _construirMetricasRoiYComida(),
+                  // 2. MONITOR DE DINERO EN RIESGO DE DESPERDICIO (RESCATE CULINARIO P24)
+                  _construirMonitorRiesgoDesperdicio(),
                   const SizedBox(height: 16),
 
-                  // 3. COMPARATIVA INTELIGENTE SÚPER VS CENTRAL DE ABASTO
+                  // 3. CENTRO DE AHORRO DOMÉSTICO VS DELIVERY (P24)
+                  _construirCentroAhorroDomestico(),
+                  const SizedBox(height: 16),
+
+                  // 4. RANKING COSTO-PROTEÍNA DEL MERCADO (P24)
+                  _construirRankingCostoProteina(),
+                  const SizedBox(height: 16),
+
+                  // 5. COMPARATIVA INTELIGENTE SÚPER VS CENTRAL DE ABASTO
                   _construirComparativaAhorroSuper(),
                   const SizedBox(height: 16),
 
-                  // 4. DESGLOSE DEL GASTO POR DEPARTAMENTO
+                  // 6. DESGLOSE DEL GASTO POR DEPARTAMENTO
                   _construirDesglosePorDepartamento(),
                   const SizedBox(height: 16),
 
-                  // 5. RESUMEN DE CAPITAL EN DESPENSA
+                  // 7. RESUMEN DE CAPITAL EN DESPENSA
                   _construirResumenCapitalDespensa(),
                   const SizedBox(height: 16),
 
-                  // 6. HISTORIAL DE INGRESOS VALORADOS Y TICKETS
+                  // 8. HISTORIAL DE INGRESOS VALORADOS Y TICKETS
                   _construirHistorialIngresos(),
                 ],
               ),
@@ -979,131 +1089,542 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     );
   }
 
-  // 🍽️ 2. WIDGET: MÉTRICAS DE ROI Y COSTO POR PLATILLO
-  Widget _construirMetricasRoiYComida() {
-    return Row(
-      children: [
-        // Costo por Comida Casera
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+  // 🍳 WIDGET P24: MONITOR DE MERMA Y RESCATE CULINARIO
+  Widget _construirMonitorRiesgoDesperdicio() {
+    if (_insumosEnRiesgo.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.restaurant,
-                          color: Colors.teal, size: 18),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Por Comida',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '\$${_costoPorPlatillo.toStringAsFixed(1)} MXN',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _comidasPlaneadas > 0
-                      ? '$_comidasPlaneadas platillos planeados'
-                      : 'Promedio 14 comidas',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
-        const SizedBox(width: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.check_circle_outline, color: Colors.green.shade700, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Despensa Optimizada Sin Merma',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  Text(
+                    'No se detectaron ingredientes frescos en riesgo inminente de expirar.',
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-        // Ahorro vs Comer Fuera
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+    final nombresInsumos = _insumosEnRiesgo.map((e) => e.nombre).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0), // Ámbar/naranja advertencia suave
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.orange.shade300, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade800,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Monitor de Merma en Despensa',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade800,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
+                child: Text(
+                  '\$${_capitalEnRiesgo.toStringAsFixed(0)} MXN en riesgo',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Tienes ${_insumosEnRiesgo.length} ingredientes perecederos que conviene consumir pronto para no perder su valor:',
+            style: const TextStyle(fontSize: 12.5, color: Color(0xFF4E342E), height: 1.3),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _insumosEnRiesgo.take(6).map((insumo) {
+              return Chip(
+                avatar: const Icon(Icons.timer, size: 14, color: Colors.deepOrange),
+                label: Text(
+                  '${insumo.nombre} (\$${insumo.precioEstimado.toStringAsFixed(0)})',
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                ),
+                backgroundColor: Colors.white,
+                side: BorderSide(color: Colors.orange.shade200),
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F), // Bistró Borgoña
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: Text(
+                '🍳 Rescatar \$${_capitalEnRiesgo.toStringAsFixed(0)} MXN con Chef IA',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PantallaChef(
+                      ingredientesIniciales: nombresInsumos.take(5).join(', '),
+                    ),
+                  ),
+                );
+              },
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🛵 WIDGET P24: CENTRO DE AHORRO DOMÉSTICO VS DELIVERY
+  Widget _construirCentroAhorroDomestico() {
+    final ahorroData = ServicioFinanzasDomesticas.calcularAhorroVsDelivery(
+      costoTotalSuper: _costoSemanaActual,
+      comidasPlaneadas: _comidasPlaneadas,
+    );
+
+    final double costoPlatillo = (ahorroData['costoPorPlatillo'] as num?)?.toDouble() ?? _costoPorPlatillo;
+    final double ahorroSem = (ahorroData['ahorroSemanal'] as num?)?.toDouble() ?? _ahorroVsRestaurantes;
+    final double ahorroMes = (ahorroData['ahorroMensual'] as num?)?.toDouble() ?? (ahorroSem * 4.33);
+    final double ahorroAnio = (ahorroData['ahorroAnual'] as num?)?.toDouble() ?? (ahorroSem * 52.0);
+    final String metafora = (ahorroData['metafora'] as String?) ?? '¡Ahorro inteligente al cocinar!';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.savings_outlined, color: Colors.green.shade800, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Ahorro vs Restaurantes / Delivery',
+                    style: TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.share_outlined, size: 20, color: Colors.teal),
+                tooltip: 'Exportar Estado de Cuenta',
+                onPressed: _exportarEstadoCuentaCulinario,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Comparador: Por comida vs Delivery
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Platillo en Casa', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '\$${costoPlatillo.toStringAsFixed(1)} MXN',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
                       ),
-                      child: Icon(Icons.savings_outlined,
-                          color: Colors.green.shade700, size: 18),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Ahorro vs Fuera',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '+\$${_ahorroVsRestaurantes.toStringAsFixed(0)} MXN',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade800,
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'vs comer en restaurante',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                const Icon(Icons.compare_arrows, color: Colors.grey),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('Benchmark Delivery / Fonda', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '\$${ServicioFinanzasDomesticas.benchmarkDeliveryPorPlatillo.toStringAsFixed(0)} MXN',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade700),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+
+          // Métricas de acumulación
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Esta Semana', style: TextStyle(fontSize: 11, color: Colors.green.shade900)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '+\$${ahorroSem.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.green.shade900),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Proy. Mes (4s)', style: TextStyle(fontSize: 11, color: Colors.teal.shade900)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '+\$${ahorroMes.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Proy. Año (52s)', style: TextStyle(fontSize: 11, color: Colors.amber.shade900)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '+\$${ahorroAnio.toStringAsFixed(0)}',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Metáfora de impacto en la vida real
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F8E9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFDCEDC8)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.auto_graph, color: Color(0xFF33691E), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    metafora,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF33691E)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🥩 WIDGET P24: RANKING COSTO-PROTEÍNA DEL MERCADO MEXICANO
+  Widget _construirRankingCostoProteina() {
+    final todosItems = ServicioFinanzasDomesticas.obtenerRankingCostoProteina();
+    final itemsFiltrados = todosItems.where((it) {
+      if (_filtroProteina == 'Animal') return it.categoria == 'Animal';
+      if (_filtroProteina == 'Vegetal') return it.categoria == 'Vegetal';
+      return true;
+    }).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.fitness_center, color: Color(0xFFD32F2F), size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Ranking Costo-Proteína',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'MXN / g real',
+                  style: TextStyle(
+                    color: Color(0xFFD32F2F),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Compara cuántos pesos te cuesta 1 gramo de proteína asimilable en el mercado mexicano:',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+
+          // Filtros
+          Row(
+            children: ['Todos', 'Animal', 'Vegetal'].map((cat) {
+              final sel = _filtroProteina == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ChoiceChip(
+                  label: Text(cat),
+                  selected: sel,
+                  selectedColor: const Color(0xFFFBECEF),
+                  labelStyle: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                    color: sel ? const Color(0xFFD32F2F) : Colors.black87,
+                  ),
+                  onSelected: (val) {
+                    if (val) setState(() => _filtroProteina = cat);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+
+          // Lista de items
+          ...itemsFiltrados.map((it) {
+            final double pctBarra = (it.costoPorGramo / 1.10).clamp(0.1, 1.0);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(it.icono, size: 16, color: it.color),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          it.nombre,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: it.costoPorGramo <= 0.25
+                              ? Colors.green.shade50
+                              : (it.costoPorGramo <= 0.65 ? Colors.teal.shade50 : Colors.amber.shade50),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '\$${it.costoPorGramo.toStringAsFixed(2)} MXN / g',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: it.costoPorGramo <= 0.25
+                                ? Colors.green.shade800
+                                : (it.costoPorGramo <= 0.65 ? Colors.teal.shade800 : Colors.brown.shade800),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        it.unidadPresentacion,
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      Text(
+                        '\$${it.precioReferencia.toStringAsFixed(0)} MXN ref.',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: pctBarra,
+                      minHeight: 5,
+                      backgroundColor: Colors.grey.shade100,
+                      valueColor: AlwaysStoppedAnimation<Color>(it.color),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 10),
+
+          // Tip Culinario Inteligente
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lightbulb_outline, color: Color(0xFFF57F17), size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '💡 Tip Culinario Pro: Combinar 50% legumbres (lentejas o frijoles) con 50% pechuga o huevo reduce tu gasto proteico mensual hasta un 35% sin sacrificar biodisponibilidad.',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF5D4037), height: 1.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
