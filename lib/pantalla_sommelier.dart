@@ -1,8 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'menu_lateral.dart';
+import 'pantalla_chef.dart';
 import 'servicio_sommelier.dart';
 
 class PantallaSommelier extends StatefulWidget {
@@ -235,6 +238,10 @@ class _PantallaSommelierState extends State<PantallaSommelier>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 📸 Hero Card: Sommelier Vision IA (Escáner de Botellas)
+          _construirBannerSommelierVision(),
+          const SizedBox(height: 14),
+
           // Banner Cava en Casa
           Container(
             padding: const EdgeInsets.all(14),
@@ -568,6 +575,594 @@ class _PantallaSommelierState extends State<PantallaSommelier>
           onPressed: onComprar,
         ),
       ],
+    );
+  }
+
+  // =========================================================================
+  // 📸 SOMMELIER VISION IA (ESCÁNER DE BOTELLAS CON CÁMARA / GALERÍA)
+  // =========================================================================
+
+  Widget _construirBannerSommelierVision() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF380B17),
+            Color(0xFF6B1426),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6B1426).withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _colorGold.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _colorGold, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Color(0xFFFFD700),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sommelier Vision IA 📸',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      'Escanea la etiqueta de cualquier botella',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Toma una foto a cualquier vino, destilado o licor. La IA identificará la bodega y uva, te dará notas de cata y te sugerirá platillos ideales cruzados con lo que tienes en tu despensa.',
+            style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.3),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFD700),
+                    foregroundColor: const Color(0xFF380B17),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  icon: const Icon(Icons.photo_camera, size: 18),
+                  label: const Text(
+                    'Tomar Foto',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  onPressed: () => _escanearBotella(ImageSource.camera),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white60),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: const Text(
+                    'Galería',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: () => _escanearBotella(ImageSource.gallery),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _escanearBotella(ImageSource origen) async {
+    final picker = ImagePicker();
+    final XFile? foto = await picker.pickImage(
+      source: origen,
+      imageQuality: 85,
+      maxWidth: 1280,
+    );
+    if (foto == null) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF800020)),
+              SizedBox(height: 18),
+              Text(
+                'Analizando etiqueta con IA... 🍷🔍',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Identificando bodega, variedad, notas de cata y maridajes con tu despensa.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final bytes = await foto.readAsBytes();
+      final despensa = await ServicioSommelier.obtenerIngredientesEnDespensa();
+      final resultado = await ServicioSommelier.escanearBotellaConIA(
+        bytes,
+        ingredientesDespensa: despensa,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      if (resultado != null) {
+        _mostrarModalResultadoBotella(resultado, bytes);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No pudimos identificar la etiqueta con claridad. Intenta con una toma más cercana y con buena iluminación.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      debugPrint('Error al escanear botella: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al analizar la botella: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _mostrarModalResultadoBotella(
+    ResultadoEscaneoBotella resultado,
+    Uint8List fotoBytes,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.88,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: ListView(
+            controller: scrollCtrl,
+            children: [
+              // Barra superior arrastrable
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Cabecera: Foto + Título de la Botella
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      fotoBytes,
+                      width: 75,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFF800020).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            resultado.tipoBebida,
+                            style: const TextStyle(
+                              color: Color(0xFF800020),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          resultado.nombreBotella,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        if (resultado.variedadORegion.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            resultado.variedadORegion,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Ficha de servicio: Temperatura & Copa
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.thermostat,
+                              color: Colors.blueGrey, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              resultado.temperaturaServicio,
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(height: 20, width: 1, color: Colors.grey[300]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(Icons.wine_bar,
+                              color: Color(0xFF800020), size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              resultado.copaRecomendada,
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Notas de Cata
+              if (resultado.notasCata.isNotEmpty) ...[
+                const Text(
+                  'Notas de Cata 📝',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Text(
+                    resultado.notasCata,
+                    style: const TextStyle(
+                        fontSize: 13, height: 1.4, color: Colors.black87),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Platillos Sugeridos
+              if (resultado.platillosSugeridos.isNotEmpty) ...[
+                const Text(
+                  'Platillos recomendados para acompañar 🍽️',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                ...resultado.platillosSugeridos.map(
+                  (platillo) => Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.restaurant_menu,
+                            size: 16, color: Color(0xFF800020)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            platillo,
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Insumos compatibles de la Despensa
+              if (resultado.ingredientesDespensaCompatibles.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.teal.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.kitchen, color: Colors.teal, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            '¡En tu despensa tienes insumos que combinan!',
+                            style: TextStyle(
+                              color: Colors.teal,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: resultado.ingredientesDespensaCompatibles
+                            .map(
+                              (ing) => Chip(
+                                label: Text(ing,
+                                    style: const TextStyle(fontSize: 11)),
+                                backgroundColor: Colors.white,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Tip del Sommelier
+              if (resultado.tipSommelier.isNotEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBECEF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color:
+                            const Color(0xFFB33951).withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('💡', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          resultado.tipSommelier,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF5B1228),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Botonera de acciones
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF800020),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.wine_bar, size: 18),
+                      label: const Text(
+                        'Guardar en Mi Cava 🍾',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      onPressed: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(ctx);
+                        final guardado =
+                            await ServicioSommelier.guardarBotellaEnCava(
+                                resultado.nombreBotella);
+                        if (guardado) {
+                          _cargarCavaYRecetas();
+                          if (mounted) {
+                            navigator.pop();
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '${resultado.nombreBotella} guardada en Mi Cava & Bar 🍾✅'),
+                                backgroundColor: const Color(0xFF800020),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal.shade800,
+                        side: BorderSide(color: Colors.teal.shade400),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.soup_kitchen, size: 18),
+                      label: const Text(
+                        'Cocinar con Chef IA 👨‍🍳',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        final sugerenciaIngredientes = resultado
+                                .ingredientesDespensaCompatibles.isNotEmpty
+                            ? resultado.ingredientesDespensaCompatibles
+                                .take(4)
+                                .join(', ')
+                            : (resultado.platillosSugeridos.isNotEmpty
+                                ? resultado.platillosSugeridos.first
+                                : '');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PantallaChef(
+                              ingredientesIniciales: sugerenciaIngredientes,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton.filledTonal(
+                    icon: const Icon(Icons.share_outlined, size: 20),
+                    tooltip: 'Compartir Ficha de Cata',
+                    onPressed: () {
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: resultado.formatoParaCompartir(),
+                          subject: 'Ficha de Cata: ${resultado.nombreBotella}',
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

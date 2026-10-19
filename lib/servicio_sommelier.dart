@@ -660,6 +660,132 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       return false;
     }
   }
+
+  /// Consulta todos los ingredientes guardados en la despensa del usuario.
+  static Future<List<String>> obtenerIngredientesEnDespensa() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      var query = Supabase.instance.client
+          .from('despensa_usuario')
+          .select('nombre');
+      if (user != null) {
+        query = query.eq('user_id', user.id);
+      }
+      final data = await query;
+      return (data as List)
+          .map((item) => (item['nombre'] ?? '').toString())
+          .where((nombre) => nombre.trim().isNotEmpty)
+          .toList();
+    } catch (e) {
+      debugPrint('Error al consultar ingredientes en despensa: $e');
+      return [];
+    }
+  }
+
+  /// Analiza con visión multimodal (Gemini) la foto de la etiqueta de una botella.
+  /// Identifica la bebida, notas de cata y sugiere platillos idóneos cruzados
+  /// con los ingredientes que el usuario tiene en su despensa.
+  static Future<ResultadoEscaneoBotella?> escanearBotellaConIA(
+    Uint8List imageBytes, {
+    List<String>? ingredientesDespensa,
+  }) async {
+    if (ConfigApi.geminiKey.trim().isEmpty) {
+      return null;
+    }
+
+    try {
+      final model = GenerativeModel(
+        model: 'gemini-2.5-flash',
+        apiKey: ConfigApi.geminiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        ),
+      );
+
+      final despensaInfo = (ingredientesDespensa != null && ingredientesDespensa.isNotEmpty)
+          ? 'Ingredientes que el usuario tiene actualmente en su despensa de casa: ${ingredientesDespensa.join(", ")}.'
+          : 'El usuario no tiene ingredientes registrados en despensa.';
+
+      final prompt = '''
+Eres un Master Sommelier, Mixólogo y Chef de alta gama en la app "Jitomate y Cebolla".
+Analiza minuciosamente la etiqueta de la botella en esta fotografía.
+
+$despensaInfo
+
+INSTRUCCIONES CLAVE:
+1. Identifica con la mayor exactitud posible: Nombre comercial de la botella, bodega o destilería, añada si es visible, tipo de bebida (Vino Tinto, Vino Blanco, Mezcal, Cerveza, Tequila, etc.) y variedad/región (ej. "Cabernet Sauvignon • Valle de Guadalupe" o "Mezcal Tobalá • Oaxaca"). Si la imagen no es una botella ni bebida, indícalo amablemente.
+2. Proporciona notas de cata breves pero refinadas (cuerpo, aromas principales, taninos/acidez).
+3. Recomienda 3 platillos específicos que logren un maridaje excepcional con esta botella.
+4. "Ingredientes de la despensa compatibles": De la lista de ingredientes que el usuario tiene en su despensa, lista cuáles combinan perfectamente para preparar una comida para esta botella. Si no tiene insumos afines, sugiere 2 o 3 ingredientes recomendados para comprar.
+5. Temperatura de servicio exacta y cristalería ideal recomendada.
+6. Tip de oro del sommelier (ej. "Recomendable decantar 20 min antes", "Servir en vaso veladora con rodaja de naranja", etc.).
+
+Responde ÚNICAMENTE en JSON válido con este esquema estricto:
+{
+  "nombreBotella": "Nombre completo identificado",
+  "tipoBebida": "Tipo de bebida",
+  "variedadORegion": "Uva / Cepa y Región",
+  "notasCata": "Aroma a frutos rojos, cuerpo medio-alto con taninos redondos...",
+  "temperaturaServicio": "16°C - 18°C",
+  "copaRecomendada": "Copa Burdeos",
+  "maridajeRecomendado": "Ideal con carnes asadas, pastas con salsas rojas o quesos curados.",
+  "platillosSugeridos": [
+    "Platillo 1 sugerido",
+    "Platillo 2 sugerido",
+    "Platillo 3 sugerido"
+  ],
+  "ingredientesDespensaCompatibles": [
+    "Ingrediente 1",
+    "Ingrediente 2"
+  ],
+  "tipSommelier": "Consejo profesional para disfrutar al máximo esta botella"
+}
+''';
+
+      final content = [
+        Content.multi([
+          TextPart(prompt),
+          DataPart('image/jpeg', imageBytes),
+        ]),
+      ];
+
+      final response = await model.generateContent(content);
+      final rawText = response.text;
+      if (rawText == null || rawText.trim().isEmpty) return null;
+
+      final start = rawText.indexOf('{');
+      final end = rawText.lastIndexOf('}');
+      if (start == -1 || end == -1) return null;
+
+      final jsonLimpio = rawText.substring(start, end + 1);
+      final map = jsonDecode(jsonLimpio) as Map<String, dynamic>;
+      return ResultadoEscaneoBotella.fromMap(map);
+    } catch (e) {
+      debugPrint('Error al escanear botella con IA: $e');
+      return null;
+    }
+  }
+
+  /// Guarda una botella escaneada directamente en la Cava (despensa_usuario).
+  static Future<bool> guardarBotellaEnCava(String nombreBotella) async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      final payload = {
+        'nombre': nombreBotella,
+        'cantidad': 1,
+        'fecha_ingreso': DateTime.now().toIso8601String().split('T')[0],
+      };
+      if (user != null) {
+        payload['user_id'] = user.id;
+      }
+      await Supabase.instance.client.from('despensa_usuario').insert(payload);
+      return true;
+    } catch (e) {
+      debugPrint('Error al guardar botella en cava: $e');
+      return false;
+    }
+  }
 }
 
 /// Respuesta conversacional del Sommelier IA en vivo.
@@ -713,4 +839,108 @@ class MenuTresTiemposMaridado {
     return sb.toString();
   }
 }
+
+/// Ficha técnica y gastronómica del escaneo visual de una botella con IA.
+class ResultadoEscaneoBotella {
+  final String nombreBotella;
+  final String tipoBebida;
+  final String variedadORegion;
+  final String notasCata;
+  final String temperaturaServicio;
+  final String copaRecomendada;
+  final String? maridajeRecomendado;
+  final List<String> platillosSugeridos;
+  final List<String> ingredientesDespensaCompatibles;
+  final String tipSommelier;
+
+  const ResultadoEscaneoBotella({
+    required this.nombreBotella,
+    required this.tipoBebida,
+    required this.variedadORegion,
+    required this.notasCata,
+    required this.temperaturaServicio,
+    required this.copaRecomendada,
+    this.maridajeRecomendado,
+    required this.platillosSugeridos,
+    required this.ingredientesDespensaCompatibles,
+    required this.tipSommelier,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'nombreBotella': nombreBotella,
+        'tipoBebida': tipoBebida,
+        'variedadORegion': variedadORegion,
+        'notasCata': notasCata,
+        'temperaturaServicio': temperaturaServicio,
+        'copaRecomendada': copaRecomendada,
+        'maridajeRecomendado': maridajeRecomendado,
+        'platillosSugeridos': platillosSugeridos,
+        'ingredientesDespensaCompatibles': ingredientesDespensaCompatibles,
+        'tipSommelier': tipSommelier,
+      };
+
+  factory ResultadoEscaneoBotella.fromMap(Map<String, dynamic> map) {
+    return ResultadoEscaneoBotella(
+      nombreBotella:
+          (map['nombreBotella'] ?? map['nombre'] ?? 'Bebida Escaneada')
+              .toString(),
+      tipoBebida:
+          (map['tipoBebida'] ?? map['tipo'] ?? 'Vino / Licor').toString(),
+      variedadORegion:
+          (map['variedadORegion'] ?? map['region'] ?? '').toString(),
+      notasCata: (map['notasCata'] ?? map['notas'] ?? '').toString(),
+      temperaturaServicio:
+          (map['temperaturaServicio'] ?? map['temperatura'] ?? '16°C - 18°C')
+              .toString(),
+      copaRecomendada:
+          (map['copaRecomendada'] ?? map['copa'] ?? 'Copa estándar').toString(),
+      maridajeRecomendado: map['maridajeRecomendado']?.toString(),
+      platillosSugeridos: (map['platillosSugeridos'] is List)
+          ? (map['platillosSugeridos'] as List)
+              .map((e) => e.toString())
+              .toList()
+          : <String>[],
+      ingredientesDespensaCompatibles:
+          (map['ingredientesDespensaCompatibles'] is List)
+              ? (map['ingredientesDespensaCompatibles'] as List)
+                  .map((e) => e.toString())
+                  .toList()
+              : <String>[],
+      tipSommelier: (map['tipSommelier'] ?? map['tip'] ?? '').toString(),
+    );
+  }
+
+  String formatoParaCompartir() {
+    final sb = StringBuffer();
+    sb.writeln('🍷 *FICHA DE CATA & MARIDAJE SOMMELIER IA* 📸');
+    sb.writeln('🍾 *Botella:* $nombreBotella');
+    if (variedadORegion.isNotEmpty) {
+      sb.writeln('🍇 *Variedad/Origen:* $variedadORegion');
+    }
+    sb.writeln('✨ *Tipo:* $tipoBebida\n');
+
+    if (notasCata.isNotEmpty) {
+      sb.writeln('📝 *Notas de Cata:* $notasCata');
+    }
+    sb.writeln(
+        '❄️ *Servicio:* $temperaturaServicio | 🍷 *Cristalería:* $copaRecomendada\n');
+
+    if (platillosSugeridos.isNotEmpty) {
+      sb.writeln('🍽️ *Platillos recomendados para maridar:*');
+      for (final p in platillosSugeridos) {
+        sb.writeln('  • $p');
+      }
+      sb.writeln();
+    }
+
+    if (tipSommelier.isNotEmpty) {
+      sb.writeln('💡 *Tip del Sommelier:* $tipSommelier\n');
+    }
+
+    sb.writeln('Descubierto con Jitomate y Cebolla 🍅🧅');
+    sb.writeln('https://www.jitomateycebolla.com');
+    return sb.toString();
+  }
+}
+
 

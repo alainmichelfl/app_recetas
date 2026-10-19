@@ -107,5 +107,42 @@ void main() {
       expect(texto, contains('Sommelier IA'));
       expect(texto, contains('jitomateycebolla.com'));
     });
+
+    test('ResultadoEscaneoBotella serialización y formato para compartir (P20)', () {
+      const resultado = ResultadoEscaneoBotella(
+        nombreBotella: 'Casa Madero Gran Reserva Malbec 2019',
+        tipoBebida: 'Vino Tinto',
+        variedadORegion: 'Malbec - Valle de Parras, Coahuila, México',
+        notasCata: 'Frutos negros maduros, ciruela, notas de vainilla y roble tostado con taninos redondos.',
+        temperaturaServicio: '16-18°C',
+        copaRecomendada: 'Copa Burdeos / Vino Tinto de Cáliz Amplio',
+        platillosSugeridos: [
+          'Corte Rib Eye a la parrilla con mantequilla de hierbas',
+          'Costillas de cordero al romero',
+          'Estofado de res al vino tinto',
+        ],
+        ingredientesDespensaCompatibles: ['romero', 'mantequilla', 'ajo'],
+        tipSommelier: 'Decantar 20 minutos antes de servir para oxigenar los aromas frutales.',
+      );
+
+      final map = resultado.toMap();
+      final reconstruido = ResultadoEscaneoBotella.fromMap(map);
+
+      expect(reconstruido.nombreBotella, equals(resultado.nombreBotella));
+      expect(reconstruido.tipoBebida, equals('Vino Tinto'));
+      expect(reconstruido.variedadORegion, equals(resultado.variedadORegion));
+      expect(reconstruido.temperaturaServicio, equals('16-18°C'));
+      expect(reconstruido.platillosSugeridos.length, equals(3));
+      expect(reconstruido.ingredientesDespensaCompatibles, contains('romero'));
+      expect(reconstruido.tipSommelier, contains('Decantar'));
+
+      final ficha = resultado.formatoParaCompartir();
+      expect(ficha, contains('FICHA DE CATA'));
+      expect(ficha, contains('Casa Madero Gran Reserva Malbec 2019'));
+      expect(ficha, contains('Corte Rib Eye'));
+      expect(ficha, contains('16-18°C'));
+      expect(ficha, contains('jitomateycebolla.com'));
+    });
   });
 }
+
