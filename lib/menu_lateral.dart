@@ -21,6 +21,7 @@ import 'dialogo_contacto_soporte.dart';
 import 'dialogo_busqueda_spotlight.dart';
 import 'dialogo_onboarding_bienvenida.dart';
 import 'servicio_recordatorios.dart';
+import 'servicio_perfil_usuario.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -556,6 +557,7 @@ class MenuLateral extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
+    final String nombreUsuario = ServicioPerfilUsuario.obtenerNombreSincrono();
     final String emailUsuario = user?.email ?? 'Chef Invitado';
 
     return Drawer(
@@ -633,30 +635,80 @@ class MenuLateral extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person, color: Colors.white70, size: 14),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            emailUsuario,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                  InkWell(
+                    onTap: () {
+                      ServicioPerfilUsuario.mostrarDialogoEditarNombre(
+                        context,
+                        alGuardar: () {
+                          if (context.mounted) {
+                            (context as Element).markNeedsBuild();
+                          }
+                        },
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFD32F2F).withValues(alpha: 0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFD32F2F),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.person, color: Colors.white, size: 14),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        nombreUsuario,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.edit_outlined,
+                                      size: 13,
+                                      color: Colors.amberAccent,
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  emailUsuario,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

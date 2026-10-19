@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pantalla_chef.dart';
 import 'perfiles_nutricionales.dart';
+import 'servicio_perfil_usuario.dart';
 import 'servicio_preferencias.dart';
 import 'utensilios_cocina.dart';
 
@@ -53,6 +55,12 @@ class _DialogoOnboardingBienvenidaState
   int _pasoActual = 0; // 0: Preferencias, 1: Despensa, 2: Utensilios, 3: Pilares & Chef
   bool _guardando = false;
   bool _noVolverAMostrar = true;
+
+  // Paso 0: Identidad y Nombre de Usuario
+  late final TextEditingController _nombreUsuarioController;
+  ResultadoDisponibilidadNombre? _resultadoDisponibilidad;
+  bool _validandoNombre = false;
+  Timer? _debounceNombre;
 
   // Paso 1: Preferencias Culinarias y del Hogar
   int _porciones = 2;
@@ -115,7 +123,46 @@ class _DialogoOnboardingBienvenidaState
   @override
   void initState() {
     super.initState();
+    _nombreUsuarioController = TextEditingController(
+      text: ServicioPerfilUsuario.obtenerNombreSincrono(),
+    );
+    _verificarNombreInicial();
     _cargarDatosExistentes();
+  }
+
+  @override
+  void dispose() {
+    _debounceNombre?.cancel();
+    _nombreUsuarioController.dispose();
+    super.dispose();
+  }
+
+  void _onNombreChanged(String val) {
+    _debounceNombre?.cancel();
+    _debounceNombre = Timer(const Duration(milliseconds: 350), () {
+      _verificarNombre(val);
+    });
+  }
+
+  Future<void> _verificarNombreInicial() async {
+    final nombre = await ServicioPerfilUsuario.obtenerNombreUsuario();
+    if (mounted) {
+      if (_nombreUsuarioController.text.trim().isEmpty) {
+        _nombreUsuarioController.text = nombre;
+      }
+      _verificarNombre(_nombreUsuarioController.text);
+    }
+  }
+
+  Future<void> _verificarNombre(String val) async {
+    if (!mounted) return;
+    setState(() => _validandoNombre = true);
+    final res = await ServicioPerfilUsuario.verificarDisponibilidad(val);
+    if (!mounted) return;
+    setState(() {
+      _resultadoDisponibilidad = res;
+      _validandoNombre = false;
+    });
   }
 
   Future<void> _cargarDatosExistentes() async {
@@ -170,6 +217,12 @@ class _DialogoOnboardingBienvenidaState
       if (_noVolverAMostrar) {
         final sp = await SharedPreferences.getInstance();
         await sp.setBool(DialogoOnboardingBienvenida.keyOnboardingCompletado, true);
+      }
+
+      // 0. Guardar Nombre de Usuario si está presente
+      final nombreLimpio = _nombreUsuarioController.text.trim();
+      if (nombreLimpio.isNotEmpty) {
+        await ServicioPerfilUsuario.guardarNombreUsuario(nombreLimpio);
       }
 
       // 1. Guardar Preferencias de Perfil
@@ -392,6 +445,143 @@ class _DialogoOnboardingBienvenidaState
         Text(
           'Personaliza tus porciones, estilo de vida y supermercado para que el Chef IA y el cotizador se adapten a tu realidad desde el primer segundo.',
           style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.35),
+        ),
+        const SizedBox(height: 18),
+
+        // 0. Nombre de Usuario / Apodo (¿Cómo te gustaría que te llamemos?)
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2022),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: (_resultadoDisponibilidad?.disponible ?? true)
+                  ? const Color(0xFFD32F2F)
+                  : Colors.amber,
+              width: 1.2,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.person_pin_rounded, color: Color(0xFFD32F2F), size: 22),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '¿Cómo te gustaría que te llamemos?',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tu nombre o apodo para saludarte con calidez al abrir la app.',
+                style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nombreUsuarioController,
+                onChanged: _onNombreChanged,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Ej. Alain, Chef Alex, Mamá...',
+                  hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                  prefixIcon: const Icon(Icons.edit, color: Colors.white70, size: 18),
+                  suffixIcon: _validandoNombre
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+                          ),
+                        )
+                      : Icon(
+                          (_resultadoDisponibilidad?.disponible ?? true)
+                              ? Icons.check_circle
+                              : Icons.error_outline,
+                          color: (_resultadoDisponibilidad?.disponible ?? true)
+                              ? const Color(0xFF81C784)
+                              : Colors.amber,
+                          size: 20,
+                        ),
+                  filled: true,
+                  fillColor: const Color(0xFF282B30),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              if (_resultadoDisponibilidad != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      _resultadoDisponibilidad!.disponible ? Icons.check_circle : Icons.info_outline,
+                      size: 13,
+                      color: _resultadoDisponibilidad!.disponible
+                          ? const Color(0xFF81C784)
+                          : const Color(0xFFFFB74D),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _resultadoDisponibilidad!.mensaje,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: _resultadoDisponibilidad!.disponible
+                              ? const Color(0xFF81C784)
+                              : const Color(0xFFFFB74D),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!_resultadoDisponibilidad!.disponible &&
+                    _resultadoDisponibilidad!.sugerencias.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sugerencias disponibles:',
+                    style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: _resultadoDisponibilidad!.sugerencias.map((sug) {
+                      return ActionChip(
+                        label: Text(sug),
+                        avatar: const Icon(Icons.add, size: 12, color: Colors.amber),
+                        backgroundColor: const Color(0xFF202328),
+                        labelStyle: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(color: Colors.amber, width: 0.8),
+                        ),
+                        onPressed: () {
+                          _nombreUsuarioController.text = sug;
+                          _verificarNombre(sug);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ],
+          ),
         ),
         const SizedBox(height: 18),
 

@@ -21,6 +21,7 @@ import 'dialogo_manifiesto_bienvenida.dart';
 import 'dialogo_busqueda_spotlight.dart';
 import 'dialogo_onboarding_bienvenida.dart';
 import 'servicio_recordatorios.dart';
+import 'servicio_perfil_usuario.dart';
 
 class PantallaRecetas extends StatefulWidget {
   final FiltroAudienciaReceta? filtroInicial;
@@ -1530,6 +1531,88 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     );
   }
 
+  Widget _construirBannerSaludo() {
+    final String saludo = ServicioPerfilUsuario.obtenerSaludoHorario();
+    final String subtitulo = ServicioPerfilUsuario.obtenerSubtituloHorario();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF16171D),
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFF262833),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  saludo,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () {
+              ServicioPerfilUsuario.mostrarDialogoEditarNombre(
+                context,
+                alGuardar: () => setState(() {}),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD32F2F).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFD32F2F), width: 0.8),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.edit, size: 11, color: Color(0xFFEF5350)),
+                  SizedBox(width: 4),
+                  Text(
+                    'Apodo',
+                    style: TextStyle(
+                      color: Color(0xFFEF5350),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _construirChipAudiencia({
     required String etiqueta,
     required FiltroAudienciaReceta filtro,
@@ -1751,6 +1834,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       ),
       body: Column(
         children: [
+          _construirBannerSaludo(),
           Container(
             padding: const EdgeInsets.all(15),
             color: Colors.white,

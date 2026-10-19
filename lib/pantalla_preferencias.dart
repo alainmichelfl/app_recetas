@@ -5,6 +5,7 @@ import 'tipos_cocina.dart';
 import 'widget_deslizador_cocinas.dart';
 import 'utensilios_cocina.dart';
 import 'servicio_preferencias.dart';
+import 'servicio_perfil_usuario.dart';
 import 'menu_lateral.dart';
 import 'dialogo_contacto_soporte.dart';
 
@@ -200,6 +201,81 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 👤 IDENTIDAD CULINARIA & APODO
+                  const Text(
+                    '👤 Identidad Culinaria',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.person, color: Color(0xFFD32F2F), size: 26),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '¿Cómo te gustaría que te llamemos?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  ServicioPerfilUsuario.obtenerNombreSincrono(),
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E2022),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              ServicioPerfilUsuario.mostrarDialogoEditarNombre(
+                                context,
+                                alGuardar: () => setState(() {}),
+                              );
+                            },
+                            icon: const Icon(Icons.edit, size: 14),
+                            label: const Text('Cambiar'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFD32F2F),
+                              side: const BorderSide(color: Color(0xFFD32F2F)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // 💡 1. PERFIL NUTRICIONAL (DIETA Y ALERGIAS)
                   const Text(
                     '🍎 Perfil Nutricional',
