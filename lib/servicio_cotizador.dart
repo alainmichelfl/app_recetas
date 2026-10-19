@@ -232,4 +232,106 @@ class ServicioCotizador {
     resultados.sort((a, b) => a.total.compareTo(b.total));
     return resultados;
   }
+
+  /// Deduce el ID del supermercado a partir del nombre o texto del ticket
+  static int deducirIdSupermercado(String tienda) {
+    final tLower = tienda.toLowerCase();
+    if (tLower.contains('soriana') || tLower.contains('city club')) return 2;
+    if (tLower.contains('comer') ||
+        tLower.contains('fresko') ||
+        tLower.contains('sumesa') ||
+        tLower.contains('city market')) {
+      return 3;
+    }
+    if (tLower.contains('abasto') ||
+        tLower.contains('mercado') ||
+        tLower.contains('tianguis')) {
+      return 4;
+    }
+    return 1; // Default: Walmart / Bodega Aurrera
+  }
+
+  /// Calcula el nuevo precio ponderado (40% histórico + 60% nuevo ticket)
+  static double calcularPrecioPonderado(double precioExistente, double precioNuevo) {
+    if (precioExistente <= 0) return double.parse(precioNuevo.toStringAsFixed(2));
+    if (precioNuevo <= 0) return double.parse(precioExistente.toStringAsFixed(2));
+    final ponderado = (precioExistente * 0.4) + (precioNuevo * 0.6);
+    return double.parse(ponderado.toStringAsFixed(2));
+  }
+
+  /// Retroalimenta y calibra la base de datos de precios en Supabase a partir de
+  /// los artículos y precios reales leídos en un ticket de supermercado (Crowdsourcing P22).
+  static Future<int> reportarPreciosCrowdsourcing({
+    required SupabaseClient supabase,
+    required String tienda,
+    required List<dynamic> articulos,
+  }) async {
+    try {
+      final int idSupermercado = deducirIdSupermercado(tienda);
+
+      final ingredientesRes = await supabase
+          .from('ingredientes_genericos')
+          .select('id_ingrediente, nombre_estandar');
+      final List ingredientes = (ingredientesRes as List);
+
+      int actualizados = 0;
+      for (final art in articulos) {
+        final nombreArt = (art['nombre'] ?? '').toString().trim();
+        final double precio = extraerNumeroSeguro(art['precio']);
+        final double cantidad = extraerNumeroSeguro(art['cantidad']);
+        if (nombreArt.isEmpty || precio <= 0) continue;
+
+        // Si la cantidad es > 1, calcular precio unitario estimado
+        final double precioUnitario =
+            (cantidad > 1.0) ? (precio / cantidad) : precio;
+
+        final match = ingredientes.cast<Map<String, dynamic>>().firstWhere(
+          (ing) {
+            final est = (ing['nombre_estandar'] ?? '').toString();
+            return ConversorUnidades.nombresCoinciden(nombreArt, est);
+          },
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (match.isNotEmpty) {
+          final int idIng = match['id_ingrediente'];
+
+          final existe = await supabase
+              .from('precios_supermercado')
+              .select('precio')
+              .eq('id_ingrediente', idIng)
+              .eq('id_supermercado', idSupermercado)
+              .maybeSingle();
+
+          double precioFinal = precioUnitario;
+          if (existe != null && existe['precio'] != null) {
+            final double precioExistente =
+                extraerNumeroSeguro(existe['precio']);
+            precioFinal = calcularPrecioPonderado(precioExistente, precioUnitario);
+          } else {
+            precioFinal = double.parse(precioFinal.toStringAsFixed(2));
+          }
+
+          if (existe != null) {
+            await supabase
+                .from('precios_supermercado')
+                .update({'precio': precioFinal})
+                .eq('id_ingrediente', idIng)
+                .eq('id_supermercado', idSupermercado);
+          } else {
+            await supabase.from('precios_supermercado').insert({
+              'id_ingrediente': idIng,
+              'id_supermercado': idSupermercado,
+              'precio': precioFinal,
+            });
+          }
+          actualizados++;
+        }
+      }
+      return actualizados;
+    } catch (_) {
+      // Manejo silencioso en caso de error de red o permisos para no interrumpir el flujo del usuario
+      return 0;
+    }
+  }
 }

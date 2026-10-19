@@ -1,0 +1,36 @@
+name: Actualización Semanal de Precios
+
+on:
+  schedule:
+    # Todos los lunes a las 12:00 UTC (6:00 AM tiempo del centro de México)
+    - cron: '0 12 * * 1'
+  workflow_dispatch: # Permite ejecutar manualmente cuando se desee desde la pestaña Actions en GitHub
+
+permissions:
+  contents: read
+
+concurrency:
+  group: 'precio-updater'
+  cancel-in-progress: true
+
+jobs:
+  actualizar-precios:
+    name: Calibrar Precios en Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Ejecutar Robot de Actualización de Precios
+        env:
+          SUPABASE_URL: https://xjfzlthgycczcjbifaty.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
+        run: |
+          python robots/actualizar_precios_nube.py

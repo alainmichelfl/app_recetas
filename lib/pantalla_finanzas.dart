@@ -321,10 +321,83 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
     );
   }
 
-  Future<void> _escanearTicketRapido() async {
+  Future<void> _elegirOrigenTicket() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  'Escanear Ticket de Compra 🧾',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Text(
+                  'Registra tus gastos en finanzas y colabora calibrando los precios de tu supermercado con la comunidad.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFBECEF),
+                  child: Icon(Icons.camera_alt, color: Color(0xFFD32F2F)),
+                ),
+                title: const Text('Tomar foto con la cámara',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Captura tu ticket impreso al instante',
+                    style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _escanearTicketRapido(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFECEFF1),
+                  child: Icon(Icons.photo_library, color: Color(0xFF1E2022)),
+                ),
+                title: const Text('Elegir de la galería',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Sube una foto o captura de ticket digital',
+                    style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _escanearTicketRapido(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _escanearTicketRapido([ImageSource origen = ImageSource.camera]) async {
     final picker = ImagePicker();
     final XFile? foto = await picker.pickImage(
-      source: ImageSource.camera,
+      source: origen,
       imageQuality: 85,
     );
 
@@ -340,7 +413,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: Colors.deepOrange),
+                CircularProgressIndicator(color: Color(0xFFD32F2F)),
                 SizedBox(height: 15),
                 Text(
                   'Leyendo ticket con IA... 🧾✨',
@@ -381,13 +454,22 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           insertados++;
         }
 
+        // 🤝 CROWDSOURCING P22: Calibrar precios en Supabase con los datos reales del ticket
+        final int calibrados = await ServicioCotizador.reportarPreciosCrowdsourcing(
+          supabase: supabase,
+          tienda: tienda,
+          articulos: articulos,
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '¡$insertados artículos de $tienda registrados en tus finanzas! 🧾✅',
+                calibrados > 0
+                    ? '¡$insertados artículos de $tienda registrados! Y se calibraron $calibrados precios para la comunidad 🤝🛒'
+                    : '¡$insertados artículos de $tienda registrados en tus finanzas! 🧾✅',
               ),
-              backgroundColor: Colors.green.shade800,
+              backgroundColor: const Color(0xFF1E2022),
             ),
           );
         }
@@ -650,8 +732,8 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _escanearTicketRapido,
-        backgroundColor: Colors.deepOrange,
+        onPressed: _elegirOrigenTicket,
+        backgroundColor: const Color(0xFFD32F2F),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.receipt_long),
         label: const Text('Escanear Ticket 📸'),
