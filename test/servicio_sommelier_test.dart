@@ -70,5 +70,42 @@ void main() {
       expect(reconstruido.sinAlcohol, maridaje.sinAlcohol);
       expect(reconstruido.categoriaPerfil, maridaje.categoriaPerfil);
     });
+
+    test('Detección de botellas de Cava y Bar en despensa', () {
+      expect(ServicioSommelier.esItemDeCava('Botella de Vino Tinto Malbec'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Vino blanco chardonnay'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Six pack de Cerveza Corona'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Mezcal espadín artesanal'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Tequila reposado'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Ginebra Bombay Sapphire'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Agua Tónica Fever Tree'), isTrue);
+      expect(ServicioSommelier.esItemDeCava('Licor de café Kahlúa'), isTrue);
+
+      // Ingredientes normales de cocina NO deben ser clasificados como cava
+      expect(ServicioSommelier.esItemDeCava('Jitomate bola'), isFalse);
+      expect(ServicioSommelier.esItemDeCava('Cebolla morada'), isFalse);
+      expect(ServicioSommelier.esItemDeCava('Pechuga de pollo'), isFalse);
+      expect(ServicioSommelier.esItemDeCava('Harina de trigo'), isFalse);
+      expect(ServicioSommelier.esItemDeCava('Aceite de oliva extra virgen'), isFalse);
+    });
+
+    test('Menú de Tres Tiempos con Maridaje formatea texto para compartir', () {
+      final menu = MenuTresTiemposMaridado(
+        entrada: 'Carpaccio de salmón con alcaparras',
+        maridajeEntrada: ServicioSommelier.generarMaridajeHeuristico('Carpaccio de salmón'),
+        platoFuerte: 'Solomillo al oporto con puré trufado',
+        maridajePlatoFuerte: ServicioSommelier.generarMaridajeHeuristico('Corte de carne de res'),
+        postre: 'Tiramisú casero',
+        maridajePostre: ServicioSommelier.generarMaridajeHeuristico('Pastel dulce de postre'),
+      );
+
+      final texto = menu.formatoParaCompartir();
+      expect(texto, contains('CARTA DE CENA GOURMET'));
+      expect(texto, contains('1er Tiempo (Entrada):'));
+      expect(texto, contains('2do Tiempo (Plato Fuerte):'));
+      expect(texto, contains('3er Tiempo (Postre):'));
+      expect(texto, contains('Sommelier IA'));
+      expect(texto, contains('jitomateycebolla.com'));
+    });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pantalla_preferencias.dart';
 import 'perfiles_nutricionales.dart';
@@ -15,6 +16,10 @@ class PantallaSalud extends StatefulWidget {
 
 class _PantallaSaludState extends State<PantallaSalud> {
   bool cargando = true;
+
+  // 💧 Hidratación diaria (8 vasos * 250ml = 2000ml)
+  int _vasosAguaHoy = 0;
+  static const int _metaVasosAgua = 8;
 
   // Totales consumidos hoy
   int caloriasTotales = 0;
@@ -68,6 +73,7 @@ class _PantallaSaludState extends State<PantallaSalud> {
   void initState() {
     super.initState();
     _cargarPerfilDesdePreferencias();
+    _cargarHidratacionHoy();
     calcularNutricionDelDia();
   }
 
@@ -380,6 +386,7 @@ class _PantallaSaludState extends State<PantallaSalud> {
               color: Colors.teal,
               onRefresh: () async {
                 await _cargarPerfilDesdePreferencias();
+                await _cargarHidratacionHoy();
                 await calcularNutricionDelDia();
               },
               child: SingleChildScrollView(
@@ -592,6 +599,9 @@ class _PantallaSaludState extends State<PantallaSalud> {
                     ),
                   ),
 
+                  const SizedBox(height: 20),
+                  _construirTarjetaHidratacion(),
+
                   const SizedBox(height: 30),
 
                   // --- DESGLOSE DEL DÍA ---
@@ -654,6 +664,274 @@ class _PantallaSaludState extends State<PantallaSalud> {
               ),
             ),
           ),
+    );
+  }
+
+  // =========================================================================
+  // 💧 REGISTRO DE HIDRATACIÓN DIARIA
+  // =========================================================================
+
+  Future<void> _cargarHidratacionHoy() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fechaHoy = DateTime.now().toIso8601String().split('T').first;
+      final key = 'hidratacion_$fechaHoy';
+      final vasos = prefs.getInt(key) ?? 0;
+      if (mounted) {
+        setState(() => _vasosAguaHoy = vasos);
+      }
+    } catch (e) {
+      debugPrint('Error al cargar hidratación: $e');
+    }
+  }
+
+  Future<void> _ajustarVasosAgua(int delta) async {
+    final nuevo = (_vasosAguaHoy + delta).clamp(0, 20);
+    setState(() => _vasosAguaHoy = nuevo);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final fechaHoy = DateTime.now().toIso8601String().split('T').first;
+      final key = 'hidratacion_$fechaHoy';
+      await prefs.setInt(key, nuevo);
+      if (nuevo == _metaVasosAgua && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '¡Excelente! Has alcanzado tu meta diaria de 2L de agua 💧🎉',
+            ),
+            backgroundColor: Colors.blueAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error al guardar hidratación: $e');
+    }
+  }
+
+  Widget _construirTarjetaHidratacion() {
+    final double progreso = (_vasosAguaHoy / _metaVasosAgua).clamp(0.0, 1.0);
+    final int mlActuales = _vasosAguaHoy * 250;
+    final int mlMeta = _metaVasosAgua * 250;
+    final bool metaAlcanzada = _vasosAguaHoy >= _metaVasosAgua;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withValues(alpha: 0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(
+          color: metaAlcanzada ? Colors.blue.shade200 : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.water_drop,
+                      color: Colors.blueAccent,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hidratación Diaria',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Text(
+                        'Objetivo saludable: 2,000 ml al día',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (metaAlcanzada)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blueAccent),
+                  ),
+                  child: const Text(
+                    '¡Cumplida! 🎉',
+                    style: TextStyle(
+                      color: Colors.blueAccent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$mlActuales ',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '/ $mlMeta ml',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '$_vasosAguaHoy de $_metaVasosAgua vasos',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progreso,
+              minHeight: 12,
+              backgroundColor: Colors.blue.shade50,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                metaAlcanzada ? Colors.teal : Colors.blueAccent,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 8 Vasos interactivos
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(_metaVasosAgua, (index) {
+              final bool lleno = index < _vasosAguaHoy;
+              return InkWell(
+                onTap: () {
+                  if (lleno) {
+                    _ajustarVasosAgua(-1);
+                  } else {
+                    _ajustarVasosAgua(1);
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                  child: Icon(
+                    lleno ? Icons.local_drink : Icons.local_drink_outlined,
+                    color: lleno ? Colors.blueAccent : Colors.grey.shade400,
+                    size: 26,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 14),
+          // Botonera de incremento rápido
+          Row(
+            children: [
+              IconButton.outlined(
+                icon: const Icon(Icons.remove, size: 18),
+                tooltip: 'Quitar 1 vaso (250 ml)',
+                style: IconButton.styleFrom(
+                  foregroundColor: Colors.blueAccent,
+                  side: BorderSide(color: Colors.blue.shade200),
+                ),
+                onPressed:
+                    _vasosAguaHoy > 0 ? () => _ajustarVasosAgua(-1) : null,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade50,
+                    foregroundColor: Colors.blue.shade800,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.blue.shade200),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text(
+                    '+1 Vaso (250 ml)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  onPressed: () => _ajustarVasosAgua(1),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    elevation: 1,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.water_drop, size: 16),
+                  label: const Text(
+                    '+ Botella (500 ml)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  onPressed: () => _ajustarVasosAgua(2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

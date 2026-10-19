@@ -44,6 +44,13 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
   String? _ultimoTextoVoz;
   Timer? _temporizadorLimpiezaVoz;
 
+  // ⏱️ Temporizador inteligente integrado
+  Timer? _temporizadorCocina;
+  int _segundosTotales = 0;
+  int _segundosRestantes = 0;
+  bool _temporizadorActivo = false;
+  String _tituloTemporizador = '';
+
   // 💡 Estructura inteligente para manejar diferentes tipos de tarjetas
   List<Map<String, dynamic>> paginasCocina = [];
   int _pasoActual = 0;
@@ -671,6 +678,10 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                   ),
                 ),
 
+              // Banner interactivo del Temporizador Activo
+              if (_segundosRestantes > 0)
+                _construirBannerFlotanteTemporizador(),
+
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -821,6 +832,12 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                                   ),
                                 ),
                               ),
+                              if (!esPreparacion)
+                                _construirSeccionTemporizadorPaso(
+                                  pagina['contenido'] ?? '',
+                                  params?.tiempo,
+                                  numPaso,
+                                ),
                             ],
                           ),
                         ),
@@ -1023,8 +1040,421 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
     }
   }
 
+  // =========================================================================
+  // ⏱️ TEMPORIZADOR INTELIGENTE INTEGRADO
+  // =========================================================================
+
+  int? _extraerSegundosDeTexto(String texto, {String? paramTiempo}) {
+    if (paramTiempo != null && paramTiempo.trim().isNotEmpty) {
+      final s = _parsearCadenaASegundos(paramTiempo);
+      if (s != null && s > 0) return s;
+    }
+    return _parsearCadenaASegundos(texto);
+  }
+
+  int? _parsearCadenaASegundos(String texto) {
+    final t = texto.toLowerCase();
+    // 1. Minutos (ej. "15 min", "15 minutos", "2.5 min")
+    final matchMin =
+        RegExp(r'(\d+(?:\.\d+)?)\s*(?:minutos?|min)\b').firstMatch(t);
+    if (matchMin != null) {
+      final val = double.tryParse(matchMin.group(1) ?? '');
+      if (val != null) return (val * 60).round();
+    }
+    // 2. Segundos (ej. "30 seg", "45 segundos")
+    final matchSeg = RegExp(r'(\d+)\s*(?:segundos?|seg|s)\b').firstMatch(t);
+    if (matchSeg != null) {
+      final val = int.tryParse(matchSeg.group(1) ?? '');
+      if (val != null) return val;
+    }
+    // 3. Horas (ej. "1 hora", "2 hrs")
+    final matchHora =
+        RegExp(r'(\d+(?:\.\d+)?)\s*(?:horas?|hrs?|h)\b').firstMatch(t);
+    if (matchHora != null) {
+      final val = double.tryParse(matchHora.group(1) ?? '');
+      if (val != null) return (val * 3600).round();
+    }
+    return null;
+  }
+
+  String _formatearTiempoRestante(int totalSegundos) {
+    final int horas = totalSegundos ~/ 3600;
+    final int minutos = (totalSegundos % 3600) ~/ 60;
+    final int segundos = totalSegundos % 60;
+    if (horas > 0) {
+      return '${horas.toString().padLeft(2, '0')}:${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
+    }
+    return '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
+  }
+
+  String _formatearMinutosOSegundos(int seg) {
+    if (seg >= 3600) {
+      final h = seg ~/ 3600;
+      final m = (seg % 3600) ~/ 60;
+      return m > 0 ? '$h h $m min' : '$h h';
+    }
+    if (seg >= 60) {
+      final m = seg ~/ 60;
+      final s = seg % 60;
+      return s > 0 ? '$m min $s seg' : '$m min';
+    }
+    return '$seg seg';
+  }
+
+  void _iniciarTemporizador(int segundos, String titulo) {
+    _temporizadorCocina?.cancel();
+    setState(() {
+      _segundosTotales = segundos;
+      _segundosRestantes = segundos;
+      _temporizadorActivo = true;
+      _tituloTemporizador = titulo;
+    });
+
+    _temporizadorCocina = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_segundosRestantes > 1) {
+        setState(() {
+          _segundosRestantes--;
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _segundosRestantes = 0;
+          _temporizadorActivo = false;
+        });
+        _notificarFinTemporizador(titulo);
+      }
+    });
+  }
+
+  void _alternarPausaTemporizador() {
+    if (!_temporizadorActivo && _segundosRestantes > 0) {
+      setState(() => _temporizadorActivo = true);
+      _temporizadorCocina = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        if (_segundosRestantes > 1) {
+          setState(() => _segundosRestantes--);
+        } else {
+          timer.cancel();
+          setState(() {
+            _segundosRestantes = 0;
+            _temporizadorActivo = false;
+          });
+          _notificarFinTemporizador(_tituloTemporizador);
+        }
+      });
+    } else if (_temporizadorActivo) {
+      _temporizadorCocina?.cancel();
+      setState(() => _temporizadorActivo = false);
+    }
+  }
+
+  void _ajustarSegundosTemporizador(int deltaSegundos) {
+    setState(() {
+      final nuevo = _segundosRestantes + deltaSegundos;
+      _segundosRestantes = nuevo > 0 ? nuevo : 0;
+      if (_segundosRestantes > _segundosTotales) {
+        _segundosTotales = _segundosRestantes;
+      }
+    });
+  }
+
+  void _cancelarTemporizador() {
+    _temporizadorCocina?.cancel();
+    setState(() {
+      _segundosRestantes = 0;
+      _segundosTotales = 0;
+      _temporizadorActivo = false;
+      _tituloTemporizador = '';
+    });
+  }
+
+  void _notificarFinTemporizador(String titulo) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.deepOrange.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.alarm_on,
+                  color: Colors.deepOrange, size: 28),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '¡Tiempo cumplido! ⏰',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'El temporizador para "$titulo" ha finalizado. Revisa tu preparación.',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido 👍',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirSeccionTemporizadorPaso(
+    String contenido,
+    String? paramTiempo,
+    int numPaso,
+  ) {
+    if (_segundosRestantes > 0) {
+      return Container(
+        margin: const EdgeInsets.only(top: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.orange.shade900,
+              const Color(0xFFD32F2F),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.timer, color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      _tituloTemporizador.isNotEmpty
+                          ? _tituloTemporizador
+                          : 'Temporizador Activo',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: _cancelarTemporizador,
+                  child: const Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Icon(Icons.close, color: Colors.white70, size: 16),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatearTiempoRestante(_segundosRestantes),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: _segundosTotales > 0
+                    ? (_segundosRestantes / _segundosTotales)
+                    : 0,
+                backgroundColor: Colors.white24,
+                color: const Color(0xFFFFD700),
+                minHeight: 5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () => _ajustarSegundosTemporizador(-60),
+                  child: const Text('-1 min', style: TextStyle(fontSize: 11)),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.red.shade900,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: Icon(
+                    _temporizadorActivo ? Icons.pause : Icons.play_arrow,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _temporizadorActivo ? 'Pausar' : 'Reanudar',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  onPressed: _alternarPausaTemporizador,
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white54),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () => _ajustarSegundosTemporizador(60),
+                  child: const Text('+1 min', style: TextStyle(fontSize: 11)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    final int? seg =
+        _extraerSegundosDeTexto(contenido, paramTiempo: paramTiempo);
+    if (seg == null || seg <= 0) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepOrange.shade600,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 3,
+        ),
+        icon: const Icon(Icons.timer_outlined, size: 20),
+        label: Text(
+          '⏱️ Iniciar temporizador (${_formatearMinutosOSegundos(seg)})',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        onPressed: () => _iniciarTemporizador(
+          seg,
+          'Paso $numPaso (${_formatearMinutosOSegundos(seg)})',
+        ),
+      ),
+    );
+  }
+
+  Widget _construirBannerFlotanteTemporizador() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.deepOrange.shade900.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orangeAccent, width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _temporizadorActivo ? Icons.timer : Icons.timer_off_outlined,
+            size: 18,
+            color: const Color(0xFFFFD700),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '⏱️ ${_tituloTemporizador.isNotEmpty ? _tituloTemporizador : "Temporizador"}: ${_formatearTiempoRestante(_segundosRestantes)}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              _temporizadorActivo
+                  ? Icons.pause_circle_filled
+                  : Icons.play_circle_fill,
+              color: Colors.white,
+              size: 20,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: _alternarPausaTemporizador,
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white70, size: 16),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: _cancelarTemporizador,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _temporizadorCocina?.cancel();
     _temporizadorLimpiezaVoz?.cancel();
     _servicioVoz.dispose();
     _pageController.dispose();

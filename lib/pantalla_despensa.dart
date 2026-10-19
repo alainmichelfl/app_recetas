@@ -4,9 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'conversor_unidades.dart';
 import 'pantalla_chef.dart';
+import 'pantalla_sommelier.dart';
 import 'servicio_ia.dart';
 import 'servicio_hogar.dart';
 import 'servicio_recordatorios.dart';
+import 'servicio_sommelier.dart';
 import 'menu_lateral.dart';
 
 class PantallaDespensa extends StatefulWidget {
@@ -20,6 +22,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
   final TextEditingController _itemController = TextEditingController();
   bool procesandoTicket = false;
   int _cantidadNueva = 1;
+  String _filtroCategoria = 'Todos';
 
   @override
   void dispose() {
@@ -802,6 +805,9 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
               if (mounted) setState(() {});
             },
           ),
+          _construirFiltrosDespensa(),
+          if (_filtroCategoria == 'Cava & Bar')
+            _construirBannerCavaBar(),
           Expanded(
             child: StreamBuilder(
               stream: Supabase.instance.client
@@ -817,7 +823,11 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                   );
                 }
 
-                final despensa = snapshot.data ?? [];
+                final despensaRaw = snapshot.data ?? [];
+                final despensa = despensaRaw
+                    .where((item) =>
+                        _pasaFiltro((item['nombre'] ?? '').toString()))
+                    .toList();
 
                 if (despensa.isEmpty) {
                   return RefreshIndicator(
@@ -836,22 +846,28 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.kitchen_outlined,
+                                  _filtroCategoria == 'Cava & Bar'
+                                      ? Icons.wine_bar
+                                      : Icons.kitchen_outlined,
                                   size: 70,
                                   color: Colors.grey[400],
                                 ),
                                 const SizedBox(height: 15),
-                                const Text(
-                                  'Tu despensa está vacía',
-                                  style: TextStyle(
+                                Text(
+                                  _filtroCategoria == 'Cava & Bar'
+                                      ? 'No tienes bebidas registradas en tu Cava'
+                                      : 'Tu despensa está vacía',
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     color: Colors.grey,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
-                                const Text(
-                                  'Agrega ingredientes o escanea tu ticket de compra',
-                                  style: TextStyle(
+                                Text(
+                                  _filtroCategoria == 'Cava & Bar'
+                                      ? 'Agrega vinos, cervezas o destilados tocando los botones de arriba'
+                                      : 'Agrega ingredientes o escanea tu ticket de compra',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
                                   ),
@@ -1069,4 +1085,319 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
       ),
     );
   }
+
+  bool _pasaFiltro(String nombre) {
+    if (_filtroCategoria == 'Todos') return true;
+    if (_filtroCategoria == 'Cava & Bar') {
+      return ServicioSommelier.esItemDeCava(nombre);
+    }
+    final n = nombre.toLowerCase();
+    if (_filtroCategoria == 'Verduras & Frutas') {
+      return n.contains('jitomate') ||
+          n.contains('tomate') ||
+          n.contains('cebolla') ||
+          n.contains('ajo') ||
+          n.contains('limon') ||
+          n.contains('limón') ||
+          n.contains('zanahoria') ||
+          n.contains('papa') ||
+          n.contains('aguacate') ||
+          n.contains('lechuga') ||
+          n.contains('espinaca') ||
+          n.contains('cilantro') ||
+          n.contains('perejil') ||
+          n.contains('chile') ||
+          n.contains('calabac') ||
+          n.contains('fruta') ||
+          n.contains('manzana') ||
+          n.contains('platano') ||
+          n.contains('plátano') ||
+          n.contains('naranja') ||
+          n.contains('fresa') ||
+          n.contains('uva');
+    }
+    if (_filtroCategoria == 'Carnes & Proteínas') {
+      return n.contains('pollo') ||
+          n.contains('carne') ||
+          n.contains('res') ||
+          n.contains('puerco') ||
+          n.contains('cerdo') ||
+          n.contains('pescado') ||
+          n.contains('salmon') ||
+          n.contains('salmón') ||
+          n.contains('atun') ||
+          n.contains('atún') ||
+          n.contains('camaron') ||
+          n.contains('camarón') ||
+          n.contains('huevo') ||
+          n.contains('queso') ||
+          n.contains('jamon') ||
+          n.contains('jamón') ||
+          n.contains('tofu') ||
+          n.contains('lenteja');
+    }
+    if (_filtroCategoria == 'Alacena') {
+      return !ServicioSommelier.esItemDeCava(nombre) &&
+          !_esVerduraOProteina(n);
+    }
+    return true;
+  }
+
+  bool _esVerduraOProteina(String n) {
+    return n.contains('jitomate') ||
+        n.contains('tomate') ||
+        n.contains('cebolla') ||
+        n.contains('ajo') ||
+        n.contains('limon') ||
+        n.contains('limón') ||
+        n.contains('zanahoria') ||
+        n.contains('papa') ||
+        n.contains('aguacate') ||
+        n.contains('lechuga') ||
+        n.contains('espinaca') ||
+        n.contains('cilantro') ||
+        n.contains('perejil') ||
+        n.contains('chile') ||
+        n.contains('calabac') ||
+        n.contains('fruta') ||
+        n.contains('manzana') ||
+        n.contains('platano') ||
+        n.contains('plátano') ||
+        n.contains('naranja') ||
+        n.contains('pollo') ||
+        n.contains('carne') ||
+        n.contains('res') ||
+        n.contains('puerco') ||
+        n.contains('cerdo') ||
+        n.contains('pescado') ||
+        n.contains('salmon') ||
+        n.contains('salmón') ||
+        n.contains('atun') ||
+        n.contains('atún') ||
+        n.contains('camaron') ||
+        n.contains('camarón') ||
+        n.contains('huevo') ||
+        n.contains('queso') ||
+        n.contains('jamon') ||
+        n.contains('jamón');
+  }
+
+  Widget _construirFiltrosDespensa() {
+    final categorias = [
+      {'id': 'Todos', 'label': 'Todos', 'icon': Icons.all_inbox_rounded},
+      {'id': 'Cava & Bar', 'label': '🍷 Mi Cava & Bar', 'icon': Icons.wine_bar},
+      {'id': 'Verduras & Frutas', 'label': '🥦 Verduras', 'icon': Icons.eco},
+      {'id': 'Carnes & Proteínas', 'label': '🥩 Proteínas', 'icon': Icons.restaurant},
+      {'id': 'Alacena', 'label': '📦 Alacena', 'icon': Icons.inventory_2_outlined},
+    ];
+
+    return Container(
+      height: 48,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: categorias.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final cat = categorias[index];
+          final String catId = cat['id'] as String;
+          final bool seleccionada = _filtroCategoria == catId;
+          final bool esCava = catId == 'Cava & Bar';
+
+          return ChoiceChip(
+            label: Text(
+              cat['label'] as String,
+              style: TextStyle(
+                fontWeight: seleccionada ? FontWeight.bold : FontWeight.normal,
+                color: seleccionada
+                    ? Colors.white
+                    : (esCava ? const Color(0xFF5B1228) : Colors.black87),
+                fontSize: 13,
+              ),
+            ),
+            selected: seleccionada,
+            selectedColor: esCava ? const Color(0xFF5B1228) : Colors.red.shade700,
+            backgroundColor: esCava ? const Color(0xFFFBECEF) : Colors.grey.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: esCava
+                    ? const Color(0xFFB33951).withValues(alpha: 0.5)
+                    : (seleccionada ? Colors.transparent : Colors.grey.shade300),
+              ),
+            ),
+            onSelected: (val) {
+              if (val) {
+                setState(() => _filtroCategoria = catId);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _construirBannerCavaBar() {
+    final botellasComunes = [
+      'Vino Tinto',
+      'Vino Blanco',
+      'Cerveza',
+      'Tequila',
+      'Mezcal',
+      'Ginebra',
+      'Agua Tónica',
+      'Ron',
+      'Whisky',
+    ];
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF380B17),
+            Color(0xFF5B1228),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5B1228).withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.wine_bar,
+                  color: Color(0xFFFFD700),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mi Cava & Bar en Casa',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    Text(
+                      'Sincronizado con el Sommelier IA para maridar tus platillos',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD700),
+                  foregroundColor: const Color(0xFF380B17),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(Icons.auto_awesome, size: 14),
+                label: const Text(
+                  'Sommelier',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PantallaSommelier(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Agregar botella rápida a tu cava:',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: botellasComunes.map((botella) {
+              return ActionChip(
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.25),
+                  ),
+                ),
+                avatar: const Icon(
+                  Icons.add,
+                  size: 14,
+                  color: Color(0xFFFFD700),
+                ),
+                label: Text(
+                  botella,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                  ),
+                ),
+                onPressed: () => _agregarBotellaCava(botella),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _agregarBotellaCava(String nombre) async {
+    try {
+      await Supabase.instance.client.from('despensa_usuario').insert({
+        'nombre': nombre,
+        'cantidad': 1,
+        'fecha_ingreso': DateTime.now().toIso8601String().split('T')[0],
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$nombre agregado a tu Cava & Bar 🍾🍷'),
+          backgroundColor: const Color(0xFF5B1228),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error al agregar botella: $e');
+    }
+  }
 }
+

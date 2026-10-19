@@ -9,6 +9,7 @@ import 'pantalla_despensa.dart';
 import 'pantalla_carrito.dart';
 import 'pantalla_cotizador.dart';
 import 'pantalla_chef.dart';
+import 'pantalla_sommelier.dart';
 import 'pantalla_recetas_caninas.dart';
 import 'pantalla_salud.dart';
 import 'pantalla_finanzas.dart';
@@ -326,6 +327,68 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
+  Widget _construirMenuAsistentesIAConSubmenu(BuildContext context) {
+    final bool esGrupoActivo = rutaActual == 'chef' || rutaActual == 'sommelier';
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: esGrupoActivo ? Colors.amber.withValues(alpha: 0.06) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: esGrupoActivo,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: esGrupoActivo ? Colors.amber.shade800 : Colors.amber.shade800.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.auto_awesome,
+              color: esGrupoActivo ? Colors.white : Colors.amber.shade800,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            'Asistentes IA Culinarios',
+            style: TextStyle(
+              fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
+              color: esGrupoActivo ? Colors.amber.shade900 : Colors.black87,
+              fontSize: 15,
+            ),
+          ),
+          children: [
+            _construirSubItem(
+              context: context,
+              ruta: 'chef',
+              titulo: 'Chef IA',
+              subtitulo: 'Recetas, Despensa & Robots',
+              icono: Icons.soup_kitchen,
+              colorIcono: Colors.amber.shade800,
+              pantalla: () => const PantallaChef(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'sommelier',
+              titulo: 'Sommelier IA 🍷',
+              subtitulo: 'Cava, Maridaje & Coctelería',
+              icono: Icons.wine_bar,
+              colorIcono: const Color(0xFF800020),
+              badge: 'Nuevo ✨',
+              pantalla: () => const PantallaSommelier(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
@@ -525,14 +588,7 @@ class MenuLateral extends StatelessWidget {
                     colorIcono: Colors.deepPurple,
                     pantalla: () => const PantallaCotizador(),
                   ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'chef',
-                    titulo: 'Chef IA',
-                    icono: Icons.auto_awesome,
-                    colorIcono: Colors.amber.shade800,
-                    pantalla: () => const PantallaChef(),
-                  ),
+                  _construirMenuAsistentesIAConSubmenu(context),
 
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),

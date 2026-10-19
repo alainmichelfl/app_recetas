@@ -469,6 +469,176 @@ No incluyas markdown ni texto fuera del JSON.
     }
   }
 
+  /// Identifica si un nombre de insumo corresponde a la Cava / Bar en Casa.
+  static bool esItemDeCava(String nombre) {
+    final n = _normalizarTexto(nombre);
+    const palabrasCava = [
+      'vino',
+      'tinto',
+      'blanco',
+      'rosado',
+      'espumoso',
+      'cava',
+      'prosecco',
+      'champagne',
+      'mezcal',
+      'tequila',
+      'whisky',
+      'whiskey',
+      'bourbon',
+      'ron',
+      'vodka',
+      'gin',
+      'ginebra',
+      'cerveza',
+      'licor',
+      'vermut',
+      'vermouth',
+      'aperol',
+      'campari',
+      'amaretto',
+      'brandy',
+      'cognac',
+      'tonica',
+      'tónica',
+      'angostura',
+      'curaçao',
+      'triple sec',
+      'baileys',
+      'kahlua',
+    ];
+    for (final p in palabrasCava) {
+      if (RegExp('(?<![a-z])${RegExp.escape(p)}(s|es)?(?![a-z])').hasMatch(n)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Consulta qué botellas o bebidas tiene el usuario registradas en su Despensa.
+  static Future<List<String>> obtenerBotellasEnDespensa() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      var query = Supabase.instance.client
+          .from('despensa_usuario')
+          .select('nombre, cantidad');
+      if (user != null) {
+        query = query.eq('user_id', user.id);
+      }
+      final data = await query;
+      final List<String> botellas = [];
+      for (final item in data) {
+        final nombre = (item['nombre'] ?? '').toString();
+        if (esItemDeCava(nombre)) {
+          botellas.add(nombre);
+        }
+      }
+      return botellas;
+    } catch (e) {
+      debugPrint('Error al consultar botellas en despensa: $e');
+      return [];
+    }
+  }
+
+  /// Consulta interactiva libre en vivo con el Sommelier IA (Gemini).
+  static Future<RespuestaSommelierEnVivo> consultarSommelierEnVivo({
+    required String consulta,
+    List<String>? botellasEnCava,
+  }) async {
+    if (ConfigApi.geminiKey.trim().isEmpty) {
+      final heuristico = generarMaridajeHeuristico(consulta);
+      return RespuestaSommelierEnVivo(
+        mensaje:
+            '¡Excelente elección culinaria! Para esta preparación te recomiendo un maridaje balanceado.',
+        maridaje: heuristico,
+      );
+    }
+
+    try {
+      final model = GenerativeModel(
+        model: 'gemini-2.5-flash',
+        apiKey: ConfigApi.geminiKey,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          temperature: 0.6,
+        ),
+      );
+
+      final cavaInfo = (botellasEnCava != null && botellasEnCava.isNotEmpty)
+          ? '- Botellas y bebidas que el usuario tiene disponibles en su cava de casa: ${botellasEnCava.join(", ")}. Si alguna combina bien, ¡priorízala!'
+          : '';
+
+      final prompt = '''
+Eres un Master Sommelier y Mixólogo de talla mundial en la app culinaria "Jitomate y Cebolla".
+El usuario te está haciendo una consulta en vivo mientras cocina, planifica una cena o busca con qué maridar:
+"$consulta"
+
+$cavaInfo
+
+Responde ÚNICAMENTE con un JSON válido con esta estructura:
+{
+  "mensaje": "Respuesta cálida, profesional y concisa (máximo 3 párrafos cortos) con recomendaciones claras, consejos de cata o servicio.",
+  "vino": "Nombre preciso de vino y cepa recomendada",
+  "destilado": "Coctel o destilado afín sugerido",
+  "sinAlcohol": "Mocktail artesanal 0.0% alcohol para acompañar",
+  "notasArmonia": "Por qué armoniza (equilibrio de grasa, acidez, picor o dulzor)",
+  "temperaturaServicio": "Temperatura ideal (ej. 8°C a 10°C)",
+  "tipoCopa": "Tipo de copa o cristalería",
+  "categoriaPerfil": "Perfil gastronómico",
+  "ingredientesBebida": ["Ingrediente 1", "Ingrediente 2"]
+}
+''';
+
+      final response = await model.generateContent([Content.text(prompt)]);
+      final rawText = response.text;
+      if (rawText == null || rawText.trim().isEmpty) {
+        final fallback = generarMaridajeHeuristico(consulta);
+        return RespuestaSommelierEnVivo(
+          mensaje:
+              'Aquí tienes una recomendación armonizada para elevar tu experiencia gastronómica.',
+          maridaje: fallback,
+        );
+      }
+
+      final limpio = rawText.replaceAll('```json', '').replaceAll('```', '').trim();
+      final Map<String, dynamic> data = jsonDecode(limpio);
+      final maridaje = MaridajeReceta.fromMap(data);
+      return RespuestaSommelierEnVivo(
+        mensaje: data['mensaje']?.toString() ??
+            '¡Excelente maridaje seleccionado por tu Sommelier!',
+        maridaje: maridaje,
+      );
+    } catch (e) {
+      debugPrint('Error en Sommelier en vivo ($e)');
+      final fallback = generarMaridajeHeuristico(consulta);
+      return RespuestaSommelierEnVivo(
+        mensaje:
+            'Te sugiero este maridaje clásico para equilibrar texturas y notas aromáticas de tu platillo.',
+        maridaje: fallback,
+      );
+    }
+  }
+
+  /// Genera una Carta Gourmet de 3 Tiempos con Maridaje para cenas y anfitriones.
+  static Future<MenuTresTiemposMaridado> generarMenuTresTiempos({
+    required String entrada,
+    required String platoFuerte,
+    required String postre,
+  }) async {
+    final maridajeEntrada = generarMaridajeHeuristico(entrada);
+    final maridajePlatoFuerte = generarMaridajeHeuristico(platoFuerte);
+    final maridajePostre = generarMaridajeHeuristico(postre);
+
+    return MenuTresTiemposMaridado(
+      entrada: entrada,
+      platoFuerte: platoFuerte,
+      postre: postre,
+      maridajeEntrada: maridajeEntrada,
+      maridajePlatoFuerte: maridajePlatoFuerte,
+      maridajePostre: maridajePostre,
+    );
+  }
+
   /// Agrega la bebida o ingredientes del maridaje a la Lista de Compras del usuario en Supabase.
   static Future<bool> agregarBebidaAListaCompras(
     String nombreBebida, {
@@ -491,3 +661,56 @@ No incluyas markdown ni texto fuera del JSON.
     }
   }
 }
+
+/// Respuesta conversacional del Sommelier IA en vivo.
+class RespuestaSommelierEnVivo {
+  final String mensaje;
+  final MaridajeReceta maridaje;
+
+  const RespuestaSommelierEnVivo({
+    required this.mensaje,
+    required this.maridaje,
+  });
+}
+
+/// Carta de Menú de 3 Tiempos para anfitriones y cenas con amigos.
+class MenuTresTiemposMaridado {
+  final String entrada;
+  final String platoFuerte;
+  final String postre;
+  final MaridajeReceta maridajeEntrada;
+  final MaridajeReceta maridajePlatoFuerte;
+  final MaridajeReceta maridajePostre;
+
+  const MenuTresTiemposMaridado({
+    required this.entrada,
+    required this.platoFuerte,
+    required this.postre,
+    required this.maridajeEntrada,
+    required this.maridajePlatoFuerte,
+    required this.maridajePostre,
+  });
+
+  String formatoParaCompartir() {
+    final sb = StringBuffer();
+    sb.writeln('🍽️ *CARTA DE CENA GOURMET & MARIDAJE* 🍷');
+    sb.writeln('_Diseñado por el Sommelier IA de Jitomate y Cebolla_\n');
+
+    sb.writeln('🥗 *1er Tiempo (Entrada):* $entrada');
+    sb.writeln('   • 🍷 Maridaje: ${maridajeEntrada.vino}');
+    sb.writeln('   • 🍹 Sin alcohol: ${maridajeEntrada.sinAlcohol}\n');
+
+    sb.writeln('🥩 *2do Tiempo (Plato Fuerte):* $platoFuerte');
+    sb.writeln('   • 🍷 Maridaje: ${maridajePlatoFuerte.vino}');
+    sb.writeln('   • 🥃 Destilado: ${maridajePlatoFuerte.destilado}\n');
+
+    sb.writeln('🍰 *3er Tiempo (Postre):* $postre');
+    sb.writeln('   • 🍷 Maridaje: ${maridajePostre.vino}');
+    sb.writeln('   • ☕ Coctel/Café: ${maridajePostre.destilado}\n');
+
+    sb.writeln('✨ ¡Buen provecho y feliz velada! 🥂');
+    sb.writeln('https://www.jitomateycebolla.com');
+    return sb.toString();
+  }
+}
+
