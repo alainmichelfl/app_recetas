@@ -56,6 +56,12 @@ class _PantallaSaludState extends State<PantallaSalud> {
       'grasas': 75,
     },
     'Keto': {'calorias': 1700, 'proteinas': 110, 'carbs': 30, 'grasas': 130},
+    'Baja en grasa': {
+      'calorias': 1600,
+      'proteinas': 135,
+      'carbs': 220,
+      'grasas': 20,
+    },
   };
 
   @override
@@ -71,7 +77,9 @@ class _PantallaSaludState extends State<PantallaSalud> {
       if (!mounted) return;
       final perfil = prefs.estilos.contains(PerfilesNutricionales.keto)
           ? 'Keto'
-          : prefs.objetivo;
+          : (prefs.estilos.contains(PerfilesNutricionales.bajaEnGrasa)
+              ? 'Baja en grasa'
+              : prefs.objetivo);
       _aplicarPerfil(
         perfilesNutricionales.containsKey(perfil)
             ? perfil

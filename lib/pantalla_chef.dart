@@ -226,7 +226,7 @@ class _PantallaChefState extends State<PantallaChef> {
           "unidad": "piezas"
         }
       ],
-      "instrucciones": "1. Primer paso.\\n2. Segundo paso.\\n3. Tercer paso."
+      "instrucciones": "1. Primer paso.\\n2. Segundo paso.\\n3. Tercer paso."${!esPerruno ? ',\n      "maridaje": {\n        "vino": "Nombre y estilo de vino sugerido",\n        "destilado": "Destilado o cóctel sugerido",\n        "sinAlcohol": "Mocktail artesanal sin alcohol sugerido"\n      }' : ''}
     }
     
     Nota: En "nombre_estandar" usa SIEMPRE minúsculas y el nombre base del ingrediente (ej. "cebolla blanca", no "media cebolla blanca picada").
@@ -450,6 +450,48 @@ class _PantallaChefState extends State<PantallaChef> {
                         receta['instrucciones'] ?? '',
                         style: const TextStyle(fontSize: 14, height: 1.4),
                       ),
+                      if (receta['maridaje'] != null && !_modoPerruno) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF230611).withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF800020).withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Text('🍷', style: TextStyle(fontSize: 16)),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Maridaje del Sommelier:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Color(0xFF800020),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              if (receta['maridaje']['vino'] != null)
+                                Text('• Vino: ${receta['maridaje']['vino']}',
+                                    style: const TextStyle(fontSize: 13)),
+                              if (receta['maridaje']['destilado'] != null)
+                                Text('• Destilado: ${receta['maridaje']['destilado']}',
+                                    style: const TextStyle(fontSize: 13)),
+                              if (receta['maridaje']['sinAlcohol'] != null)
+                                Text('• Sin alcohol: ${receta['maridaje']['sinAlcohol']}',
+                                    style: const TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -527,6 +569,14 @@ class _PantallaChefState extends State<PantallaChef> {
       }
       sb.writeln('\n🍳 INSTRUCCIONES:');
       sb.writeln(instrucciones);
+
+      if (!_modoPerruno && recetaGenerada['maridaje'] is Map) {
+        final m = recetaGenerada['maridaje'] as Map;
+        sb.writeln('\n🍷 MARIDAJE SUGERIDO:');
+        if (m['vino'] != null) sb.writeln('- Vino: ${m['vino']}');
+        if (m['destilado'] != null) sb.writeln('- Destilado / Cóctel: ${m['destilado']}');
+        if (m['sinAlcohol'] != null) sb.writeln('- Sin Alcohol: ${m['sinAlcohol']}');
+      }
 
       final String descCompleta = sb.toString().trim();
       final bool esPerruna = _modoPerruno;

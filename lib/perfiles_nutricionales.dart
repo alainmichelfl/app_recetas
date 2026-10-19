@@ -37,6 +37,7 @@ class PerfilesNutricionales {
 
   // ───────────── ESTILOS DE DIETA (se pueden combinar) ─────────────
   static const String libre = 'Libre';
+  static const String bajaEnGrasa = 'Baja en grasa';
   static const String keto = 'Keto';
   static const String vegetariana = 'Vegetariana';
   static const String vegana = 'Vegana';
@@ -49,6 +50,7 @@ class PerfilesNutricionales {
 
   static const List<String> estilos = [
     libre,
+    bajaEnGrasa,
     keto,
     vegetariana,
     vegana,
@@ -62,6 +64,8 @@ class PerfilesNutricionales {
 
   /// Instrucción que se agrega al prompt del Chef IA por cada estilo.
   static const Map<String, String> instruccionIA = {
+    bajaEnGrasa:
+        'Dieta BAJA EN GRASA / LIBRE DE GRASA (Low-Fat): Prohibido usar manteca, tocino, empanizados, frituras por inmersión, mantequilla y lácteos enteros. Prioriza cocción al vapor, al horno, hervido, pochado o en freidora de aire. Usa proteínas magras (pechuga de pollo/pavo, pescados blancos, claras de huevo, legumbres). Máximo 5-7g de grasa por porción (~20g total al día).',
     keto: 'Dieta KETO: muy bajo en carbohidratos (máx. 30 g al día), alto en grasas saludables.',
     vegetariana: 'Dieta VEGETARIANA: sin carne, aves ni pescado (permite huevo y lácteos).',
     vegana: 'Dieta VEGANA: sin ningún producto de origen animal (sin carne, pescado, huevo, lácteos ni miel).',
@@ -76,6 +80,20 @@ class PerfilesNutricionales {
   /// Palabras que delatan ingredientes a evitar (filtro simple para recetas
   /// ya guardadas en el Planeador, que se buscan por título y descripción).
   static const Map<String, List<String>> palabrasExcluidas = {
+    bajaEnGrasa: [
+      'manteca',
+      'tocino',
+      'chicharron',
+      'chicharrón',
+      'frito',
+      'empanizado',
+      'capeado',
+      'crema entera',
+      'carnitas',
+      'chorizo',
+      'panceta',
+      'mayonesa',
+    ],
     vegetariana: [
       'pollo', 'carne', 'res', 'cerdo', 'tocino', 'jamón', 'jamon', 'atún',
       'atun', 'pescado', 'camarón', 'camaron', 'salmón', 'salmon', 'pavo',
@@ -105,20 +123,42 @@ class PerfilesNutricionales {
     return normalizar(texto.split(','));
   }
 
-  /// Quita valores desconocidos; "Libre" es exclusivo y es el valor por defecto.
+  /// Quita valores desconocidos; soporta alias como "Libre de grasa"; "Libre" es exclusivo.
   static List<String> normalizar(Iterable<String> seleccion) {
     final limpios = seleccion
         .map((e) => e.trim())
+        .map((e) {
+          final l = e.toLowerCase();
+          if (l == 'libre de grasa' || l == 'baja en grasa' || l == 'sin grasa') {
+            return bajaEnGrasa;
+          }
+          return e;
+        })
         .where((e) => estilos.contains(e) && e != libre)
         .toSet()
         .toList();
     return limpios.isEmpty ? [libre] : limpios;
   }
 
-  /// Macros finales según objetivo + estilos (Keto manda sobre el objetivo).
+  /// Macros finales según objetivo + estilos (Keto manda sobre el objetivo; Baja en grasa ajusta grasas al mínimo).
   static Map<String, int> macrosPara(String objetivo, List<String> estilosSel) {
     if (estilosSel.contains(keto)) return macrosKeto;
-    return macrosPorObjetivo[objetivo] ?? macrosPorObjetivo[mantenimiento]!;
+    final base = Map<String, int>.from(
+      macrosPorObjetivo[objetivo] ?? macrosPorObjetivo[mantenimiento]!,
+    );
+    if (estilosSel.contains(bajaEnGrasa)) {
+      final grasasBase = base['grasas'] ?? 65;
+      const int grasasBajas = 20;
+      if (grasasBase > grasasBajas) {
+        final reduccionKcal = (grasasBase - grasasBajas) * 9;
+        base['grasas'] = grasasBajas;
+        final carbsExtra = (reduccionKcal * 0.75 / 4).round();
+        final protExtra = (reduccionKcal * 0.25 / 4).round();
+        base['carbs'] = (base['carbs'] ?? 200) + carbsExtra;
+        base['proteinas'] = (base['proteinas'] ?? 140) + protExtra;
+      }
+    }
+    return base;
   }
 
   /// Texto de estilos y objetivo para el prompt del Chef IA.

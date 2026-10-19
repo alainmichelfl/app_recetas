@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pantalla_modo_cocina.dart';
@@ -8,6 +9,7 @@ import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'servicio_copiloto_cocina.dart';
+import 'servicio_sommelier.dart';
 
 class PantallaDetalleReceta extends StatefulWidget {
   final int idReceta;
@@ -37,6 +39,10 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
   RegistroCocina? _registroCocina;
   String? _textoCargado;
   String? _recipeUserId;
+
+  MaridajeReceta? _maridaje;
+  int _tabMaridaje = 0; // 0: Vino, 1: Destilado, 2: Mocktail
+  bool _cargandoSommelierIA = false;
 
   bool get _puedeEliminar =>
       ServicioAdmin.esAdmin() ||
@@ -919,6 +925,10 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     ),
                   ],
 
+                  // 🍷 SOMMELIER IA & CAVA VIRTUAL
+                  const SizedBox(height: 35),
+                  _construirTarjetaSommelier(listaIngredientes),
+
                   const SizedBox(height: 100),
                 ],
               ),
@@ -1447,6 +1457,434 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
           ),
         );
       },
+    );
+  }
+
+  // ───────────── SOMMELIER IA & CAVA VIRTUAL ─────────────
+  MaridajeReceta _obtenerMaridaje(List<String> ingredientes) {
+    return _maridaje ??
+        ServicioSommelier.generarMaridajeHeuristico(
+          widget.titulo,
+          ingredientes: ingredientes,
+          descripcion: widget.descripcion,
+        );
+  }
+
+  Future<void> _afinarConSommelierIA(List<String> ingredientes) async {
+    setState(() => _cargandoSommelierIA = true);
+    try {
+      final res = await ServicioSommelier.consultarSommelierIA(
+        titulo: widget.titulo,
+        ingredientes: ingredientes,
+        descripcion: widget.descripcion,
+      );
+      if (mounted) {
+        setState(() {
+          _maridaje = res;
+          _cargandoSommelierIA = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ ¡Sommelier IA afinó el maridaje con éxito! 🍷'),
+            backgroundColor: Color(0xFF4A1222),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoSommelierIA = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Aviso: Se mantuvo el maridaje de cava ($e)'),
+            backgroundColor: Colors.brown,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _agregarBebidaAlCarrito(String nombreBebida) async {
+    final ok = await ServicioSommelier.agregarBebidaAListaCompras(
+      nombreBebida,
+      cantidad: '1 botella / porción',
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? '🛒 "$nombreBebida" agregado a tu Lista de Compras'
+              : 'Error al agregar la bebida a tu lista',
+        ),
+        backgroundColor: ok ? const Color(0xFF004D40) : Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _compartirMaridaje(MaridajeReceta m) async {
+    final texto = m.resumenParaCompartir(widget.titulo);
+    await SharePlus.instance.share(ShareParams(text: texto));
+  }
+
+  Widget _construirTarjetaSommelier(List<String> ingredientes) {
+    final m = _obtenerMaridaje(ingredientes);
+
+    String descripcionBebidaActual;
+    IconData iconoBebidaActual;
+    String etiquetaPestana;
+
+    switch (_tabMaridaje) {
+      case 1:
+        descripcionBebidaActual = m.destilado;
+        iconoBebidaActual = Icons.local_bar;
+        etiquetaPestana = 'Coctelería & Destilados';
+        break;
+      case 2:
+        descripcionBebidaActual = m.sinAlcohol;
+        iconoBebidaActual = Icons.local_drink;
+        etiquetaPestana = '0.0% Alcohol · Artesanal';
+        break;
+      case 0:
+      default:
+        descripcionBebidaActual = m.vino;
+        iconoBebidaActual = Icons.wine_bar;
+        etiquetaPestana = 'Cepa & Bodega';
+        break;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF230611),
+            Color(0xFF3F0F20),
+            Color(0xFF5A162D),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF230611).withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // CABECERA
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: const Text('🍷', style: TextStyle(fontSize: 22)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Sommelier IA & Cava Virtual',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.share_outlined,
+                            color: Color(0xFFE5C158),
+                            size: 20,
+                          ),
+                          tooltip: 'Compartir maridaje',
+                          onPressed: () => _compartirMaridaje(m),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Perfil: ${m.categoriaPerfil}',
+                      style: const TextStyle(
+                        color: Color(0xFFE5C158),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // PESTAÑAS SELECTORAS (Vino, Destilado, Mocktail)
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                _construirPestana(0, '🍷 Vino', _tabMaridaje == 0),
+                _construirPestana(1, '🥃 Destilado', _tabMaridaje == 1),
+                _construirPestana(2, '🍹 Sin alcohol', _tabMaridaje == 2),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // TARJETA DE LA BEBIDA SELECCIONADA
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(iconoBebidaActual, color: const Color(0xFFE5C158), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      etiquetaPestana,
+                      style: const TextStyle(
+                        color: Color(0xFFE5C158),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  descripcionBebidaActual,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ARMONÍA EN BOCA
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('🎯', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Armonía del maridaje:',
+                        style: TextStyle(
+                          color: Color(0xFFE5C158),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        m.notasArmonia,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // SERVICIO & COPA
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('❄️', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 6),
+                    Text(
+                      m.temperaturaServicio,
+                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('🥂', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 6),
+                    Text(
+                      m.tipoCopa,
+                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // BOTONES DE ACCIÓN
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD4AF37),
+                    foregroundColor: const Color(0xFF230611),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  onPressed: () {
+                    final bebidaAComprar = _tabMaridaje == 0
+                        ? m.vino
+                        : (_tabMaridaje == 1 ? m.destilado : m.sinAlcohol);
+                    _agregarBebidaAlCarrito(bebidaAComprar);
+                  },
+                  icon: const Icon(Icons.add_shopping_cart, size: 18),
+                  label: const Text(
+                    'Comprar Bebida 🛒',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
+                onPressed: _cargandoSommelierIA
+                    ? null
+                    : () => _afinarConSommelierIA(ingredientes),
+                icon: _cargandoSommelierIA
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.auto_awesome, size: 16, color: Color(0xFFE5C158)),
+                label: Text(
+                  _cargandoSommelierIA ? 'Afinando...' : 'Afinar IA ✨',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirPestana(int indice, String label, bool activa) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tabMaridaje = indice),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: activa
+                ? const Color(0xFFD4AF37)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: activa ? const Color(0xFF230611) : Colors.white70,
+              fontSize: 12,
+              fontWeight: activa ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

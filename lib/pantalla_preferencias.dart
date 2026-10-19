@@ -316,6 +316,40 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                             }).toList(),
                           ),
                           if (estilosSeleccionados.contains(
+                            PerfilesNutricionales.bajaEnGrasa,
+                          )) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.teal.shade300),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.favorite_outline,
+                                    size: 20,
+                                    color: Colors.teal.shade800,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '"Baja en grasa" restringe frituras, manteca, mayonesa y empanizados, priorizando cocción al vapor, air fryer y proteínas magras (~20g de grasa diaria). Ideal para salud hepática, vesícula o definición.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.teal.shade900,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (estilosSeleccionados.contains(
                             PerfilesNutricionales.diabetes,
                           )) ...[
                             const SizedBox(height: 12),
