@@ -423,7 +423,7 @@ class _PantallaCargaMasivaRecetasState
           'Carga Masiva de Recetas (IA)',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.orange.shade800,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
       ),
       body: Column(

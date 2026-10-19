@@ -950,7 +950,7 @@ class _PantallaChefState extends State<PantallaChef> {
           ),
         ),
         title: Text(_modoPerruno ? 'Chef Perruno 🐾' : 'Chef IA 👨‍🍳'),
-        backgroundColor: colorPremium,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         elevation: 0,
       ),

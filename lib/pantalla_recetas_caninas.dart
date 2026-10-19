@@ -329,7 +329,7 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
             ),
           ],
         ),
-        backgroundColor: Colors.brown[700],
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

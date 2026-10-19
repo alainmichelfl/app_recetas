@@ -71,11 +71,11 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           centerTitle: true,
           elevation: 0,
-          backgroundColor: Color(0xFFD32F2F),
+          backgroundColor: Color(0xFF1E2022),
           foregroundColor: Colors.white,
           iconTheme: IconThemeData(color: Colors.white),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
         ),
       ),

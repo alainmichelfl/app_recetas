@@ -187,7 +187,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           'Mis Preferencias ⚙️',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: colorPrincipal,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         elevation: 0,
       ),

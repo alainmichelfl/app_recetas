@@ -203,7 +203,7 @@ class _PantallaSommelierState extends State<PantallaSommelier>
             ),
           ],
         ),
-        backgroundColor: _colorBurgundy,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(

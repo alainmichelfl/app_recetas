@@ -665,7 +665,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
           'Mi Despensa 🥫',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.red.shade800,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

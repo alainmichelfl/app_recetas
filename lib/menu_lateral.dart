@@ -120,7 +120,8 @@ class MenuLateral extends StatelessWidget {
     required String titulo,
     required IconData icono,
     required Color colorIcono,
-    required Widget Function() pantalla,
+    Widget Function()? pantalla,
+    VoidCallback? alPresionar,
     String? subtitulo,
     String? badge,
   }) {
@@ -182,7 +183,13 @@ class MenuLateral extends StatelessWidget {
           : (esActiva
               ? Icon(Icons.circle, size: 7, color: colorIcono)
               : null),
-      onTap: () => _navegar(context, ruta, pantalla),
+      onTap: () {
+        if (alPresionar != null) {
+          alPresionar();
+        } else if (pantalla != null) {
+          _navegar(context, ruta, pantalla);
+        }
+      },
     );
   }
 
@@ -191,12 +198,14 @@ class MenuLateral extends StatelessWidget {
         rutaActual == 'recetas_mias' ||
         rutaActual == 'caninas';
 
+    const Color colorGrupo = Color(0xFFC62828); // Rojo Jitomate Gourmet
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? Colors.orange.withValues(alpha: 0.05) : Colors.transparent,
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -206,12 +215,12 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? Colors.orange.shade800 : Colors.orange.withValues(alpha: 0.15),
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.menu_book_rounded,
-              color: esGrupoActivo ? Colors.white : Colors.orange.shade800,
+              color: esGrupoActivo ? Colors.white : colorGrupo,
               size: 20,
             ),
           ),
@@ -219,7 +228,7 @@ class MenuLateral extends StatelessWidget {
             'Recetario',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? Colors.orange.shade900 : Colors.black87,
+              color: esGrupoActivo ? colorGrupo : Colors.black87,
               fontSize: 15,
             ),
           ),
@@ -230,7 +239,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Catálogo Oficial',
               subtitulo: 'Recetas curadas por el chef',
               icono: Icons.star_rounded,
-              colorIcono: Colors.orange.shade800,
+              colorIcono: colorGrupo,
               pantalla: () => const PantallaRecetas(
                 filtroInicial: FiltroAudienciaReceta.oficiales,
                 rutaMenu: 'recetas',
@@ -243,7 +252,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Mis Creaciones',
               subtitulo: 'Tus recetas y las del Chef IA',
               icono: Icons.person_pin_circle_outlined,
-              colorIcono: Colors.teal.shade800,
+              colorIcono: const Color(0xFF1E2022),
               pantalla: () => const PantallaRecetas(
                 filtroInicial: FiltroAudienciaReceta.misRecetas,
                 rutaMenu: 'recetas_mias',
@@ -256,7 +265,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Recetas Caninas 🐾',
               subtitulo: 'Nutrición casera para perritos',
               icono: Icons.pets,
-              colorIcono: Colors.brown,
+              colorIcono: Colors.brown.shade700,
               pantalla: () => const PantallaRecetasCaninas(),
             ),
           ],
@@ -320,6 +329,96 @@ class MenuLateral extends StatelessWidget {
               colorIcono: Colors.teal.shade700,
               badge: 'Nuevo ✨',
               pantalla: () => const PantallaCalendario(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _construirMenuDespensaYComprasConSubmenu(BuildContext context) {
+    final bool esGrupoActivo = rutaActual == 'despensa' ||
+        rutaActual == 'carrito' ||
+        rutaActual == 'cotizador' ||
+        rutaActual == 'hogar';
+
+    const Color colorGrupo = Color(0xFF2E7D32); // Verde Huerto / Despensa Gourmet
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: esGrupoActivo,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              color: esGrupoActivo ? Colors.white : colorGrupo,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            'Despensa y Compras',
+            style: TextStyle(
+              fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
+              color: esGrupoActivo ? colorGrupo : Colors.black87,
+              fontSize: 15,
+            ),
+          ),
+          children: [
+            _construirSubItem(
+              context: context,
+              ruta: 'despensa',
+              titulo: 'Mi Despensa',
+              subtitulo: 'Insumos, Cava & Refrigerador',
+              icono: Icons.kitchen,
+              colorIcono: colorGrupo,
+              pantalla: () => const PantallaDespensa(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'carrito',
+              titulo: 'Lista de Compras',
+              subtitulo: 'Lista inteligente para el súper',
+              icono: Icons.shopping_cart,
+              colorIcono: colorGrupo,
+              pantalla: () => const PantallaCarrito(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'cotizador',
+              titulo: 'Cotizador Dinámico',
+              subtitulo: 'Compara precios de supermercados',
+              icono: Icons.calculate,
+              colorIcono: const Color(0xFF455A64),
+              pantalla: () => const PantallaCotizador(),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'hogar',
+              titulo: 'Hogar Familiar',
+              subtitulo: 'Despensa compartida en casa',
+              icono: Icons.family_restroom_rounded,
+              colorIcono: const Color(0xFF1976D2),
+              badge: 'Familia 👨‍👩‍👧‍👦',
+              alPresionar: () {
+                Navigator.pop(context);
+                ModalHogarFamiliar.mostrar(context);
+              },
             ),
           ],
         ),
@@ -399,24 +498,24 @@ class MenuLateral extends StatelessWidget {
         top: false,
         child: Column(
           children: [
-            // Cabecera elegante con degradado de marca
+            // Cabecera elegante Bistró Minimalista Dark
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [
-                    const Color(0xFFD32F2F),
-                    Colors.orange.shade800,
+                    Color(0xFF1E2022), // Negro Carbón Grafito
+                    Color(0xFF2C3437), // Pizarra oscura
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -428,18 +527,18 @@ class MenuLateral extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: const Color(0xFFD32F2F), // Sello Rojo Jitomate
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.15),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 6,
                             ),
                           ],
                         ),
                         child: const Icon(
                           Icons.restaurant_menu,
-                          color: Color(0xFFD32F2F),
+                          color: Colors.white,
                           size: 30,
                         ),
                       ),
@@ -518,76 +617,7 @@ class MenuLateral extends StatelessWidget {
                   ),
                   _construirMenuRecetasConSubmenu(context),
                   _construirMenuPlaneadorConSubmenu(context),
-                  _construirItem(
-                    context: context,
-                    ruta: 'despensa',
-                    titulo: 'Mi Despensa',
-                    icono: Icons.kitchen,
-                    colorIcono: Colors.blue.shade700,
-                    pantalla: () => const PantallaDespensa(),
-                  ),
-                  ListTile(
-                    dense: true,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-                    leading: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.family_restroom_rounded,
-                        color: Colors.teal.shade800,
-                        size: 20,
-                      ),
-                    ),
-                    title: const Text(
-                      'Hogar Familiar',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        fontSize: 15,
-                      ),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'Familia 👨‍👩‍👧‍👦',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal.shade800,
-                        ),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      ModalHogarFamiliar.mostrar(context);
-                    },
-                  ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'carrito',
-                    titulo: 'Lista de Compras',
-                    icono: Icons.shopping_cart,
-                    colorIcono: Colors.green.shade700,
-                    pantalla: () => const PantallaCarrito(),
-                  ),
-                  _construirItem(
-                    context: context,
-                    ruta: 'cotizador',
-                    titulo: 'Cotizador',
-                    icono: Icons.calculate,
-                    colorIcono: Colors.deepPurple,
-                    pantalla: () => const PantallaCotizador(),
-                  ),
+                  _construirMenuDespensaYComprasConSubmenu(context),
                   _construirMenuAsistentesIAConSubmenu(context),
 
                   const Padding(

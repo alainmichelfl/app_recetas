@@ -614,8 +614,6 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
 
   @override
   Widget build(BuildContext context) {
-    const Color colorTema = Colors.deepOrange;
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
       drawer: const MenuLateral(rutaActual: 'finanzas'),
@@ -631,7 +629,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           'Mis Finanzas 📈',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: colorTema,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

@@ -422,7 +422,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
           SliverAppBar(
             expandedHeight: 300.0,
             pinned: true,
-            backgroundColor: rojoJitomate,
+            backgroundColor: const Color(0xFF1E2022),
             foregroundColor: Colors.white,
             leading: Padding(
               padding: const EdgeInsets.all(8.0),

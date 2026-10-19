@@ -202,7 +202,7 @@ class _PantallaAgregarRecetaState extends State<PantallaAgregarReceta> {
           'Nueva Receta',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: verdeCilantro,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(

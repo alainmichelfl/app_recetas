@@ -712,7 +712,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
           'Calendario de Comidas 📅',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.teal.shade800,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -859,11 +859,11 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                                   );
                                 },
                                 icon: const Icon(Icons.event_available,
-                                    size: 16, color: Colors.teal),
+                                    size: 16, color: Color(0xFF1E2022)),
                                 label: const Text(
                                   'Exportar día',
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.teal),
+                                      fontSize: 12, color: Color(0xFF1E2022), fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
@@ -1341,7 +1341,7 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.calendar_today_outlined, color: Colors.teal, size: 19),
+              icon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF1E2022), size: 19),
               tooltip: 'Exportar este platillo a tu calendario',
               onPressed: () => _exportarAlCalendarioNativo(item),
             ),

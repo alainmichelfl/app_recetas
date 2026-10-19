@@ -355,7 +355,7 @@ class _PantallaSaludState extends State<PantallaSalud> {
           'Mi Salud 🍏',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

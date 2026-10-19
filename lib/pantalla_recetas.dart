@@ -1455,7 +1455,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           tituloAppBar,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.orange[800],
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -1546,7 +1546,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _mostrarOpcionesAgregar,
-        backgroundColor: Colors.orange[800],
+        backgroundColor: const Color(0xFFD32F2F),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
@@ -1560,7 +1560,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Buscar receta por nombre...',
-                    prefixIcon: const Icon(Icons.search, color: Colors.orange),
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFF1E2022)),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -1590,12 +1590,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     decoration: BoxDecoration(
                       color: _ingredientesSeleccionados.isNotEmpty
                           ? Colors.teal.shade50
-                          : Colors.orange.shade50,
+                          : const Color(0xFFF5F5F7),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _ingredientesSeleccionados.isNotEmpty
                             ? Colors.teal.shade300
-                            : Colors.orange.shade300,
+                            : const Color(0xFF1E2022).withValues(alpha: 0.15),
                         width: 1.2,
                       ),
                     ),
@@ -1607,7 +1607,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                               : Icons.restaurant_menu_rounded,
                           color: _ingredientesSeleccionados.isNotEmpty
                               ? Colors.teal.shade700
-                              : Colors.orange.shade800,
+                              : const Color(0xFF1E2022),
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -1621,7 +1621,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                               fontWeight: FontWeight.bold,
                               color: _ingredientesSeleccionados.isNotEmpty
                                   ? Colors.teal.shade800
-                                  : Colors.orange.shade900,
+                                  : const Color(0xFF1E2022),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1644,10 +1644,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ),
                           )
                         else
-                          Icon(
+                          const Icon(
                             Icons.tune,
                             size: 16,
-                            color: Colors.orange.shade800,
+                            color: Color(0xFF1E2022),
                           ),
                       ],
                     ),
@@ -1663,14 +1663,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       _construirChipAudiencia(
                         etiqueta: '🌟 Oficiales',
                         filtro: FiltroAudienciaReceta.oficiales,
-                        colorActivo: Colors.red.shade800,
-                        fondoActivo: Colors.red.shade50,
+                        colorActivo: const Color(0xFFD32F2F),
+                        fondoActivo: const Color(0xFFFBECEF),
                       ),
                       _construirChipAudiencia(
                         etiqueta: '👨‍🍳 Mis Recetas',
                         filtro: FiltroAudienciaReceta.misRecetas,
-                        colorActivo: Colors.teal.shade800,
-                        fondoActivo: Colors.teal.shade50,
+                        colorActivo: const Color(0xFF1E2022),
+                        fondoActivo: Colors.grey.shade200,
                       ),
                       _construirChipAudiencia(
                         etiqueta: '🌎 Comunidad',
@@ -1699,11 +1699,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                         child: ChoiceChip(
                           label: Text(cat),
                           selected: seleccionado,
-                          selectedColor: Colors.orange[200],
+                          selectedColor: const Color(0xFF1E2022),
                           backgroundColor: Colors.grey[200],
                           labelStyle: TextStyle(
                             color: seleccionado
-                                ? Colors.orange[900]
+                                ? Colors.white
                                 : Colors.black87,
                             fontWeight: seleccionado
                                 ? FontWeight.bold

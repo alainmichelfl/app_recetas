@@ -120,7 +120,7 @@ class _PantallaDetalleState extends State<PantallaDetalle> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.titulo),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

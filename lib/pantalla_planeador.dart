@@ -2722,18 +2722,18 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 icon: const Icon(
                                   Icons.tune,
                                   size: 16,
-                                  color: Colors.deepOrange,
+                                  color: Color(0xFF1E2022),
                                 ),
                                 label: const Text(
                                   'Personalizar',
                                   style: TextStyle(
-                                    color: Colors.deepOrange,
+                                    color: Color(0xFF1E2022),
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: Colors.deepOrange.shade300),
+                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
                                     vertical: 10,
@@ -2753,18 +2753,18 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 icon: const Icon(
                                   Icons.calendar_today,
                                   size: 16,
-                                  color: Colors.teal,
+                                  color: Color(0xFF1E2022),
                                 ),
                                 label: const Text(
                                   'Calendario',
                                   style: TextStyle(
-                                    color: Colors.teal,
+                                    color: Color(0xFF1E2022),
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.teal),
+                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
                                     vertical: 10,
@@ -2779,18 +2779,18 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                                 icon: const Icon(
                                   Icons.file_upload_outlined,
                                   size: 16,
-                                  color: Colors.blueGrey,
+                                  color: Color(0xFF1E2022),
                                 ),
                                 label: const Text(
                                   'Exportar',
                                   style: TextStyle(
-                                    color: Colors.blueGrey,
+                                    color: Color(0xFF1E2022),
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.blueGrey),
+                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
                                     vertical: 10,
@@ -2805,10 +2805,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                               icon: const Icon(
                                 Icons.delete_sweep,
                                 size: 20,
-                                color: Colors.red,
+                                color: Color(0xFFC62828),
                               ),
                               style: IconButton.styleFrom(
-                                side: const BorderSide(color: Colors.red),
+                                side: BorderSide(color: const Color(0xFFC62828).withValues(alpha: 0.3)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
