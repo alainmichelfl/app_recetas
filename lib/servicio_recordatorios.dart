@@ -1,7 +1,9 @@
 import 'package:add_2_calendar/add_2_calendar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'servicio_exportar_calendario.dart';
 
 /// Datos estructurados de una alerta de descongelación
 class AlertaDescongelacion {
@@ -138,11 +140,32 @@ class ServicioRecordatorios {
     required String platillo,
     required String proteina,
     required String tipoComida,
+    BuildContext? context,
   }) async {
     final hoy = DateTime.now();
     // Programar para hoy a las 20:00 (8:00 PM)
     final fechaAlarma = DateTime(hoy.year, hoy.month, hoy.day, 20, 0, 0);
     final fechaFin = fechaAlarma.add(const Duration(minutes: 30));
+
+    if (kIsWeb && context != null) {
+      final item = {
+        'recetas': {
+          'titulo': 'Descongelar $proteina',
+          'descripcion':
+              'Baja $proteina del congelador al refrigerador para preparar "$platillo" ($tipoComida).',
+          'calorias': 'N/A',
+        },
+        'tipo_comida': 'Recordatorio',
+        'fecha': '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}',
+      };
+      ServicioExportarCalendario.mostrarModalExportacion(
+        context: context,
+        items: [item],
+        titulo: 'Alarma de Descongelado 🧊',
+        subtitulo: 'Para preparar "$platillo"',
+      );
+      return true;
+    }
 
     final Event event = Event(
       title: '🧊 Descongelar $proteina',
@@ -155,7 +178,10 @@ class ServicioRecordatorios {
     );
 
     try {
-      return await Add2Calendar.addEvent2Cal(event);
+      if (!kIsWeb) {
+        return await Add2Calendar.addEvent2Cal(event);
+      }
+      return false;
     } catch (e) {
       debugPrint('Error al agregar evento de descongelado al calendario: $e');
       return false;

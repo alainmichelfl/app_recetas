@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:add_2_calendar/add_2_calendar.dart';
 
 import 'config_api.dart';
 
@@ -22,6 +22,7 @@ import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
 import 'servicio_admin.dart';
 import 'servicio_recordatorios.dart';
+import 'servicio_exportar_calendario.dart';
 import 'menu_lateral.dart';
 
 // Constante global de primer nivel para evitar errores de null en Hot Reload
@@ -611,9 +612,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     platillo: alerta.platillo,
                     proteina: alerta.proteina,
                     tipoComida: alerta.tipoComida,
+                    context: context,
                   );
                   if (!mounted) return;
-                  if (exito) {
+                  if (exito && !kIsWeb) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -2560,49 +2562,19 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No hay platillos en el planeador para exportar.'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    for (var item in miPlan) {
-      final receta = item['recetas'] ?? {};
-      final tituloReceta = receta['titulo'] ?? 'Receta';
-      final tipoComida = item['tipo_comida'] ?? 'Comida';
-      final fechaStr = item['fecha'];
+    final listaMapas = miPlan.map((e) => Map<String, dynamic>.from(e)).toList();
 
-      DateTime fechaOriginal = DateTime.parse(fechaStr);
-      int hora = 14;
-      if (tipoComida == 'Desayuno') hora = 9;
-      if (tipoComida == 'Cena') hora = 20;
-      if (tipoComida == 'Snack') hora = 17;
-
-      DateTime fechaInicio = DateTime(
-        fechaOriginal.year,
-        fechaOriginal.month,
-        fechaOriginal.day,
-        hora,
-        0,
-      );
-      DateTime fechaFin = fechaInicio.add(const Duration(hours: 1));
-
-      final Event event = Event(
-        title: '🧑‍🍳 Cocinar: $tituloReceta',
-        description: 'Receta de Jitomate y Cebolla.\nTipo: $tipoComida',
-        location: 'Mi Cocina',
-        startDate: fechaInicio,
-        endDate: fechaFin,
-        allDay: false,
-      );
-
-      Add2Calendar.addEvent2Cal(event);
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('¡Platillos listos para agregarse a tu calendario! 📅'),
-        backgroundColor: Colors.teal,
-      ),
+    ServicioExportarCalendario.mostrarModalExportacion(
+      context: context,
+      items: listaMapas,
+      titulo: 'Exportar Menú Semanal 📅',
+      subtitulo: '${listaMapas.length} platillos listos para tu calendario',
     );
   }
 

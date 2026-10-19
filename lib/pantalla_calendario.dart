@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:add_2_calendar/add_2_calendar.dart';
 
 import 'menu_lateral.dart';
 import 'pantalla_planeador.dart';
 import 'pantalla_detalle_receta.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_despensa.dart';
+import 'servicio_exportar_calendario.dart';
 
 /// Pantalla de Calendario Interactivo del Planeador de Comidas.
 /// Permite al usuario visualizar sus recetas planeadas organizadas por días y meses,
@@ -305,38 +305,12 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
   }
 
   void _exportarAlCalendarioNativo(Map<String, dynamic> item) {
-    try {
-      final receta = _obtenerRecetaSegura(item['recetas']);
-      final titulo = (receta['titulo'] ?? 'Receta').toString();
-      final tipo = (item['tipo_comida'] ?? 'Comida').toString();
-      final fechaStr = (item['fecha'] ?? '').toString();
-
-      final fecha = DateTime.tryParse(fechaStr) ?? DateTime.now();
-      int hora = 14;
-      if (tipo == 'Desayuno') hora = 9;
-      if (tipo == 'Cena') hora = 20;
-      if (tipo == 'Snack') hora = 17;
-
-      final inicio = DateTime(fecha.year, fecha.month, fecha.day, hora, 0);
-      final fin = inicio.add(const Duration(hours: 1));
-
-      final Event evento = Event(
-        title: '👨‍🍳 Cocinar: $titulo ($tipo)',
-        description:
-            'Platillo planeado desde Jitomate y Cebolla.\nCalorías: ${receta['calorias'] ?? "N/A"} kcal\n${receta['descripcion'] ?? ""}',
-        location: 'Mi Cocina',
-        startDate: inicio,
-        endDate: fin,
-        allDay: false,
-      );
-
-      Add2Calendar.addEvent2Cal(evento);
-    } catch (e) {
-      debugPrint('Error al exportar evento a calendario: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo exportar el evento: $e')),
-      );
-    }
+    final tipo = item['tipo_comida']?.toString() ?? 'Platillo';
+    ServicioExportarCalendario.mostrarModalExportacion(
+      context: context,
+      items: [item],
+      titulo: 'Exportar $tipo 📅',
+    );
   }
 
   /// Elimina un platillo individual del calendario con advertencia amigable
@@ -876,9 +850,13 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                               ),
                               TextButton.icon(
                                 onPressed: () {
-                                  for (final item in comidasDia) {
-                                    _exportarAlCalendarioNativo(item);
-                                  }
+                                  final items = List<Map<String, dynamic>>.from(comidasDia);
+                                  ServicioExportarCalendario.mostrarModalExportacion(
+                                    context: context,
+                                    items: items,
+                                    titulo: 'Exportar Platillos del Día 📅',
+                                    subtitulo: '${items.length} platillos para este día',
+                                  );
                                 },
                                 icon: const Icon(Icons.event_available,
                                     size: 16, color: Colors.teal),
@@ -1361,6 +1339,11 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                 titulo: titulo,
                 textoReceta: instrucciones,
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.calendar_today_outlined, color: Colors.teal, size: 19),
+              tooltip: 'Exportar este platillo a tu calendario',
+              onPressed: () => _exportarAlCalendarioNativo(item),
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
