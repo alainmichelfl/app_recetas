@@ -527,6 +527,15 @@ class _DialogoManifiestoBienvenidaState
             descripcion:
                 'Di "Siguiente", "Atrás" o "Terminar" sin tocar el teléfono con las manos llenas de masa o aceite.',
           ),
+          const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.bolt_rounded,
+            colorIcono: Colors.orangeAccent,
+            titulo: 'Cocina Express & Cero Trastes',
+            descripcion:
+                '¿Sin tiempo hoy? Recetas completas en ≤ 15 minutos, ensamble sin estufa y modo One-Pan (1 sola sartén) para no lavar trastes.',
+          ),
         ],
       ),
     );
@@ -654,6 +663,15 @@ class _DialogoManifiestoBienvenidaState
             titulo: 'Ahorro vs Delivery & Hogar Familiar',
             descripcion:
                 'Descubre cuánto dinero retienes al no pedir por delivery y sincroniza despensa y compras con tu familia (CASA-XXXX).',
+          ),
+          const SizedBox(height: 12),
+
+          _construirFilaBeneficio(
+            icono: Icons.kitchen_rounded,
+            colorIcono: Colors.cyanAccent,
+            titulo: 'Despensa por Zonas Físicas',
+            descripcion:
+                'Refrigerador, Congelador, Alacena Seca y Cava. Sabe al instante qué tienes congelado para batch cooking vs insumos frescos.',
           ),
         ],
       ),

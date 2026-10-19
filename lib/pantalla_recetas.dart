@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'conversor_unidades.dart';
+import 'pantalla_chef.dart';
 import 'pantalla_detalle_receta.dart';
 import 'pantalla_planeador.dart';
 import 'pantalla_recetas_caninas.dart';
@@ -14,6 +15,7 @@ import 'servicio_historial_cocina.dart';
 import 'menu_lateral.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
+import 'servicio_cocina_express.dart';
 import 'pantalla_carga_masiva_recetas.dart';
 import 'dialogo_manifiesto_bienvenida.dart';
 
@@ -39,6 +41,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   bool cargando = true;
 
   FiltroAudienciaReceta _filtroAudiencia = FiltroAudienciaReceta.todas;
+  FiltroExpress _filtroExpress = FiltroExpress.todos;
 
   final TextEditingController _searchController = TextEditingController();
   String categoriaSeleccionada = 'Todos';
@@ -314,6 +317,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             categoriaSeleccionada == 'Todos' || tipo == categoriaSeleccionada;
 
         if (!coincideTexto || !coincideCategoria) return false;
+
+        // Filtro por Cocina Express / Poco Tiempo
+        if (!ServicioCocinaExpress.cumpleFiltroExpress(receta, _filtroExpress)) {
+          return false;
+        }
 
         // Filtro por Audiencia (Oficiales vs Mis Recetas vs Comunidad vs Todas)
         final bool coincideAudiencia;
@@ -1757,6 +1765,119 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     }).toList(),
                   ),
                 ),
+                const SizedBox(height: 8),
+                // ⏱️ FILTROS DE COCINA EXPRESS Y CERO TRASTES
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: FiltroExpress.values.map((f) {
+                      final bool seleccionado = _filtroExpress == f;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          avatar: Text(f.emoji, style: const TextStyle(fontSize: 13)),
+                          label: Text(f.etiqueta),
+                          selected: seleccionado,
+                          selectedColor: f == FiltroExpress.todos
+                              ? const Color(0xFF1E2022)
+                              : f.color,
+                          backgroundColor: f.fondoColor,
+                          labelStyle: TextStyle(
+                            color: seleccionado
+                                ? Colors.white
+                                : (f == FiltroExpress.todos ? Colors.black87 : f.color),
+                            fontWeight: seleccionado
+                                ? FontWeight.bold
+                                : FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: seleccionado
+                                  ? Colors.transparent
+                                  : f.color.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          onSelected: (bool valor) {
+                            if (valor) {
+                              setState(() => _filtroExpress = f);
+                              _filtrarRecetas();
+                            }
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                if (_filtroExpress != FiltroExpress.todos) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _filtroExpress.fondoColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _filtroExpress.color.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(_filtroExpress.emoji, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _filtroExpress.descripcionCorta,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: _filtroExpress.color,
+                            ),
+                          ),
+                        ),
+                        if (_filtroExpress == FiltroExpress.express20)
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PantallaChef(
+                                    modoExpressInicial: true,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE65100),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.bolt, size: 12, color: Colors.white),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Chef 15 min ➔',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -2099,6 +2220,92 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                         ),
                                       ),
                                     ),
+                                  Builder(
+                                    builder: (context) {
+                                      final desglose = ServicioCocinaExpress.calcularDesglose(receta);
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: desglose.totalMinutos <= 20
+                                              ? const Color(0xFFFFF3E0)
+                                              : Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: desglose.totalMinutos <= 20
+                                                ? const Color(0xFFFFB74D)
+                                                : Colors.grey.shade300,
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              desglose.totalMinutos <= 20
+                                                  ? Icons.bolt_rounded
+                                                  : Icons.schedule_rounded,
+                                              size: 11,
+                                              color: desglose.totalMinutos <= 20
+                                                  ? const Color(0xFFE65100)
+                                                  : Colors.grey.shade700,
+                                            ),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              desglose.insigniaCorta,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: desglose.totalMinutos <= 20
+                                                    ? const Color(0xFFE65100)
+                                                    : Colors.grey.shade800,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  if (ServicioCocinaExpress.esCeroTrastes(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE0F2F1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        '🍳 1 Sartén',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF00695C),
+                                        ),
+                                      ),
+                                    ),
+                                  if (ServicioCocinaExpress.esFacil5(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3E5F5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '✨ ${ServicioCocinaExpress.contarIngredientes(receta)} ing',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF6A1B9A),
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ],
@@ -2287,7 +2494,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                         ),
                       ),
                       Text(
-                        'Los 4 Pilares de Jitomate y Cebolla',
+                        'Los 5 Pilares de Jitomate y Cebolla',
                         style: GoogleFonts.poppins(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
@@ -2322,7 +2529,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
           const SizedBox(height: 12),
 
-          // Carrusel horizontal de las 4 tarjetas explicativas
+          // Carrusel horizontal de las 5 tarjetas explicativas
           SizedBox(
             height: 140,
             child: ListView(
@@ -2339,9 +2546,18 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   etiqueta: 'Chef & Batch Cooking',
                 ),
                 _construirMiniTarjetaPilar(
+                  icono: Icons.bolt_rounded,
+                  colorIcono: Colors.orangeAccent,
+                  numero: '02',
+                  titulo: 'Cocina Express & Zonas',
+                  descripcion:
+                      'Recetas en ≤ 15 min, Cero Trastes (1 sartén) y despensa por zonas (refri, congelador, alacena y cava).',
+                  etiqueta: 'Express & Cero Trastes',
+                ),
+                _construirMiniTarjetaPilar(
                   icono: Icons.fitness_center_rounded,
                   colorIcono: Colors.greenAccent,
-                  numero: '02',
+                  numero: '03',
                   titulo: 'Wellness & Macros',
                   descripcion:
                       'Metas TDEE, déficit calórico, keto y reloj de ayuno en tiempo real.',
@@ -2350,7 +2566,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 _construirMiniTarjetaPilar(
                   icono: Icons.compare_arrows_rounded,
                   colorIcono: Colors.lightBlueAccent,
-                  numero: '03',
+                  numero: '04',
                   titulo: 'Cotizador de Súper',
                   descripcion:
                       'Walmart vs Soriana vs La Comer. Ahorra +\$3,000 MXN/mes vs delivery.',
@@ -2359,7 +2575,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 _construirMiniTarjetaPilar(
                   icono: Icons.eco_rounded,
                   colorIcono: Colors.tealAccent,
-                  numero: '04',
+                  numero: '05',
                   titulo: 'Cero Merma & Hogar',
                   descripcion:
                       'Racha antidesperdicio con insignias y despensa sincronizada (CASA-XXXX).',

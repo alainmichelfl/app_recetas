@@ -13,15 +13,20 @@ import 'menu_lateral.dart';
 import 'pantalla_recetas_caninas.dart';
 import 'servicio_copiloto_cocina.dart';
 import 'utensilios_cocina.dart';
+import 'servicio_cocina_express.dart';
 
 class PantallaChef extends StatefulWidget {
   final String? ingredientesIniciales;
   final bool modoPerrunoInicial;
+  final bool modoExpressInicial;
+  final bool modoCeroTrastesInicial;
 
   const PantallaChef({
     super.key,
     this.ingredientesIniciales,
     this.modoPerrunoInicial = false,
+    this.modoExpressInicial = false,
+    this.modoCeroTrastesInicial = false,
   });
 
   @override
@@ -32,6 +37,8 @@ class _PantallaChefState extends State<PantallaChef> {
   final SupabaseClient supabase = Supabase.instance.client;
   bool _generando = false;
   bool _modoPerruno = false; // 🐾 Interruptor para recetas de perritos
+  bool _modoExpress = false; // ⚡ Modo Express (≤ 15 min)
+  bool _modoCeroTrastes = false; // 🍳 Modo One-Pan (1 sola sartén)
   ModoElectrodomestico _electrodomesticoSeleccionado = ModoElectrodomestico.tradicional;
 
   final TextEditingController _ingredientesCtrl = TextEditingController();
@@ -57,6 +64,12 @@ class _PantallaChefState extends State<PantallaChef> {
     super.initState();
     if (widget.modoPerrunoInicial) {
       _modoPerruno = true;
+    }
+    if (widget.modoExpressInicial) {
+      _modoExpress = true;
+    }
+    if (widget.modoCeroTrastesInicial) {
+      _modoCeroTrastes = true;
     }
     if (widget.ingredientesIniciales != null && widget.ingredientesIniciales!.isNotEmpty) {
       _ingredientesCtrl.text = widget.ingredientesIniciales!;
@@ -184,6 +197,13 @@ class _PantallaChefState extends State<PantallaChef> {
     '''
                 : '';
 
+    final String instruccionExpress = (_modoExpress || _modoCeroTrastes)
+        ? ServicioCocinaExpress.construirInstruccionesPromptExpress(
+            modoCeroTrastes: _modoCeroTrastes,
+            tiempoMaximoMinutos: 15,
+          )
+        : '';
+
     return '''
     Eres el chef principal y nutriólogo de la app "Jitomate y Cebolla".
     Tu tarea es crear una receta deliciosa, realista y fácil de preparar.
@@ -195,6 +215,7 @@ class _PantallaChefState extends State<PantallaChef> {
     $instruccionEstilos
     $instruccionUtensilios
     $instruccionElectrodomestico
+    $instruccionExpress
     - Tipo de comida: $tipoComida
     - Objetivo de salud: $objetivoSalud
     
@@ -1064,6 +1085,101 @@ class _PantallaChefState extends State<PantallaChef> {
 
               // Ocultamos tipos de comida, objetivos y gastronomía si está en modo perruno
               if (!_modoPerruno) ...[
+                // ⏱️ ATAJOS EXPRESS Y CERO TRASTES
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFFF3E0),
+                        Colors.orange.shade50,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.orange.shade300,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.bolt_rounded, color: Color(0xFFE65100), size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            '¿Poco tiempo o cansancio hoy? ⏱️',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.brown.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Activa modos rápidos para que el Chef IA diseñe recetas de fuego vivo, ensamble y mínimo desorden:',
+                        style: TextStyle(fontSize: 12, color: Colors.brown.shade700),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip(
+                            avatar: const Text('⚡', style: TextStyle(fontSize: 14)),
+                            label: const Text('Modo Express (≤ 15 min)'),
+                            selected: _modoExpress,
+                            selectedColor: const Color(0xFFE65100),
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: _modoExpress ? Colors.white : const Color(0xFFE65100),
+                              fontWeight: _modoExpress ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: _modoExpress
+                                    ? Colors.transparent
+                                    : const Color(0xFFE65100).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            onSelected: (val) => setState(() => _modoExpress = val),
+                          ),
+                          FilterChip(
+                            avatar: const Text('🍳', style: TextStyle(fontSize: 14)),
+                            label: const Text('Cero Trastes (1 Sartén)'),
+                            selected: _modoCeroTrastes,
+                            selectedColor: const Color(0xFF00695C),
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: _modoCeroTrastes ? Colors.white : const Color(0xFF00695C),
+                              fontWeight: _modoCeroTrastes ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: _modoCeroTrastes
+                                    ? Colors.transparent
+                                    : const Color(0xFF00695C).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            onSelected: (val) => setState(() => _modoCeroTrastes = val),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
                 const Text(
                   'Tipo de Platillo',
                   style: TextStyle(
