@@ -3,8 +3,8 @@ import 'package:app_recetas/utensilios_cocina.dart';
 
 void main() {
   group('UtensiliosCocina - Catálogo y Serialización', () {
-    test('Catálogo contiene 11 utensilios clave incluyendo Nutribullet', () {
-      expect(UtensiliosCocina.catalogo.length, 11);
+    test('Catálogo contiene 17 utensilios clave incluyendo KitchenAid, Crock-Pot, Arrocera y Molcajete', () {
+      expect(UtensiliosCocina.catalogo.length, 17);
       final ids = UtensiliosCocina.catalogo.map((u) => u.id).toSet();
       expect(ids.contains('sarten'), isTrue);
       expect(ids.contains('licuadora'), isTrue);
@@ -12,6 +12,12 @@ void main() {
       expect(ids.contains('air_fryer'), isTrue);
       expect(ids.contains('thermomix'), isTrue);
       expect(ids.contains('horno'), isTrue);
+      expect(ids.contains('kitchenaid'), isTrue);
+      expect(ids.contains('slow_cooker'), isTrue);
+      expect(ids.contains('arrocera'), isTrue);
+      expect(ids.contains('molcajete'), isTrue);
+      expect(ids.contains('sous_vide'), isTrue);
+      expect(ids.contains('mandolina'), isTrue);
     });
 
     test('Por defecto incluye sartén y licuadora', () {
@@ -53,6 +59,20 @@ void main() {
       final idsFaltantes = faltantes.map((f) => f.id).toList();
       expect(idsFaltantes.contains('horno'), isTrue);
       expect(idsFaltantes.contains('air_fryer'), isTrue);
+    });
+
+    test('Detecta KitchenAid y Molcajete cuando la receta los requiere y el usuario no los tiene', () {
+      final misUtensilios = ['sarten', 'licuadora'];
+      const receta = 'Amasar con el gancho de la KitchenAid por 10 min y preparar la salsa martajada en molcajete.';
+
+      final faltantes = UtensiliosCocina.detectarUtensiliosFaltantes(
+        textoReceta: receta,
+        misUtensilios: misUtensilios,
+      );
+
+      final idsFaltantes = faltantes.map((f) => f.id).toList();
+      expect(idsFaltantes.contains('kitchenaid'), isTrue);
+      expect(idsFaltantes.contains('molcajete'), isTrue);
     });
 
     test('No reporta faltantes si el usuario cuenta con los electrodomésticos', () {
