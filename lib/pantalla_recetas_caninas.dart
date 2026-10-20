@@ -449,7 +449,11 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
                       final id = receta['id_receta'] as int;
                       final titulo = receta['titulo'] ?? 'Premio Perruno';
                       final descripcion = receta['descripcion'] ?? '';
-                      final imagenUrl = receta['imagen_url']?.toString();
+                      final imagenUrl = ServicioRecetas.obtenerImagenOptimizada(
+                        idReceta: id,
+                        titulo: titulo,
+                        rawUrl: receta['imagen_url']?.toString(),
+                      );
                       final puedeEliminar = ServicioRecetas.puedeModificar(
                         receta,
                       );

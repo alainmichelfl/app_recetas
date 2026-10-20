@@ -2235,11 +2235,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       mostrarBanner ? index - 1 : index;
                                   final receta = recetasFiltradas[indiceReceta];
                                   final titulo = receta['titulo'] ?? 'Sin título';
-                                  final rawImagen = receta['imagen_url']?.toString();
-                                  final String? imagen = (titulo.toString().toLowerCase().contains('picadillo') &&
-                                          (rawImagen == null || rawImagen.contains('546069901') || rawImagen.isEmpty))
-                                      ? 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800'
-                                      : rawImagen;
+                                  final String? imagen =
+                                      ServicioRecetas.obtenerImagenOptimizada(
+                                        idReceta: receta['id_receta'],
+                                        titulo: titulo.toString(),
+                                        rawUrl: receta['imagen_url']?.toString(),
+                                      );
                       final tipo = receta['tipo_comida'] ?? 'General';
                       final descripcion =
                           receta['descripcion'] ??

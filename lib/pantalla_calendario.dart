@@ -7,6 +7,7 @@ import 'pantalla_detalle_receta.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_despensa.dart';
 import 'servicio_exportar_calendario.dart';
+import 'servicio_recetas.dart';
 
 /// Pantalla de Calendario Interactivo del Planeador de Comidas.
 /// Permite al usuario visualizar sus recetas planeadas organizadas por días y meses,
@@ -1197,7 +1198,11 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
     final tipoComida = (item['tipo_comida'] ?? 'Comida').toString();
     final titulo = (receta['titulo'] ?? 'Receta sin título').toString();
     final calorias = int.tryParse(receta['calorias']?.toString() ?? '0') ?? 0;
-    final imagen = receta['imagen_url']?.toString();
+    final imagen = ServicioRecetas.obtenerImagenOptimizada(
+      idReceta: idReceta,
+      titulo: titulo,
+      rawUrl: receta['imagen_url']?.toString(),
+    );
     final instrucciones = (receta['instrucciones'] ?? '').toString();
     final macros = (receta['macros'] ?? '').toString();
 

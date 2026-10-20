@@ -52,12 +52,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
           _recipeUserId == Supabase.instance.client.auth.currentUser?.id);
 
   String? get _imagenUrlEfectiva {
-    final titulo = widget.titulo.toLowerCase();
-    final url = widget.imagenUrl;
-    if (titulo.contains('picadillo') && (url == null || url.contains('546069901') || url.isEmpty)) {
-      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800';
-    }
-    return url;
+    return ServicioRecetas.obtenerImagenOptimizada(
+      idReceta: widget.idReceta,
+      titulo: widget.titulo,
+      rawUrl: widget.imagenUrl,
+    );
   }
 
   @override

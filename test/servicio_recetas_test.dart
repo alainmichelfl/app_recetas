@@ -109,4 +109,53 @@ void main() {
       );
     });
   });
+
+  group('ServicioRecetas - Resolución y Optimización de Imágenes', () {
+    test('Retorna la imagen curada por ID cuando existe en el catálogo verificado', () {
+      final imgPancakes = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 36,
+        titulo: 'Pancakes de Avena',
+        rawUrl: 'https://images.unsplash.com/photo-broken',
+      );
+      expect(imgPancakes, contains('photo-1506084868230-bb9d95c24759'));
+
+      final imgPicadillo = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 110,
+        titulo: 'Picadillo Tradicional',
+        rawUrl: null,
+      );
+      expect(imgPicadillo, contains('photo-1590655367923-fa80b7e61b6c'));
+    });
+
+    test('Maneja el caso especial del picadillo por título cuando la URL es nula o rota', () {
+      final img = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Picadillo Tradicional Casero',
+        rawUrl: 'https://images.unsplash.com/photo-546069901-ba9599a7e63c',
+      );
+      expect(img, contains('photo-1590655367923-fa80b7e61b6c'));
+    });
+
+    test('Optimiza URLs de Unsplash con parámetros para dispositivos móviles', () {
+      const urlSimple = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c';
+      final optimizada = ServicioRecetas.obtenerImagenOptimizada(
+        rawUrl: urlSimple,
+      );
+      expect(optimizada, contains('auto=format'));
+      expect(optimizada, contains('fit=crop'));
+      expect(optimizada, contains('w=600'));
+    });
+
+    test('Garantiza que todas las 48 imágenes del mapa verificado son 100% únicas', () {
+      final map = ServicioRecetas.imagenesVerificadasPorId;
+      expect(map.length, equals(48));
+      final uniqueUrls = map.values.toSet();
+      expect(uniqueUrls.length, equals(48));
+    });
+
+    test('Retorna null cuando no hay URL ni coincidencia', () {
+      expect(ServicioRecetas.obtenerImagenOptimizada(), isNull);
+      expect(ServicioRecetas.obtenerImagenOptimizada(rawUrl: ''), isNull);
+      expect(ServicioRecetas.obtenerImagenOptimizada(rawUrl: '   '), isNull);
+    });
+  });
 }

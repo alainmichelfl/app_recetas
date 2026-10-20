@@ -3426,7 +3426,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
           ...items.map((item) {
           final receta = item['recetas'] ?? {};
           final tituloReceta = receta['titulo'] ?? 'Receta eliminada';
-          final imagen = receta['imagen_url'];
+          final idReceta = item['id_receta'] ?? 0;
+          final imagen = ServicioRecetas.obtenerImagenOptimizada(
+            idReceta: idReceta,
+            titulo: tituloReceta.toString(),
+            rawUrl: receta['imagen_url']?.toString(),
+          );
           final int calorias =
               int.tryParse(receta['calorias']?.toString() ?? '0') ?? 0;
 
@@ -3434,7 +3439,6 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
               receta['descripcion'] ??
               receta['instrucciones'] ??
               'Parece que esta receta no tiene instrucciones detalladas. ¡Usa tu creatividad de Chef!';
-          final idReceta = item['id_receta'] ?? 0;
 
           final bool esCompatible = PerfilesNutricionales.recetaCompatible(
             "$tituloReceta $textoRecetaMagico",
