@@ -2856,11 +2856,17 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       drawer: const MenuLateral(rutaActual: 'planeador'),
       appBar: AppBar(
+        leadingWidth: 56,
         leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Menú principal',
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          builder: (ctx) => Tooltip(
+            message: 'Menú principal',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => Scaffold.of(ctx).openDrawer(),
+              child: const Center(
+                child: Icon(Icons.menu, size: 27, color: Colors.white),
+              ),
+            ),
           ),
         ),
         title: const Text(

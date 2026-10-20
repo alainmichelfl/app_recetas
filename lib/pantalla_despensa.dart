@@ -815,11 +815,17 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
       backgroundColor: Colors.grey[100],
       drawer: const MenuLateral(rutaActual: 'despensa'),
       appBar: AppBar(
+        leadingWidth: 56,
         leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Menú principal',
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          builder: (ctx) => Tooltip(
+            message: 'Menú principal',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => Scaffold.of(ctx).openDrawer(),
+              child: const Center(
+                child: Icon(Icons.menu, size: 27, color: Colors.white),
+              ),
+            ),
           ),
         ),
         title: const Text(

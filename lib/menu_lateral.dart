@@ -76,7 +76,8 @@ class MenuLateral extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      minVerticalPadding: 6,
       leading: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
@@ -140,7 +141,8 @@ class MenuLateral extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      minVerticalPadding: 6,
       leading: Container(
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
@@ -217,7 +219,7 @@ class MenuLateral extends StatelessWidget {
         ),
         child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
           leading: Container(
             padding: const EdgeInsets.all(6),
@@ -308,7 +310,7 @@ class MenuLateral extends StatelessWidget {
         ),
         child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
           leading: Container(
             padding: const EdgeInsets.all(6),
@@ -375,7 +377,7 @@ class MenuLateral extends StatelessWidget {
         ),
         child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
           leading: Container(
             padding: const EdgeInsets.all(6),
@@ -460,7 +462,7 @@ class MenuLateral extends StatelessWidget {
         ),
         child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
           leading: Container(
             padding: const EdgeInsets.all(6),
@@ -523,7 +525,7 @@ class MenuLateral extends StatelessWidget {
         ),
         child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
           leading: Container(
             padding: const EdgeInsets.all(6),
