@@ -70,41 +70,52 @@ class _PantallaCargaMasivaRecetasState
       return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800';
     }
     if (t.contains('guacamole')) {
-      return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?w=800';
+      return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('chilaquil')) {
-      return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?w=800';
+      return 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('avena') || t.contains('oatmeal')) {
-      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=800';
+    if (t.contains('avena') || t.contains('oatmeal') || t.contains('porridge')) {
+      return 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pan francés') || t.contains('pan frances')) {
+      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('mollete')) {
-      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?w=800';
+      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate'))) {
+      return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('omelette') || t.contains('huevo')) {
-      return 'https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800';
+      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('pescado') ||
         t.contains('salmón') ||
         t.contains('salmon') ||
         t.contains('atún') ||
         t.contains('atun')) {
-      return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800';
+      return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('pollo') || t.contains('tinga') || t.contains('pechuga')) {
-      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800';
+    if (t.contains('tinga')) {
+      return 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pollo') || t.contains('pechuga')) {
+      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('lenteja')) {
+      return 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('sopa') ||
         t.contains('crema') ||
-        t.contains('caldo') ||
-        t.contains('lenteja')) {
-      return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800';
+        t.contains('caldo')) {
+      return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('ensalada') || t.contains('caprese') || t.contains('quinoa')) {
-      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800';
+      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('perro') || t.contains('canin') || t.contains('lomito')) {
-      return 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800';
+      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
     }
 
     // 2. Si la URL sugerida es válida y no es un hotcake erróneo ni un placeholder
@@ -118,14 +129,14 @@ class _PantallaCargaMasivaRecetasState
     // 3. Fallbacks temáticos según el tipo de comida
     switch (tipoComida.toLowerCase()) {
       case 'desayuno':
-        return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=800';
+        return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
       case 'comida':
-        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800';
+        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
       case 'cena':
-        return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=800';
+        return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
       case 'snack':
       default:
-        return 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=800';
+        return 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80';
     }
   }
 

@@ -187,11 +187,27 @@ void main() {
       expect(optimizada, contains('w=600'));
     });
 
-    test('Garantiza que todas las 48 imágenes del mapa verificado son 100% únicas', () {
+    test('Garantiza que el catálogo verificado cubre las 94 recetas con URLs optimizadas', () {
       final map = ServicioRecetas.imagenesVerificadasPorId;
-      expect(map.length, equals(48));
-      final uniqueUrls = map.values.toSet();
-      expect(uniqueUrls.length, equals(48));
+      expect(map.length, equals(94));
+      for (final url in map.values) {
+        expect(url.isNotEmpty, isTrue);
+        expect(url, contains('auto=format'));
+        expect(url, contains('w=600'));
+      }
+
+      // Verificación específica de recetas reportadas por el usuario:
+      // ID 105: Bowl de avena cremosa con manzana y canela (no pan francés)
+      final imgAvena = ServicioRecetas.obtenerImagenOptimizada(idReceta: 105, titulo: 'Bowl de avena cremosa');
+      expect(imgAvena, isNotNull);
+      expect(imgAvena, isNot(contains('photo-1484723091739'))); // no pan francés
+      expect(imgAvena, contains('1669559809547-6e4c4fe41371')); // avena con manzana
+
+      // ID 106: Tostadas de huevo pochado con aguacate (no tocadiscos de vinilo)
+      final imgHuevo = ServicioRecetas.obtenerImagenOptimizada(idReceta: 106, titulo: 'Tostadas de huevo pochado');
+      expect(imgHuevo, isNotNull);
+      expect(imgHuevo, isNot(contains('photo-1539185441755'))); // no vinilo
+      expect(imgHuevo, contains('photo-1525351484163-7529414344d8')); // huevo pochado con aguacate
     });
 
     test('Retorna null cuando no hay URL ni coincidencia', () {

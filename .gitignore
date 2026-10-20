@@ -48,4 +48,6 @@ app.*.map.json
 .widget_preview/
 
 # Claves de API (no subir)
+.env
+scratch/
 lib/config_api.dart
