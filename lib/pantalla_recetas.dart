@@ -1846,22 +1846,23 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            constraints: const BoxConstraints(minHeight: 44),
             decoration: BoxDecoration(
               color: seleccionado ? fondoActivo : (fondoInactivo ?? Colors.grey[100]),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: seleccionado ? colorActivo : Colors.grey.shade300,
-                width: seleccionado ? 1.6 : 0.9,
+                width: seleccionado ? 1.8 : 1.0,
               ),
               boxShadow: seleccionado
                   ? [
                       BoxShadow(
-                        color: colorActivo.withValues(alpha: 0.12),
-                        blurRadius: 4,
+                        color: colorActivo.withValues(alpha: 0.15),
+                        blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
                     ]
@@ -1871,18 +1872,18 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (seleccionado) ...[
-                  Icon(Icons.check_circle_rounded, size: 14, color: colorActivo),
-                  const SizedBox(width: 5),
+                  Icon(Icons.check_circle_rounded, size: 15, color: colorActivo),
+                  const SizedBox(width: 6),
                 ] else if (icono != null) ...[
                   icono,
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                 ],
                 Text(
                   etiqueta,
                   style: TextStyle(
                     color: seleccionado ? colorActivo : (colorInactivo ?? Colors.black87),
                     fontWeight: seleccionado ? FontWeight.bold : FontWeight.w600,
-                    fontSize: 12.5,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -2233,8 +2234,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 1. Selector de Audiencia y Origen
                         SizedBox(
-                          height: 44,
+                          height: 48,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -2272,8 +2274,61 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        // 2. Selector de Tiempos de Comida
+                        SizedBox(
+                          height: 48,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            children: categorias.map((cat) {
+                              final bool seleccionado = categoriaSeleccionada == cat;
+                              final int countCat = cat == 'Todos'
+                                  ? todasLasRecetas.length
+                                  : todasLasRecetas.where((r) => (r['tipo_comida'] ?? '') == cat).length;
+                              return _construirPildoraFiltro(
+                                etiqueta: cat == 'Todos' ? 'Todas ($countCat)' : '$cat ($countCat)',
+                                seleccionado: seleccionado,
+                                colorActivo: Colors.white,
+                                fondoActivo: const Color(0xFF1E2022),
+                                colorInactivo: Colors.black87,
+                                fondoInactivo: Colors.grey[200],
+                                onTap: () {
+                                  setState(() => categoriaSeleccionada = cat);
+                                  _filtrarRecetas();
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // 3. Selector de Cocina Práctica y Express
+                        SizedBox(
+                          height: 48,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            children: FiltroExpress.values.map((f) {
+                              final bool seleccionado = _filtroExpress == f;
+                              return _construirPildoraFiltro(
+                                etiqueta: f.etiqueta,
+                                icono: Text(f.emoji, style: const TextStyle(fontSize: 14)),
+                                seleccionado: seleccionado,
+                                colorActivo: f == FiltroExpress.todos ? Colors.white : f.color,
+                                fondoActivo: f == FiltroExpress.todos ? const Color(0xFF1E2022) : f.fondoColor,
+                                colorInactivo: f == FiltroExpress.todos ? Colors.black87 : f.color,
+                                fondoInactivo: Colors.grey[100],
+                                onTap: () {
+                                  setState(() => _filtroExpress = f);
+                                  _filtrarRecetas();
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        // Banners informativos ubicados DEBAJO de todos los selectores para evitar saltos de altura
                         if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 10),
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -2281,22 +2336,23 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 _filtrarRecetas();
                               });
                             },
+                            borderRadius: BorderRadius.circular(10),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF3E0),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: const Color(0xFFFFB74D), width: 0.8),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.local_fire_department_rounded, size: 15, color: Color(0xFFE65100)),
-                                  const SizedBox(width: 6),
+                                  const Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFE65100)),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Viendo las recetas recién salidas del sartén de esta edición ($countNovedades). Toca aquí para ver todo el Catálogo Oficial ($countOficiales).',
+                                      'Viendo recetas recién salidas ($countNovedades). Toca aquí para ver todo el Catálogo Oficial ($countOficiales).',
                                       style: const TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 11.5,
                                         color: Color(0xFFBF360C),
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -2308,7 +2364,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                           ),
                         ],
                         if (_filtroAudiencia == FiltroAudienciaReceta.misRecetas) ...[
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 10),
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -2316,22 +2372,23 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 _filtrarRecetas();
                               });
                             },
+                            borderRadius: BorderRadius.circular(10),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: Colors.amber.shade50,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: Colors.amber.shade300, width: 0.8),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.info_outline, size: 14, color: Colors.amber),
-                                  const SizedBox(width: 6),
+                                  const Icon(Icons.info_outline, size: 16, color: Colors.amber),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Viendo solo tus creaciones ($countMisRecetas). Toca aquí para ver el Catálogo Oficial completo ($countOficiales recetas).',
+                                      'Viendo solo tus creaciones ($countMisRecetas). Toca aquí para ver el Catálogo Oficial completo ($countOficiales).',
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 11.5,
                                         color: Colors.brown.shade800,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -2342,135 +2399,84 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ),
                           ),
                         ],
+                        if (_filtroExpress != FiltroExpress.todos) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _filtroExpress.fondoColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _filtroExpress.color.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(_filtroExpress.emoji, style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _filtroExpress.descripcionCorta,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: _filtroExpress.color,
+                                    ),
+                                  ),
+                                ),
+                                if (_filtroExpress == FiltroExpress.express20)
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const PantallaChef(
+                                            modoExpressInicial: true,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE65100),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.bolt, size: 12, color: Colors.white),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Chef 15 min ➔',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     );
                   },
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    children: categorias.map((cat) {
-                      final bool seleccionado = categoriaSeleccionada == cat;
-                      final int countCat = cat == 'Todos'
-                          ? todasLasRecetas.length
-                          : todasLasRecetas.where((r) => (r['tipo_comida'] ?? '') == cat).length;
-                      return _construirPildoraFiltro(
-                        etiqueta: cat == 'Todos' ? 'Todas ($countCat)' : '$cat ($countCat)',
-                        seleccionado: seleccionado,
-                        colorActivo: Colors.white,
-                        fondoActivo: const Color(0xFF1E2022),
-                        colorInactivo: Colors.black87,
-                        fondoInactivo: Colors.grey[200],
-                        onTap: () {
-                          setState(() => categoriaSeleccionada = cat);
-                          _filtrarRecetas();
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // ⏱️ FILTROS DE COCINA EXPRESS Y CERO TRASTES
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    children: FiltroExpress.values.map((f) {
-                      final bool seleccionado = _filtroExpress == f;
-                      return _construirPildoraFiltro(
-                        etiqueta: f.etiqueta,
-                        icono: Text(f.emoji, style: const TextStyle(fontSize: 13)),
-                        seleccionado: seleccionado,
-                        colorActivo: f == FiltroExpress.todos ? Colors.white : f.color,
-                        fondoActivo: f == FiltroExpress.todos ? const Color(0xFF1E2022) : f.fondoColor,
-                        colorInactivo: f == FiltroExpress.todos ? Colors.black87 : f.color,
-                        fondoInactivo: Colors.grey[100],
-                        onTap: () {
-                          setState(() => _filtroExpress = f);
-                          _filtrarRecetas();
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-                if (_filtroExpress != FiltroExpress.todos) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _filtroExpress.fondoColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _filtroExpress.color.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(_filtroExpress.emoji, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _filtroExpress.descripcionCorta,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: _filtroExpress.color,
-                            ),
-                          ),
-                        ),
-                        if (_filtroExpress == FiltroExpress.express20)
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PantallaChef(
-                                    modoExpressInicial: true,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE65100),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.bolt, size: 12, color: Colors.white),
-                                  SizedBox(width: 3),
-                                  Text(
-                                    'Chef 15 min ➔',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-                        const Divider(height: 1),
-                      ],
-                    ),
-                  ),
+          const Divider(height: 1),
+        ],
+      ),
+    ),
                   if (_mostrarBannerInicioExplicativo &&
                       _searchController.text.trim().isEmpty &&
                       _ingredientesSeleccionados.isEmpty)
