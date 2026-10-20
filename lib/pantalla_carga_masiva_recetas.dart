@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config_api.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
-import 'servicio_temporadas_mexico.dart';
+import 'servicio_temas_lote.dart';
 
 class PantallaCargaMasivaRecetas extends StatefulWidget {
   const PantallaCargaMasivaRecetas({super.key});
@@ -18,7 +18,8 @@ class PantallaCargaMasivaRecetas extends StatefulWidget {
 
 class _PantallaCargaMasivaRecetasState
     extends State<PantallaCargaMasivaRecetas> {
-  late TemporadaMes _temporadaSeleccionada;
+  late OpcionTemaLote _temaSeleccionado;
+  late GrupoTemaLote _grupoActivo;
   late final TextEditingController _temaController;
 
   bool _generandoIA = false;
@@ -32,9 +33,10 @@ class _PantallaCargaMasivaRecetasState
   @override
   void initState() {
     super.initState();
-    _temporadaSeleccionada = ServicioTemporadasMexico.obtenerTemporadaActual();
+    _temaSeleccionado = ServicioTemasLote.obtenerTemporadaActual();
+    _grupoActivo = _temaSeleccionado.grupo;
     _temaController = TextEditingController(
-      text: _temporadaSeleccionada.temaSugerido,
+      text: _temaSeleccionado.temaCompleto,
     );
     if (!ServicioAdmin.esAdmin()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -168,9 +170,9 @@ class _PantallaCargaMasivaRecetasState
       Eres el chef ejecutivo y nutriólogo principal de la app "Jitomate y Cebolla".
       Tu objetivo es generar exactamente 20 recetas oficiales de alta calidad para el catálogo de la app.
       
-      TEMA / ENFOQUE DEL MES: "$tema"
+      TEMA / ENFOQUE DEL LOTE: "$tema"
       
-      ${ServicioTemporadasMexico.generarDirectrizEstacionalPrompt(_temporadaSeleccionada)}
+      ${_temaSeleccionado.directrizPrompt}
       
       DISTRIBUCIÓN ESTRICTA (5 recetas por categoría):
       - Exactamente 5 recetas de "Desayuno"
@@ -468,54 +470,136 @@ class _PantallaCargaMasivaRecetasState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.orange.shade800),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Lote Mensual de 20 Recetas Oficiales',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    Row(
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.orange.shade800),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Lote de 20 Recetas Oficiales',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Botón Ruleta Sorpresa
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.purple.shade50,
+                        foregroundColor: Colors.purple.shade800,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(color: Colors.purple.shade200),
+                        ),
+                      ),
+                      onPressed: () {
+                        final aleatorio = ServicioTemasLote.obtenerAleatorio();
+                        setState(() {
+                          _temaSeleccionado = aleatorio;
+                          _grupoActivo = aleatorio.grupo;
+                          _temaController.text = aleatorio.temaCompleto;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '¡La Ruleta Culinaria eligió: ${aleatorio.icono} ${aleatorio.tituloCorto}! 🪄✨',
+                            ),
+                            backgroundColor: Colors.purple.shade800,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      },
+                      icon: const Text('🎲', style: TextStyle(fontSize: 14)),
+                      label: const Text(
+                        '¡Sorpréndeme!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                // Selector rápido de meses y temporadas mexicanas
+                const SizedBox(height: 8),
+                // Nivel 1: Selector de Universos / Grupos Temáticos
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   child: Row(
-                    children: ServicioTemporadasMexico.obtenerTodosLosMeses().map((temp) {
-                      final esSeleccionado = _temporadaSeleccionada.mesNumero == temp.mesNumero;
-                      final esMesActual = DateTime.now().month == temp.mesNumero;
+                    children: GrupoTemaLote.values.map((grupo) {
+                      final esActivo = _grupoActivo == grupo;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6, bottom: 4),
+                        child: ChoiceChip(
+                          selected: esActivo,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _grupoActivo = grupo;
+                                final opciones = ServicioTemasLote.obtenerPorGrupo(grupo);
+                                if (!opciones.any((o) => o.id == _temaSeleccionado.id)) {
+                                  _temaSeleccionado = opciones.first;
+                                  _temaController.text = _temaSeleccionado.temaCompleto;
+                                }
+                              });
+                            }
+                          },
+                          label: Text(
+                            grupo.etiqueta,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: esActivo ? FontWeight.bold : FontWeight.w500,
+                              color: esActivo ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          selectedColor: const Color(0xFF1E2022),
+                          backgroundColor: Colors.grey.shade100,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Nivel 2: Píldoras específicas del grupo activo
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: ServicioTemasLote.obtenerPorGrupo(_grupoActivo).map((opcion) {
+                      final esSeleccionada = _temaSeleccionado.id == opcion.id;
+                      final esMesActual = opcion.grupo == GrupoTemaLote.temporada &&
+                          opcion.id == 'temp_${DateTime.now().month}';
                       return Padding(
                         padding: const EdgeInsets.only(right: 6, bottom: 6),
                         child: FilterChip(
                           showCheckmark: false,
-                          selected: esSeleccionado,
+                          selected: esSeleccionada,
                           onSelected: (selected) {
                             if (selected) {
                               setState(() {
-                                _temporadaSeleccionada = temp;
-                                _temaController.text = temp.temaSugerido;
+                                _temaSeleccionado = opcion;
+                                _temaController.text = opcion.temaCompleto;
                               });
                             }
                           },
-                          avatar: Text(temp.icono, style: const TextStyle(fontSize: 14)),
+                          avatar: Text(opcion.icono, style: const TextStyle(fontSize: 14)),
                           label: Text(
-                            '${temp.nombreMes}${esMesActual ? ' (Hoy)' : ''}',
+                            '${opcion.tituloCorto}${esMesActual ? ' (Hoy)' : ''}',
                             style: TextStyle(
                               fontSize: 12,
-                              fontWeight: esSeleccionado ? FontWeight.bold : FontWeight.w500,
-                              color: esSeleccionado ? Colors.white : Colors.black87,
+                              fontWeight: esSeleccionada ? FontWeight.bold : FontWeight.w500,
+                              color: esSeleccionada ? Colors.white : Colors.black87,
                             ),
                           ),
                           selectedColor: Colors.orange.shade800,
                           backgroundColor: Colors.grey.shade100,
                           side: BorderSide(
-                            color: esSeleccionado
+                            color: esSeleccionada
                                 ? Colors.orange.shade900
                                 : Colors.grey.shade300,
                           ),
@@ -524,12 +608,12 @@ class _PantallaCargaMasivaRecetasState
                     }).toList(),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _temaController,
                   decoration: InputDecoration(
-                    labelText: 'Tema, Enfoque o Mes del Lote',
-                    hintText: 'Ej. Noviembre 2026 - Especial Cítricos y Otoño',
+                    labelText: 'Tema, Enfoque o Especial del Lote',
+                    hintText: 'Ej. Especial Italia, Cero Trastes, High-Protein...',
                     prefixIcon: const Icon(Icons.palette_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -537,7 +621,7 @@ class _PantallaCargaMasivaRecetasState
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Tarjeta informativa de la cosecha estacional de México
+                // Tarjeta informativa del enfoque activo
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
@@ -549,7 +633,7 @@ class _PantallaCargaMasivaRecetasState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _temporadaSeleccionada.icono,
+                        _temaSeleccionado.icono,
                         style: const TextStyle(fontSize: 22),
                       ),
                       const SizedBox(width: 10),
@@ -558,7 +642,7 @@ class _PantallaCargaMasivaRecetasState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Cosecha de ${_temporadaSeleccionada.nombreMes} en México (${_temporadaSeleccionada.nombreTemporada}):',
+                              '${_temaSeleccionado.grupo.etiqueta} • ${_temaSeleccionado.tituloCorto}:',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -567,7 +651,7 @@ class _PantallaCargaMasivaRecetasState
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _temporadaSeleccionada.resumenIngredientes,
+                              _temaSeleccionado.resumenEnfoque,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.brown.shade800,
@@ -576,7 +660,7 @@ class _PantallaCargaMasivaRecetasState
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '🌱 Directriz Estacional: Las recetas generadas usarán estos ingredientes reales y no se generarán al azar.',
+                              '💡 Directriz Activa: La IA adaptará las 20 recetas a este especial respetando sus ingredientes y técnicas.',
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontStyle: FontStyle.italic,
