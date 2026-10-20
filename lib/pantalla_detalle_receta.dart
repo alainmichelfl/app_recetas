@@ -759,16 +759,17 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
 
                   // ⏱️ TARJETA DE TIEMPO REAL (ACTIVO VS. PASIVO) Y CONVENIENCIA
                   () {
-                    final recetaMap = {
-                      'id_receta': widget.idReceta,
-                      'titulo': widget.titulo,
-                      'descripcion': textoMostrar,
-                    };
-                    final desglose = ServicioCocinaExpress.calcularDesglose(recetaMap);
-                    final esCeroTrastes = ServicioCocinaExpress.esCeroTrastes(recetaMap);
-                    final esFacil5 = ServicioCocinaExpress.esFacil5(recetaMap);
-                    final esSinFuego = ServicioCocinaExpress.esSinFuego(recetaMap);
-                    final numIng = ServicioCocinaExpress.contarIngredientes(recetaMap);
+                    try {
+                      final recetaMap = {
+                        'id_receta': widget.idReceta,
+                        'titulo': widget.titulo,
+                        'descripcion': textoMostrar,
+                      };
+                      final desglose = ServicioCocinaExpress.calcularDesglose(recetaMap);
+                      final esCeroTrastes = ServicioCocinaExpress.esCeroTrastes(recetaMap);
+                      final esFacil5 = ServicioCocinaExpress.esFacil5(recetaMap);
+                      final esSinFuego = ServicioCocinaExpress.esSinFuego(recetaMap);
+                      final numIng = ServicioCocinaExpress.contarIngredientes(recetaMap);
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 20),
@@ -986,7 +987,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                         ],
                       ),
                     );
-                  }(),
+                  } catch (e) {
+                    debugPrint('Error seguro al renderizar desglose express: $e');
+                    return const SizedBox.shrink();
+                  }
+                }(),
 
                   // 🧑‍🍳 CONTROLADOR DE PORCIONES
                   Container(

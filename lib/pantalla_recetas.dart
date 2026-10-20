@@ -1176,6 +1176,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     String nombreActual = '';
     String estadoActual = 'Iniciando escaneo...';
     bool cancelado = false;
+    bool procesoIniciado = false;
 
     await showDialog(
       context: context,
@@ -1184,56 +1185,63 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             void iniciarProceso() async {
-              for (var i = 0; i < recetasParaAuditar.length; i++) {
-                if (cancelado) break;
+              try {
+                for (var i = 0; i < recetasParaAuditar.length; i++) {
+                  if (cancelado) break;
 
-                final r = recetasParaAuditar[i];
-                final dynamic rawId = r['id_receta'];
-                final int id = rawId is int ? rawId : (int.tryParse(rawId?.toString() ?? '0') ?? 0);
-                final String titulo = r['titulo'] ?? '';
-                final String tipoComida = r['tipo_comida'] ?? 'Comida';
-                final String? urlActual = r['imagen_url']?.toString();
+                  final r = recetasParaAuditar[i];
+                  final dynamic rawId = r['id_receta'];
+                  final int id = rawId is int ? rawId : (int.tryParse(rawId?.toString() ?? '0') ?? 0);
+                  final String titulo = r['titulo'] ?? '';
+                  final String tipoComida = r['tipo_comida'] ?? 'Comida';
+                  final String? urlActual = r['imagen_url']?.toString();
 
-                setStateModal(() {
-                  actual = i + 1;
-                  nombreActual = titulo;
-                  estadoActual = 'Analizando: $titulo...';
-                });
+                  setStateModal(() {
+                    actual = i + 1;
+                    nombreActual = titulo;
+                    estadoActual = 'Analizando: $titulo...';
+                  });
 
-                if (id > 0) {
-                  final resultado = ServicioRecetas.auditarImagenReceta(
-                    idReceta: id,
-                    titulo: titulo,
-                    tipoComida: tipoComida,
-                    urlActual: urlActual,
-                  );
+                  if (id > 0) {
+                    final resultado = ServicioRecetas.auditarImagenReceta(
+                      idReceta: id,
+                      titulo: titulo,
+                      tipoComida: tipoComida,
+                      urlActual: urlActual,
+                    );
 
-                  if (resultado['cambiada'] == true) {
-                    final String nuevaUrl = resultado['url'];
-                    try {
-                      await supabase
-                          .from('recetas')
-                          .update({'imagen_url': nuevaUrl})
-                          .eq('id_receta', id);
-                      corregidas++;
-                      setStateModal(() {
-                        estadoActual = 'Saneada: ${resultado['motivo']}';
-                      });
-                    } catch (e) {
-                      debugPrint('Error al actualizar imagen de receta $id: $e');
+                    if (resultado['cambiada'] == true) {
+                      final String nuevaUrl = resultado['url'];
+                      try {
+                        await supabase
+                            .from('recetas')
+                            .update({'imagen_url': nuevaUrl})
+                            .eq('id_receta', id);
+                        corregidas++;
+                        setStateModal(() {
+                          estadoActual = 'Saneada: ${resultado['motivo']}';
+                        });
+                      } catch (e) {
+                        debugPrint('Error al actualizar imagen de receta $id: $e');
+                      }
                     }
                   }
+
+                  // Pausa prudente para actualización reactiva fluida
+                  await Future.delayed(const Duration(milliseconds: 60));
                 }
-
-                // Pausa prudente para actualización reactiva fluida
-                await Future.delayed(const Duration(milliseconds: 60));
+              } catch (e) {
+                debugPrint('Excepción en proceso de auditoría: $e');
+              } finally {
+                if (context.mounted) Navigator.pop(progresoCtx);
               }
-
-              if (context.mounted) Navigator.pop(progresoCtx);
             }
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (actual == 0) iniciarProceso();
+              if (!procesoIniciado) {
+                procesoIniciado = true;
+                iniciarProceso();
+              }
             });
 
             final double progreso = recetasParaAuditar.isEmpty
@@ -3172,7 +3180,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ),
                 Builder(
                   builder: (context) {
-                    final desglose = ServicioCocinaExpress.calcularDesglose(receta);
+                    DesgloseTiempoCocina desglose;
+                    try {
+                      desglose = ServicioCocinaExpress.calcularDesglose(receta);
+                    } catch (_) {
+                      desglose = const DesgloseTiempoCocina(
+                        totalMinutos: 15,
+                        activoMinutos: 10,
+                        pasivoMinutos: 5,
+                      );
+                    }
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,

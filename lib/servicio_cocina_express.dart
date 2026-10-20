@@ -172,9 +172,9 @@ class ServicioCocinaExpress {
     final textoCompleto =
         "${receta['descripcion'] ?? ''} ${receta['instrucciones'] ?? ''}";
 
-    // Buscar "TIEMPO: X min" o "TIEMPO: 1 hora"
+    // Buscar "TIEMPO: X min", "TIEMPO TOTAL: 25 min", "DURACIÓN: 15 min" en su propia línea
     final regTiempoLinea = RegExp(
-      r'(?:tiempo|duraci[oó]n|preparaci[oó]n)\s*:\s*([^\n\r]+)',
+      r'(?:^|\n)\s*(?:⏱️\s*)?(?:tiempo(?:\s+total|\s+estimado|\s+de\s+preparaci[oó]n)?|duraci[oó]n)\s*:\s*([^\n\r]+)',
       caseSensitive: false,
     );
     final match = regTiempoLinea.firstMatch(textoCompleto);
@@ -183,10 +183,11 @@ class ServicioCocinaExpress {
       if (val > 0) return val;
     }
 
-    final minutosTexto = _extraerMinutosDeTexto(textoCompleto);
-    if (minutosTexto > 0) return minutosTexto;
+    // 3. Si no hay encabezado explícito de TIEMPO, sumar los tiempos parciales de los pasos (ej. 3 min salteado + 15 min cocción = 18 min)
+    final minutosSumados = _sumarMinutosDePasos(textoCompleto);
+    if (minutosSumados > 0) return minutosSumados;
 
-    // Fallback heurístico según el tipo de comida o palabras clave
+    // 4. Fallback heurístico según el tipo de comida o palabras clave
     final titulo = (receta['titulo'] ?? '').toString().toLowerCase();
     if (titulo.contains('express') ||
         titulo.contains('rápido') ||
@@ -200,11 +201,25 @@ class ServicioCocinaExpress {
         titulo.contains('sandwich') ||
         titulo.contains('sándwich') ||
         titulo.contains('quesadilla') ||
-        titulo.contains('huevos')) {
+        titulo.contains('huevos') ||
+        titulo.contains('omelette')) {
       return 15;
     }
 
     return 25; // Promedio estándar
+  }
+
+  static int _sumarMinutosDePasos(String texto) {
+    final regMinutos = RegExp(r'(\d+)\s*(?:minutos?|mins?)\b', caseSensitive: false);
+    final matches = regMinutos.allMatches(texto);
+    int suma = 0;
+    for (final m in matches) {
+      final n = int.tryParse(m.group(1) ?? '') ?? 0;
+      if (n > 0 && n <= 120) {
+        suma += n;
+      }
+    }
+    return suma;
   }
 
   static int _extraerMinutosDeTexto(String texto) {
@@ -264,41 +279,47 @@ class ServicioCocinaExpress {
         texto.contains('freidora de aire');
     final bool esFrio = esSinFuego(receta);
 
-    if (esFrio) {
+    // Total seguro contra negativos o cero
+    final totalEfectivo = total > 0 ? total : (esFrio ? 5 : 15);
+
+    if (esFrio || totalEfectivo <= 3) {
       // Todo es activo (picar/ensamblar) y cero tiempo pasivo
       return DesgloseTiempoCocina(
-        totalMinutos: total,
-        activoMinutos: total,
+        totalMinutos: totalEfectivo,
+        activoMinutos: totalEfectivo,
         pasivoMinutos: 0,
       );
     }
 
     if (esHorno || esLento) {
       // Mucho tiempo desatendido
-      final activo = (total * 0.3).round().clamp(5, total);
-      final pasivo = total - activo;
+      final minActivo = totalEfectivo >= 5 ? 5 : 1;
+      final activo = (totalEfectivo * 0.3).round().clamp(minActivo, totalEfectivo);
+      final pasivo = (totalEfectivo - activo).clamp(0, totalEfectivo);
       return DesgloseTiempoCocina(
-        totalMinutos: total,
+        totalMinutos: totalEfectivo,
         activoMinutos: activo,
         pasivoMinutos: pasivo,
       );
     }
 
     if (esAirFryer) {
-      final activo = (total * 0.35).round().clamp(4, total);
-      final pasivo = total - activo;
+      final minActivo = totalEfectivo >= 4 ? 4 : 1;
+      final activo = (totalEfectivo * 0.35).round().clamp(minActivo, totalEfectivo);
+      final pasivo = (totalEfectivo - activo).clamp(0, totalEfectivo);
       return DesgloseTiempoCocina(
-        totalMinutos: total,
+        totalMinutos: totalEfectivo,
         activoMinutos: activo,
         pasivoMinutos: pasivo,
       );
     }
 
     // Salteados, estufa rápida, sartenes
-    final activo = (total * 0.65).round().clamp(5, total);
-    final pasivo = total - activo;
+    final minActivo = totalEfectivo >= 5 ? 5 : 1;
+    final activo = (totalEfectivo * 0.65).round().clamp(minActivo, totalEfectivo);
+    final pasivo = (totalEfectivo - activo).clamp(0, totalEfectivo);
     return DesgloseTiempoCocina(
-      totalMinutos: total,
+      totalMinutos: totalEfectivo,
       activoMinutos: activo,
       pasivoMinutos: pasivo,
     );

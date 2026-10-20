@@ -52,6 +52,36 @@ void main() {
       expect(desglose.totalMinutos, 30);
       expect(desglose.pasivoMinutos > desglose.activoMinutos, isTrue);
     });
+
+    test('Calcula desglose seguro para recetas ultrarrápidas (1, 2, 3 o 4 minutos) sin crash de clamp', () {
+      final snack1 = {
+        'titulo': 'Mix Energético',
+        'descripcion': 'TIEMPO: 1 min',
+      };
+      final snack2 = {
+        'titulo': 'Rollitos de Pechuga de Pavo',
+        'descripcion': 'TIEMPO: 2 minutos',
+      };
+      final omelette3 = {
+        'titulo': 'Omelette de Espinacas',
+        'descripcion': 'Calorías: 300\nINSTRUCCIONES: Saltear 3 minutos.',
+      };
+
+      final d1 = ServicioCocinaExpress.calcularDesglose(snack1);
+      final d2 = ServicioCocinaExpress.calcularDesglose(snack2);
+      final d3 = ServicioCocinaExpress.calcularDesglose(omelette3);
+
+      expect(d1.totalMinutos, 1);
+      expect(d1.activoMinutos, 1);
+      expect(d1.pasivoMinutos, 0);
+
+      expect(d2.totalMinutos, 2);
+      expect(d2.activoMinutos, 2);
+      expect(d2.pasivoMinutos, 0);
+
+      expect(d3.totalMinutos, greaterThanOrEqualTo(3));
+      expect(d3.activoMinutos, greaterThanOrEqualTo(1));
+    });
   });
 
   group('ServicioCocinaExpress - Conteo de Ingredientes y Filtros', () {
