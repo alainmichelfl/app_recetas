@@ -3482,6 +3482,32 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                         width: 55,
                         height: 55,
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 55,
+                            height: 55,
+                            color: colorTema.withValues(alpha: 0.1),
+                            child: Center(
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorTema,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 55,
+                            height: 55,
+                            color: colorTema.withValues(alpha: 0.1),
+                            child: Icon(Icons.restaurant, color: colorTema),
+                          );
+                        },
                       )
                     : Container(
                         width: 55,

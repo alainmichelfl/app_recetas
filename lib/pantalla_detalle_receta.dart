@@ -51,6 +51,15 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
       (_recipeUserId != null &&
           _recipeUserId == Supabase.instance.client.auth.currentUser?.id);
 
+  String? get _imagenUrlEfectiva {
+    final titulo = widget.titulo.toLowerCase();
+    final url = widget.imagenUrl;
+    if (titulo.contains('picadillo') && (url == null || url.contains('546069901') || url.isEmpty)) {
+      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800';
+    }
+    return url;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -529,8 +538,37 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  widget.imagenUrl != null && widget.imagenUrl!.isNotEmpty
-                      ? Image.network(widget.imagenUrl!, fit: BoxFit.cover)
+                  _imagenUrlEfectiva != null && _imagenUrlEfectiva!.isNotEmpty
+                      ? Image.network(
+                          _imagenUrlEfectiva!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: const Color(0xFF1E2022),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: const Color(0xFFD32F2F),
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFF1E2022),
+                              child: const Icon(
+                                Icons.restaurant,
+                                size: 80,
+                                color: Colors.white38,
+                              ),
+                            );
+                          },
+                        )
                       : Container(
                           color: const Color(0xFF1E2022),
                           child: const Icon(

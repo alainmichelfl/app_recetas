@@ -1939,37 +1939,85 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 ),
                 const SizedBox(height: 10),
                 // 🌟 Filtro de Audiencia y Origen (Oficiales, Mis Recetas, Comunidad, Todas)
-                SizedBox(
-                  height: 38,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      _construirChipAudiencia(
-                        etiqueta: '🌟 Oficiales',
-                        filtro: FiltroAudienciaReceta.oficiales,
-                        colorActivo: const Color(0xFFD32F2F),
-                        fondoActivo: const Color(0xFFFBECEF),
-                      ),
-                      _construirChipAudiencia(
-                        etiqueta: '👨‍🍳 Mis Recetas',
-                        filtro: FiltroAudienciaReceta.misRecetas,
-                        colorActivo: const Color(0xFF1E2022),
-                        fondoActivo: Colors.grey.shade200,
-                      ),
-                      _construirChipAudiencia(
-                        etiqueta: '🌎 Comunidad',
-                        filtro: FiltroAudienciaReceta.comunidad,
-                        colorActivo: Colors.indigo.shade800,
-                        fondoActivo: Colors.indigo.shade50,
-                      ),
-                      _construirChipAudiencia(
-                        etiqueta: 'Todas',
-                        filtro: FiltroAudienciaReceta.todas,
-                        colorActivo: Colors.grey.shade900,
-                        fondoActivo: Colors.grey.shade200,
-                      ),
-                    ],
-                  ),
+                Builder(
+                  builder: (context) {
+                    final int countOficiales = todasLasRecetas.where(ServicioRecetas.esOficial).length;
+                    final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
+                    final int countComunidad = todasLasRecetas.where(ServicioRecetas.esComunidad).length;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 38,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              _construirChipAudiencia(
+                                etiqueta: '🌟 Oficiales ($countOficiales)',
+                                filtro: FiltroAudienciaReceta.oficiales,
+                                colorActivo: const Color(0xFFD32F2F),
+                                fondoActivo: const Color(0xFFFBECEF),
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: '👨‍🍳 Mis Creaciones ($countMisRecetas)',
+                                filtro: FiltroAudienciaReceta.misRecetas,
+                                colorActivo: const Color(0xFF1E2022),
+                                fondoActivo: Colors.grey.shade200,
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: '🌎 Comunidad ($countComunidad)',
+                                filtro: FiltroAudienciaReceta.comunidad,
+                                colorActivo: Colors.indigo.shade800,
+                                fondoActivo: Colors.indigo.shade50,
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: 'Todas (${todasLasRecetas.length})',
+                                filtro: FiltroAudienciaReceta.todas,
+                                colorActivo: Colors.grey.shade900,
+                                fondoActivo: Colors.grey.shade200,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_filtroAudiencia == FiltroAudienciaReceta.misRecetas) ...[
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                _filtrarRecetas();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.amber.shade300, width: 0.8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.info_outline, size: 14, color: Colors.amber),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Viendo solo tus creaciones ($countMisRecetas). Toca aquí para ver el Catálogo Oficial completo ($countOficiales recetas).',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.brown.shade800,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -1978,10 +2026,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     scrollDirection: Axis.horizontal,
                     children: categorias.map((cat) {
                       final bool seleccionado = categoriaSeleccionada == cat;
+                      final int countCat = cat == 'Todos'
+                          ? todasLasRecetas.length
+                          : todasLasRecetas.where((r) => (r['tipo_comida'] ?? '') == cat).length;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text(cat),
+                          label: Text(cat == 'Todos' ? 'Todos ($countCat)' : '$cat ($countCat)'),
                           selected: seleccionado,
                           selectedColor: const Color(0xFF1E2022),
                           backgroundColor: Colors.grey[200],
@@ -2184,7 +2235,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       mostrarBanner ? index - 1 : index;
                                   final receta = recetasFiltradas[indiceReceta];
                                   final titulo = receta['titulo'] ?? 'Sin título';
-                      final imagen = receta['imagen_url'];
+                                  final rawImagen = receta['imagen_url']?.toString();
+                                  final String? imagen = (titulo.toString().toLowerCase().contains('picadillo') &&
+                                          (rawImagen == null || rawImagen.contains('546069901') || rawImagen.isEmpty))
+                                      ? 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800'
+                                      : rawImagen;
                       final tipo = receta['tipo_comida'] ?? 'General';
                       final descripcion =
                           receta['descripcion'] ??
@@ -2221,6 +2276,24 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                     width: 60,
                                     height: 60,
                                     fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xFFD32F2F),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
                                         width: 60,

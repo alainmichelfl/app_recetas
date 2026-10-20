@@ -63,6 +63,12 @@ class _PantallaCargaMasivaRecetasState
     final t = titulo.toLowerCase();
 
     // 1. Detección específica por platillos tradicionales
+    if (t.contains('picadillo') ||
+        t.contains('carne molida') ||
+        t.contains('bistec') ||
+        t.contains('res')) {
+      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800';
+    }
     if (t.contains('guacamole')) {
       return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?w=800';
     }
