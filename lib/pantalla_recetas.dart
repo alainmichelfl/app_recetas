@@ -8,8 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'conversor_unidades.dart';
 import 'pantalla_chef.dart';
 import 'pantalla_detalle_receta.dart';
-import 'pantalla_planeador.dart';
-import 'pantalla_recetas_caninas.dart';
 import 'servicio_ia.dart';
 import 'servicio_historial_cocina.dart';
 import 'menu_lateral.dart';
@@ -2066,47 +2064,37 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               ServicioRecordatorios.mostrarModalCentroRecordatorios(context);
             },
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 28),
-            tooltip: 'Más opciones y herramientas',
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 56),
-            onSelected: (val) {
-              if (val == 'sanitizar') {
-                _confirmarSaneamientoConIA();
-              } else if (val == 'auditar_imagenes') {
-                _confirmarAuditoriaImagenesConIA();
-              } else if (val == 'migrar_relacional') {
-                _confirmarMigracionRelacional();
-              } else if (val == 'carga_mensual') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PantallaCargaMasivaRecetas(),
-                  ),
-                ).then((guardado) {
-                  if (guardado == true) cargarRecetas();
-                });
-              } else if (val == 'planeador') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PantallaPlaneador(),
-                  ),
-                );
-              } else if (val == 'caninas') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PantallaRecetasCaninas(),
-                  ),
-                );
-              } else if (val == 'tour') {
-                _mostrarCentroDeAyudaYBienvenida();
-              }
-            },
-            itemBuilder: (ctx) => [
-              if (ServicioAdmin.esAdmin()) ...[
+          IconButton(
+            icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
+            tooltip: '💡 Tour, Preferencias y Cómo Funciona',
+            splashRadius: 24,
+            onPressed: _mostrarCentroDeAyudaYBienvenida,
+          ),
+          if (ServicioAdmin.esAdmin())
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 28),
+              tooltip: 'Herramientas de Administrador',
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 56),
+              onSelected: (val) {
+                if (val == 'sanitizar') {
+                  _confirmarSaneamientoConIA();
+                } else if (val == 'auditar_imagenes') {
+                  _confirmarAuditoriaImagenesConIA();
+                } else if (val == 'migrar_relacional') {
+                  _confirmarMigracionRelacional();
+                } else if (val == 'carga_mensual') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PantallaCargaMasivaRecetas(),
+                    ),
+                  ).then((guardado) {
+                    if (guardado == true) cargarRecetas();
+                  });
+                }
+              },
+              itemBuilder: (ctx) => [
                 const PopupMenuItem(
                   value: 'carga_mensual',
                   child: Row(
@@ -2147,40 +2135,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     ],
                   ),
                 ),
-                const PopupMenuDivider(),
               ],
-              const PopupMenuItem(
-                value: 'planeador',
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_month, color: Colors.indigo),
-                    SizedBox(width: 10),
-                    Text('Planeador Semanal 📅'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'caninas',
-                child: Row(
-                  children: [
-                    Icon(Icons.pets, color: Colors.brown),
-                    SizedBox(width: 10),
-                    Text('Recetario Canino 🐾'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'tour',
-                child: Row(
-                  children: [
-                    Icon(Icons.tips_and_updates_outlined, color: Colors.amber),
-                    SizedBox(width: 10),
-                    Text('💡 Tour, Preferencias y Ayuda'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
