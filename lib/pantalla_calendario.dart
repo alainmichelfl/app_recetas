@@ -704,8 +704,11 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
               )
             : Builder(
                 builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu),
+                  icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.white),
                   tooltip: 'Menú principal',
+                  splashRadius: 26,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),

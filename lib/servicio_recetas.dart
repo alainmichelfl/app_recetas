@@ -363,59 +363,163 @@ class ServicioRecetas {
   static String resolverImagenPorSemantica(String titulo, [String? tipoComida]) {
     final t = titulo.toLowerCase().trim();
 
-    if (t.contains('avena') || t.contains('oatmeal') || t.contains('overnight')) {
+    // 1. Avena, porridge y overnight oats
+    if (t.contains('avena') || t.contains('oatmeal') || t.contains('overnight') || t.contains('porridge')) {
       return 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate'))) {
+
+    // 2. Panqueques, waffles, crepas y pan francés
+    if (t.contains('pancake') || t.contains('hot cake') || t.contains('hotcake') || t.contains('hot-cake')) {
+      return 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('waffle') || t.contains('waffles')) {
+      return 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pan francés') || t.contains('pan frances') || t.contains('french toast')) {
+      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('crepa') || t.contains('crepe') || t.contains('crepas') || t.contains('crepes')) {
+      return 'https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 3. Huevos y desayunos
+    if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate')) || t.contains('avocado toast')) {
       return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
     }
+    if (t.contains('omelette') || t.contains('tortilla francesa') || t.contains('frittata')) {
+      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('huevo') || t.contains('shakshuka')) {
+      return 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 4. Platillos tradicionales mexicanos
     if (t.contains('picadillo')) {
       return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('chilaquil')) {
       return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('pancake') || t.contains('hot cake') || t.contains('hotcake')) {
-      return 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('mollete')) {
+      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('pan francés') || t.contains('pan frances')) {
-      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('enchilada') || t.contains('enfrijolada') || t.contains('entomatada') || t.contains('suizas')) {
+      return 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido')) {
-      return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('guacamole')) {
+      return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('zoodle') || (t.contains('calabacita') && t.contains('espiral'))) {
-      return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('quesadilla') || t.contains('sincronizada')) {
+      return 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('rollito') && t.contains('pavo')) {
-      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('taco') || t.contains('taquito') || t.contains('pastor') || t.contains('carnitas') || t.contains('barbacoa') || t.contains('alambre') || t.contains('fajita')) {
+      return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('salmon') || t.contains('salmón') || t.contains('pescado') || t.contains('atún') || t.contains('atun')) {
+    if (t.contains('pozole') || t.contains('mole') || t.contains('tamal') || t.contains('tamales') || t.contains('chile relleno') || t.contains('flautas')) {
+      return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 5. Pescados y mariscos
+    if (t.contains('ceviche') || t.contains('aguachile') || t.contains('tiradito')) {
+      return 'https://images.unsplash.com/photo-1535400255456-984241443b29?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('camarón') || t.contains('camaron') || t.contains('camarones') || t.contains('marisco') || t.contains('gambas')) {
+      return 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('salmon') || t.contains('salmón') || t.contains('pescado') || t.contains('atún') || t.contains('atun') || t.contains('filete') || t.contains('mojarra') || t.contains('huachinango') || t.contains('tilapia')) {
       return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('pollo') || t.contains('pechuga') || t.contains('tinga')) {
+
+    // 6. Aves y carnes
+    if (t.contains('tinga')) {
+      return 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('rollito') || t.contains('pavo')) {
+      return 'https://images.unsplash.com/photo-1514944298352-7b0b30efcf72?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pollo') || t.contains('pechuga') || t.contains('alitas')) {
       return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('res') || t.contains('carne') || t.contains('bistec') || t.contains('arrachera')) {
-      return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('albondiga') || t.contains('albóndiga')) {
+      return 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('ensalada') || t.contains('salad') || t.contains('caprese') || t.contains('quinoa')) {
-      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('hamburguesa') || t.contains('burger')) {
+      return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('sopa') || t.contains('crema') || t.contains('caldo') || t.contains('lenteja')) {
+    if (t.contains('costilla') || t.contains('cerdo') || t.contains('lomo') || t.contains('chuleta')) {
+      return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('res') || t.contains('carne') || t.contains('bistec') || t.contains('arrachera') || t.contains('corte') || t.contains('ribeye')) {
+      return 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 7. Pastas y pizzas (Cocina Italiana e internacional)
+    if (t.contains('lasaña') || t.contains('lasagna')) {
+      return 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pizza') || t.contains('focaccia') || t.contains('calzone')) {
+      return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pasta') || t.contains('espagueti') || t.contains('spaghetti') || t.contains('fettuccine') || t.contains('penne') || t.contains('ravioli') || t.contains('carbonara') || t.contains('boloñesa') || t.contains('bolognese') || t.contains('alfredo') || t.contains('pesto')) {
+      return 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('risotto') || t.contains('arroz')) {
+      return 'https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('paella')) {
+      return 'https://images.unsplash.com/photo-1534080564583-6be75777b70a?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 8. Cocinas del mundo (Sushi, Ramen, Curry)
+    if (t.contains('sushi') || t.contains('maki') || t.contains('nigiri') || t.contains('sashimi')) {
+      return 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('ramen') || t.contains('udon') || t.contains('soba') || t.contains('fideos')) {
+      return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('curry') || t.contains('tikka') || t.contains('korma') || t.contains('masala')) {
+      return 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 9. Sopas, cremas y caldos
+    if (t.contains('lenteja') || t.contains('lentejas')) {
+      return 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('sopa') || t.contains('crema') || t.contains('caldo') || t.contains('consome') || t.contains('consomé') || t.contains('minestrone')) {
       return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('taco')) {
-      return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
+
+    // 10. Ensaladas y bowls saludables
+    if (t.contains('ensalada') || t.contains('salad') || t.contains('caprese')) {
+      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('huevo') || t.contains('omelette')) {
-      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('bowl') || t.contains('quinoa') || t.contains('poke') || t.contains('zoodle')) {
+      return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('perro') || t.contains('canin') || t.contains('lomito')) {
-      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
+
+    // 11. Snacks, postres y dulces
+    if (t.contains('galleta') || t.contains('cookie') || t.contains('cookies') || t.contains('brownie')) {
+      return 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('snack') || t.contains('yogurt') || t.contains('fruta') || t.contains('manzana')) {
+    if (t.contains('pastel') || t.contains('torta') || t.contains('cake') || t.contains('cheesecake') || t.contains('tarta') || t.contains('pay') || t.contains('pie') || t.contains('tiramisu')) {
+      return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('helado') || t.contains('nieve') || t.contains('ice cream') || t.contains('gelato')) {
+      return 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido') || t.contains('jugo')) {
+      return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('yogurt') || t.contains('yogur') || t.contains('parfait') || t.contains('chia') || t.contains('chía')) {
       return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('fruta') || t.contains('manzana') || t.contains('snack')) {
+      return 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 12. Nutrición canina
+    if (t.contains('perro') || t.contains('canin') || t.contains('lomito') || t.contains('dog')) {
+      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
     }
 
     final tipo = (tipoComida ?? '').toLowerCase();
@@ -503,24 +607,37 @@ class ServicioRecetas {
       };
     }
 
-    // 2. Si la URL actual es nula, vacía o está en la lista negra (ej. tocadiscos de vinilo)
-    final bool esNegra = urlActual == null ||
-        urlActual.trim().isEmpty ||
-        urlsNegras.any((negra) => urlActual.contains(negra));
+    final raw = (urlActual ?? '').trim();
 
-    if (esNegra) {
-      final urlSaneada = resolverImagenPorSemantica(titulo, tipoComida);
+    // 2. Proteger fotos tomadas por la cámara del usuario o archivos locales privados
+    final bool esFotoLocalUsuario = raw.startsWith('file:') ||
+        raw.startsWith('/data/user/') ||
+        raw.startsWith('content:') ||
+        raw.startsWith('blob:') ||
+        raw.startsWith('data:image');
+    if (esFotoLocalUsuario) {
       return {
-        'url': urlSaneada,
+        'url': raw,
+        'cambiada': false,
+        'motivo': 'OK (Foto local del usuario protegida)',
+      };
+    }
+
+    // 3. Obtener la fotografía culinaria óptima mediante el banco semántico determinista
+    final urlSemantica = resolverImagenPorSemantica(titulo, tipoComida);
+
+    // 4. Si la URL actual es nula, vacía o está en la lista negra (ej. tocadiscos de vinilo)
+    final bool esNegra = raw.isEmpty || urlsNegras.any((negra) => raw.contains(negra));
+    if (esNegra) {
+      return {
+        'url': urlSemantica,
         'cambiada': true,
         'motivo': 'Saneada: URL rota o en lista negra sustituida por foto gastronómica',
       };
     }
 
-    final trimmed = urlActual.trim();
-
-    // 3. Caso especial picadillo con imagen de ensalada
-    if (titulo.toLowerCase().contains('picadillo') && trimmed.contains('546069901')) {
+    // 5. Caso especial: picadillo con imagen de ensalada
+    if (titulo.toLowerCase().contains('picadillo') && raw.contains('546069901')) {
       const urlPicadillo =
           'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
       return {
@@ -530,22 +647,19 @@ class ServicioRecetas {
       };
     }
 
-    // 4. Si es de Unsplash pero carece de compresión móvil
-    if ((trimmed.contains('images.unsplash.com') || trimmed.contains('plus.unsplash.com')) &&
-        (!trimmed.contains('w=') || !trimmed.contains('fit='))) {
-      final sep = trimmed.contains('?') ? '&' : '?';
-      final opt = '$trimmed${sep}auto=format&fit=crop&w=600&q=80';
+    // 6. Si la imagen actual no coincide con la imagen semántica curada para este platillo
+    if (raw != urlSemantica) {
       return {
-        'url': opt,
+        'url': urlSemantica,
         'cambiada': true,
-        'motivo': 'Optimizada con compresión móvil y carga ultrarrápida',
+        'motivo': 'Corregida por IA: Platillo alineado con su fotografía gastronómica verificada',
       };
     }
 
     return {
-      'url': trimmed,
+      'url': raw,
       'cambiada': false,
-      'motivo': 'OK',
+      'motivo': 'OK (Verificada semánticamente)',
     };
   }
 }

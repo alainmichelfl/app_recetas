@@ -312,10 +312,14 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
       backgroundColor: Colors.grey[100],
       drawer: const MenuLateral(rutaActual: 'caninas'),
       appBar: AppBar(
+        leadingWidth: 56,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.white),
             tooltip: 'Menú principal',
+            splashRadius: 26,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),

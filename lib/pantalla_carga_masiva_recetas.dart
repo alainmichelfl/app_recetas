@@ -64,79 +64,18 @@ class _PantallaCargaMasivaRecetasState
   /// evitando fotos no correspondientes (ej. hotcakes para guacamole) o placeholders rotos.
   static String _resolverImagenOptimizada(
     String titulo,
-    String tipoComida,
+    String tipoComida, [
     String? urlSugerida,
-  ) {
-    final t = titulo.toLowerCase();
-
-    // 1. Detección específica por platillos tradicionales
-    if (t.contains('picadillo') ||
-        t.contains('carne molida') ||
-        t.contains('bistec') ||
-        t.contains('res')) {
-      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?w=800';
-    }
-    if (t.contains('guacamole')) {
-      return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('chilaquil')) {
-      return 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('avena') || t.contains('oatmeal') || t.contains('porridge')) {
-      return 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('pan francés') || t.contains('pan frances')) {
-      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('mollete')) {
-      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate'))) {
-      return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('omelette') || t.contains('huevo')) {
-      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('pescado') ||
-        t.contains('salmón') ||
-        t.contains('salmon') ||
-        t.contains('atún') ||
-        t.contains('atun')) {
-      return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('tinga')) {
-      return 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('pollo') || t.contains('pechuga')) {
-      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('lenteja')) {
-      return 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('sopa') ||
-        t.contains('crema') ||
-        t.contains('caldo')) {
-      return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('ensalada') || t.contains('caprese') || t.contains('quinoa')) {
-      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
-    }
-    if (t.contains('perro') || t.contains('canin') || t.contains('lomito')) {
-      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
-    }
-
-    // 2. Si la URL sugerida está explícitamente en nuestro catálogo verificado y no es un vinilo ni placeholder
+  ]) {
+    // Si la URL sugerida es un archivo local del dispositivo o cámara, preservarla
     if (urlSugerida != null &&
-        urlSugerida.trim().isNotEmpty &&
-        !urlSugerida.contains('placeholder') &&
-        !urlSugerida.contains('photo-1539185441755') &&
-        !urlSugerida.contains('photo-1541288097308-7b8e3f58c4c6') &&
-        (urlSugerida.contains('auto=format') || urlSugerida.contains('images.unsplash.com'))) {
-      // Validar si concuerda con la semántica
-      return ServicioRecetas.resolverImagenPorSemantica(titulo, tipoComida);
+        (urlSugerida.startsWith('file:') ||
+            urlSugerida.startsWith('/data/user/') ||
+            urlSugerida.startsWith('content:') ||
+            urlSugerida.startsWith('data:image'))) {
+      return urlSugerida;
     }
-
-    // 3. Fallback semántico determinista del banco gastronómico oficial
+    // Siempre asignar la fotografía gastronómica oficial curada por semántica
     return ServicioRecetas.resolverImagenPorSemantica(titulo, tipoComida);
   }
 
@@ -186,7 +125,7 @@ class _PantallaCargaMasivaRecetasState
       2. Ingredientes accesibles en supermercados mexicanos (Walmart, Soriana, La Comer, Central de Abasto).
       3. En "nombre_estandar" usa SIEMPRE minúsculas y el nombre base del ingrediente (ej. "huevo", "jitomate", "cebolla blanca", "aceite de oliva", "pechuga de pollo", "frijoles negros", "aguacate", "queso panela", "avena").
       4. UNIDADES: Usa "piezas", "kg", "L", "paquete", "lata" o "frasco". (NO uses gramos g ni mililitros ml).
-      5. En "imagen_url", usa URLs directas y válidas de fotos de comida de Unsplash con formato WebP o jpg optimizado.
+      5. ENFOQUE CULINARIO: Recetas auténticas, apetitosas y bien equilibradas según el tema.
       6. CALORÍAS Y MACROS: Calcula valores nutricionales realistas para cada porción.
       7. DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
       - En "descripcion" incluye SIEMPRE al inicio el desglose: "Tiempo activo: X min | Cocción: Y min. Breve descripción apetitosa..."
@@ -200,7 +139,6 @@ class _PantallaCargaMasivaRecetasState
           "tipo_comida": "Desayuno",
           "calorias": 380,
           "macros": "Proteína: 22g | Carbos: 28g | Grasas: 14g",
-          "imagen_url": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600",
           "ingredientes": [
             { "nombre_estandar": "huevo", "cantidad": 2.0, "unidad": "piezas" },
             { "nombre_estandar": "jitomate", "cantidad": 1.0, "unidad": "piezas" },
@@ -224,7 +162,6 @@ class _PantallaCargaMasivaRecetasState
           item['imagen_url'] = _resolverImagenOptimizada(
             item['titulo']?.toString() ?? '',
             item['tipo_comida']?.toString() ?? 'Comida',
-            item['imagen_url']?.toString(),
           );
         }
         setState(() {

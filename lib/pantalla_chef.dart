@@ -970,10 +970,14 @@ class _PantallaChefState extends State<PantallaChef> {
     return Scaffold(
       drawer: const MenuLateral(rutaActual: 'chef'),
       appBar: AppBar(
+        leadingWidth: 56,
         leading: Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.white),
             tooltip: 'Menú principal',
+            splashRadius: 26,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),

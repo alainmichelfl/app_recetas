@@ -1805,14 +1805,15 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
                   saludo,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
@@ -1820,50 +1821,50 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 11.5,
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  ServicioPerfilUsuario.mostrarDialogoEditarNombre(
+                    context,
+                    alGuardar: () => setState(() {}),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFD32F2F), width: 0.8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit, size: 11, color: Color(0xFFEF5350)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Apodo',
+                        style: TextStyle(
+                          color: Color(0xFFEF5350),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: () {
-              ServicioPerfilUsuario.mostrarDialogoEditarNombre(
-                context,
-                alGuardar: () => setState(() {}),
-              );
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD32F2F).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD32F2F), width: 0.8),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.edit, size: 11, color: Color(0xFFEF5350)),
-                  SizedBox(width: 4),
-                  Text(
-                    'Apodo',
-                    style: TextStyle(
-                      color: Color(0xFFEF5350),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(height: 2),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.65),
+              fontSize: 11.5,
             ),
           ),
         ],
@@ -2030,15 +2031,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       appBar: AppBar(
         leadingWidth: 56,
         leading: Builder(
-          builder: (ctx) => Tooltip(
-            message: 'Menú principal',
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => Scaffold.of(ctx).openDrawer(),
-              child: const Center(
-                child: Icon(Icons.menu, size: 27, color: Colors.white),
-              ),
-            ),
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.white),
+            tooltip: 'Menú principal',
+            splashRadius: 26,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
         title: Text(
@@ -2051,6 +2050,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           IconButton(
             icon: const Icon(Icons.search_rounded),
             tooltip: 'Búsqueda Global Spotlight 🔍',
+            splashRadius: 24,
             onPressed: () {
               DialogoBusquedaSpotlight.mostrar(
                 context,
@@ -2061,44 +2061,17 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           IconButton(
             icon: const Icon(Icons.notifications_active_outlined),
             tooltip: 'Centro de Recordatorios 🔔',
+            splashRadius: 24,
             onPressed: () {
               ServicioRecordatorios.mostrarModalCentroRecordatorios(context);
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
-            tooltip: 'Planeador Semanal 📅',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PantallaPlaneador(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.pets),
-            tooltip: 'Recetario Canino 🐾',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PantallaRecetasCaninas(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
-            tooltip: '💡 Tour, Preferencias y Cómo Funciona',
-            onPressed: _mostrarCentroDeAyudaYBienvenida,
-          ),
-          if (ServicioAdmin.esAdmin())
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              tooltip: 'Herramientas de Administrador',
-              onSelected: (val) {
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, size: 28),
+            tooltip: 'Más opciones y herramientas',
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 56),
+            onSelected: (val) {
               if (val == 'sanitizar') {
                 _confirmarSaneamientoConIA();
               } else if (val == 'auditar_imagenes') {
@@ -2114,46 +2087,95 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 ).then((guardado) {
                   if (guardado == true) cargarRecetas();
                 });
+              } else if (val == 'planeador') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PantallaPlaneador(),
+                  ),
+                );
+              } else if (val == 'caninas') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PantallaRecetasCaninas(),
+                  ),
+                );
+              } else if (val == 'tour') {
+                _mostrarCentroDeAyudaYBienvenida();
               }
             },
             itemBuilder: (ctx) => [
+              if (ServicioAdmin.esAdmin()) ...[
+                const PopupMenuItem(
+                  value: 'carga_mensual',
+                  child: Row(
+                    children: [
+                      Icon(Icons.rocket_launch, color: Color(0xFFD32F2F)),
+                      SizedBox(width: 10),
+                      Text('Carga Masiva Mensual (20 IA) 🚀'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'auditar_imagenes',
+                  child: Row(
+                    children: [
+                      Icon(Icons.camera_enhance_rounded, color: Color(0xFFE65100)),
+                      SizedBox(width: 10),
+                      Text('Auditar Imágenes con IA 📸'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'sanitizar',
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_fix_high, color: Color(0xFFD32F2F)),
+                      SizedBox(width: 10),
+                      Text('Pulir ortografía y formato ✨'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'migrar_relacional',
+                  child: Row(
+                    children: [
+                      Icon(Icons.inventory_2_outlined, color: Colors.teal),
+                      SizedBox(width: 10),
+                      Text('Sincronizar Ingredientes en BD 📦'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+              ],
               const PopupMenuItem(
-                value: 'carga_mensual',
+                value: 'planeador',
                 child: Row(
                   children: [
-                    Icon(Icons.rocket_launch, color: Color(0xFFD32F2F)),
+                    Icon(Icons.calendar_month, color: Colors.indigo),
                     SizedBox(width: 10),
-                    Text('Carga Masiva Mensual (20 IA) 🚀'),
+                    Text('Planeador Semanal 📅'),
                   ],
                 ),
               ),
               const PopupMenuItem(
-                value: 'auditar_imagenes',
+                value: 'caninas',
                 child: Row(
                   children: [
-                    Icon(Icons.camera_enhance_rounded, color: Color(0xFFE65100)),
+                    Icon(Icons.pets, color: Colors.brown),
                     SizedBox(width: 10),
-                    Text('Auditar Imágenes con IA 📸'),
+                    Text('Recetario Canino 🐾'),
                   ],
                 ),
               ),
               const PopupMenuItem(
-                value: 'sanitizar',
+                value: 'tour',
                 child: Row(
                   children: [
-                    Icon(Icons.auto_fix_high, color: Color(0xFFD32F2F)),
+                    Icon(Icons.tips_and_updates_outlined, color: Colors.amber),
                     SizedBox(width: 10),
-                    Text('Pulir ortografía y formato ✨'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'migrar_relacional',
-                child: Row(
-                  children: [
-                    Icon(Icons.inventory_2_outlined, color: Colors.teal),
-                    SizedBox(width: 10),
-                    Text('Sincronizar Ingredientes en BD 📦'),
+                    Text('💡 Tour, Preferencias y Ayuda'),
                   ],
                 ),
               ),
