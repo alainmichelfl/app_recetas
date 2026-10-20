@@ -239,5 +239,36 @@ void main() {
       );
       expect(imgSalmon, contains('photo-1519708227418-c8fd9a32b7a2'));
     });
+
+    test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {
+      // 1. Receta del catálogo oficial (ID 106) con URL de vinilo en la base de datos
+      final audit1 = ServicioRecetas.auditarImagenReceta(
+        idReceta: 106,
+        titulo: 'Tostadas de huevo pochado con aguacate',
+        tipoComida: 'Desayuno',
+        urlActual: 'https://images.unsplash.com/photo-1539185441755-900388151321',
+      );
+      expect(audit1['cambiada'], isTrue);
+      expect(audit1['url'], contains('photo-1525351484163-7529414344d8'));
+
+      // 2. Receta que ya tiene la URL canónica verificada
+      final audit2 = ServicioRecetas.auditarImagenReceta(
+        idReceta: 106,
+        titulo: 'Tostadas de huevo pochado con aguacate',
+        tipoComida: 'Desayuno',
+        urlActual: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80',
+      );
+      expect(audit2['cambiada'], isFalse);
+
+      // 3. Receta nueva sin URL (nula)
+      final audit3 = ServicioRecetas.auditarImagenReceta(
+        idReceta: 9999,
+        titulo: 'Bowl de Avena con Plátano',
+        tipoComida: 'Desayuno',
+        urlActual: null,
+      );
+      expect(audit3['cambiada'], isTrue);
+      expect(audit3['url'], contains('1669559809547-6e4c4fe41371'));
+    });
   });
 }

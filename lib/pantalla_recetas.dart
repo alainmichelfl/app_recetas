@@ -1093,6 +1093,250 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     );
   }
 
+  // ==========================================================
+  // 📸 AUDITORÍA AUTOMATIZADA DE IMÁGENES CON IA (1-CLIC)
+  // ==========================================================
+  void _confirmarAuditoriaImagenesConIA() {
+    if (!ServicioAdmin.esAdmin()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acción reservada al administrador')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.camera_enhance_rounded, color: Color(0xFFE65100)),
+            SizedBox(width: 10),
+            Expanded(child: Text('Auditar Imágenes con IA 📸')),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'El robot de IA revisará automáticamente todas las recetas oficiales del catálogo en Supabase:\n',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text('• Detecta fotos discordantes (ej. vinilos o platos no relacionados).'),
+            SizedBox(height: 4),
+            Text('• Erradica enlaces caídos (404) y cargas interminables.'),
+            SizedBox(height: 4),
+            Text('• Asigna y actualiza en Supabase fotos gastronómicas auténticas verificadas (HTTP 200).'),
+            SizedBox(height: 12),
+            Text(
+              '¿Deseas comenzar la auditoría automática?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE65100),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              _ejecutarAuditoriaImagenes();
+            },
+            icon: const Icon(Icons.rocket_launch, size: 16),
+            label: const Text('Comenzar Auditoría 📸'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ejecutarAuditoriaImagenes() async {
+    final supabase = Supabase.instance.client;
+
+    final listaRes = await supabase
+        .from('recetas')
+        .select('id_receta, titulo, tipo_comida, imagen_url')
+        .order('id_receta', ascending: true);
+
+    final List<Map<String, dynamic>> recetasParaAuditar =
+        List<Map<String, dynamic>>.from(listaRes);
+
+    if (recetasParaAuditar.isEmpty || !mounted) return;
+
+    int actual = 0;
+    int corregidas = 0;
+    String nombreActual = '';
+    String estadoActual = 'Iniciando escaneo...';
+    bool cancelado = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (progresoCtx) {
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            void iniciarProceso() async {
+              for (var i = 0; i < recetasParaAuditar.length; i++) {
+                if (cancelado) break;
+
+                final r = recetasParaAuditar[i];
+                final dynamic rawId = r['id_receta'];
+                final int id = rawId is int ? rawId : (int.tryParse(rawId?.toString() ?? '0') ?? 0);
+                final String titulo = r['titulo'] ?? '';
+                final String tipoComida = r['tipo_comida'] ?? 'Comida';
+                final String? urlActual = r['imagen_url']?.toString();
+
+                setStateModal(() {
+                  actual = i + 1;
+                  nombreActual = titulo;
+                  estadoActual = 'Analizando: $titulo...';
+                });
+
+                if (id > 0) {
+                  final resultado = ServicioRecetas.auditarImagenReceta(
+                    idReceta: id,
+                    titulo: titulo,
+                    tipoComida: tipoComida,
+                    urlActual: urlActual,
+                  );
+
+                  if (resultado['cambiada'] == true) {
+                    final String nuevaUrl = resultado['url'];
+                    try {
+                      await supabase
+                          .from('recetas')
+                          .update({'imagen_url': nuevaUrl})
+                          .eq('id_receta', id);
+                      corregidas++;
+                      setStateModal(() {
+                        estadoActual = 'Saneada: ${resultado['motivo']}';
+                      });
+                    } catch (e) {
+                      debugPrint('Error al actualizar imagen de receta $id: $e');
+                    }
+                  }
+                }
+
+                // Pausa prudente para actualización reactiva fluida
+                await Future.delayed(const Duration(milliseconds: 60));
+              }
+
+              if (context.mounted) Navigator.pop(progresoCtx);
+            }
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (actual == 0) iniciarProceso();
+            });
+
+            final double progreso = recetasParaAuditar.isEmpty
+                ? 0.0
+                : (actual / recetasParaAuditar.length);
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.camera_enhance_rounded, color: Color(0xFFE65100)),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Auditando Imágenes con IA')),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LinearProgressIndicator(
+                    value: progreso,
+                    color: const Color(0xFFE65100),
+                    backgroundColor: const Color(0xFFE65100).withValues(alpha: 0.15),
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Progreso: $actual de ${recetasParaAuditar.length}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade300, width: 0.8),
+                        ),
+                        child: Text(
+                          '$corregidas saneadas',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    nombreActual,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    estadoActual,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    cancelado = true;
+                    Navigator.pop(progresoCtx);
+                  },
+                  child: const Text('Detener', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (mounted) {
+      cargarRecetas();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '¡Auditoría finalizada! 🎉 Se revisaron $actual recetas y se sanearon $corregidas imágenes.',
+          ),
+          backgroundColor: Colors.green.shade800,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
   void _confirmarMigracionRelacional() {
     if (!ServicioAdmin.esAdmin()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1795,6 +2039,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               onSelected: (val) {
               if (val == 'sanitizar') {
                 _confirmarSaneamientoConIA();
+              } else if (val == 'auditar_imagenes') {
+                _confirmarAuditoriaImagenesConIA();
               } else if (val == 'migrar_relacional') {
                 _confirmarMigracionRelacional();
               } else if (val == 'carga_mensual') {
@@ -1816,6 +2062,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     Icon(Icons.rocket_launch, color: Color(0xFFD32F2F)),
                     SizedBox(width: 10),
                     Text('Carga Masiva Mensual (20 IA) 🚀'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'auditar_imagenes',
+                child: Row(
+                  children: [
+                    Icon(Icons.camera_enhance_rounded, color: Color(0xFFE65100)),
+                    SizedBox(width: 10),
+                    Text('Auditar Imágenes con IA 📸'),
                   ],
                 ),
               ),

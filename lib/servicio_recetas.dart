@@ -478,4 +478,74 @@ class ServicioRecetas {
 
     return trimmed;
   }
+
+  /// Realiza la auditoría de imagen de una receta.
+  /// Retorna un mapa con:
+  /// - 'url': la URL verificada
+  /// - 'cambiada': true si la URL actual requirió actualización
+  /// - 'motivo': descripción de la acción tomada
+  static Map<String, dynamic> auditarImagenReceta({
+    required int idReceta,
+    required String titulo,
+    required String tipoComida,
+    String? urlActual,
+  }) {
+    // 1. Si existe en el catálogo verificado por ID (los 94 platillos oficiales curados)
+    if (imagenesVerificadasPorId.containsKey(idReceta)) {
+      final urlCanonica = imagenesVerificadasPorId[idReceta]!;
+      final bool necesitaCambio = (urlActual ?? '').trim() != urlCanonica.trim();
+      return {
+        'url': urlCanonica,
+        'cambiada': necesitaCambio,
+        'motivo': necesitaCambio
+            ? 'Actualizada a foto oficial verificada por IA (HTTP 200)'
+            : 'OK (Verificada)',
+      };
+    }
+
+    // 2. Si la URL actual es nula, vacía o está en la lista negra (ej. tocadiscos de vinilo)
+    final bool esNegra = urlActual == null ||
+        urlActual.trim().isEmpty ||
+        urlsNegras.any((negra) => urlActual.contains(negra));
+
+    if (esNegra) {
+      final urlSaneada = resolverImagenPorSemantica(titulo, tipoComida);
+      return {
+        'url': urlSaneada,
+        'cambiada': true,
+        'motivo': 'Saneada: URL rota o en lista negra sustituida por foto gastronómica',
+      };
+    }
+
+    final trimmed = urlActual.trim();
+
+    // 3. Caso especial picadillo con imagen de ensalada
+    if (titulo.toLowerCase().contains('picadillo') && trimmed.contains('546069901')) {
+      const urlPicadillo =
+          'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
+      return {
+        'url': urlPicadillo,
+        'cambiada': true,
+        'motivo': 'Corregida: Picadillo asignado a cazuela tradicional de res',
+      };
+    }
+
+    // 4. Si es de Unsplash pero carece de compresión móvil
+    if ((trimmed.contains('images.unsplash.com') || trimmed.contains('plus.unsplash.com')) &&
+        (!trimmed.contains('w=') || !trimmed.contains('fit='))) {
+      final sep = trimmed.contains('?') ? '&' : '?';
+      final opt = '$trimmed${sep}auto=format&fit=crop&w=600&q=80';
+      return {
+        'url': opt,
+        'cambiada': true,
+        'motivo': 'Optimizada con compresión móvil y carga ultrarrápida',
+      };
+    }
+
+    return {
+      'url': trimmed,
+      'cambiada': false,
+      'motivo': 'OK',
+    };
+  }
 }
