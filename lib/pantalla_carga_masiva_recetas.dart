@@ -29,6 +29,7 @@ class _PantallaCargaMasivaRecetasState
 
   List<Map<String, dynamic>> _recetasGeneradas = [];
   String _filtroCategoria = 'Todos';
+  bool _panelConfiguracionExpandido = true;
 
   @override
   void initState() {
@@ -228,6 +229,7 @@ class _PantallaCargaMasivaRecetasState
         }
         setState(() {
           _recetasGeneradas = list;
+          _panelConfiguracionExpandido = false;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -442,6 +444,314 @@ class _PantallaCargaMasivaRecetasState
     }
   }
 
+  void _mostrarDetallePrevisualizacion(Map<String, dynamic> r, int index) {
+    final String tit = r['titulo'] ?? 'Sin título';
+    final String cat = r['tipo_comida'] ?? 'Comida';
+    final int cal = r['calorias'] is int
+        ? r['calorias']
+        : int.tryParse(r['calorias']?.toString() ?? '0') ?? 0;
+    final String macros = r['macros']?.toString() ?? '';
+    final String desc = r['descripcion']?.toString() ?? '';
+    final String inst = r['instrucciones']?.toString() ?? '';
+    final List ings = r['ingredientes'] is List ? r['ingredientes'] as List : [];
+    final String img = r['imagen_url']?.toString() ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  // Barra superior de arrastre
+                  Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 6),
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+                      children: [
+                        // Imagen de alta resolución
+                        if (img.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              img,
+                              height: 220,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                height: 160,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.restaurant_rounded,
+                                    size: 52,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 14),
+                        // Badges tipo de comida y calorías
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                cat,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '🔥 $cal kcal',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red.shade800,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.grey),
+                              onPressed: () => Navigator.pop(ctx),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          tit,
+                          style: const TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E2022),
+                          ),
+                        ),
+                        if (macros.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              macros,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (desc.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amber.shade200),
+                            ),
+                            child: Text(
+                              desc,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.4,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        // Sección Ingredientes
+                        Row(
+                          children: [
+                            const Icon(Icons.shopping_basket_outlined, size: 20, color: Color(0xFFD32F2F)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ingredientes (${ings.length}):',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E2022),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: ings.map((ing) {
+                              final nom = ing['nombre_estandar']?.toString() ?? '';
+                              final cant = ing['cantidad']?.toString() ?? '';
+                              final uni = ing['unidad']?.toString() ?? '';
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      size: 16,
+                                      color: Colors.green,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '$cant $uni de $nom',
+                                        style: const TextStyle(fontSize: 13.5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        // Sección Instrucciones
+                        const Row(
+                          children: [
+                            Icon(Icons.restaurant_outlined, size: 20, color: Color(0xFFD32F2F)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Preparación Paso a Paso:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E2022),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Text(
+                            inst.isNotEmpty ? inst : 'Instrucciones en desarrollo...',
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              height: 1.5,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Botones de acción
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red.shade700,
+                                  side: BorderSide(color: Colors.red.shade300),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _recetasGeneradas.removeAt(index);
+                                  });
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Receta descartada del lote.'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.delete_outline, size: 18),
+                                label: const Text('Descartar receta'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1E2022),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () => Navigator.pop(ctx),
+                                icon: const Icon(Icons.check, size: 18),
+                                label: const Text('Listo ✅'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> recetasFiltradas = _recetasGeneradas.where((r) {
@@ -462,30 +772,143 @@ class _PantallaCargaMasivaRecetasState
       ),
       body: Column(
         children: [
-          // Panel Superior de Configuración del Lote
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+          // Panel Superior de Configuración del Lote (Colapsable)
+          if (_recetasGeneradas.isNotEmpty && !_panelConfiguracionExpandido)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Text(
+                      _temaSeleccionado.icono,
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.auto_awesome, color: Colors.orange.shade800),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Lote de 20 Recetas Oficiales',
-                          style: TextStyle(
-                            fontSize: 16,
+                        Text(
+                          '${_temaSeleccionado.tituloCorto} • ${_recetasGeneradas.length} recetas listas',
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            fontSize: 14,
+                            color: Color(0xFF1E2022),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Toca cualquier tarjeta para revisar detalle y pasos',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      backgroundColor: Colors.orange.shade50,
+                      foregroundColor: Colors.orange.shade900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.orange.shade200),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _panelConfiguracionExpandido = true;
+                      });
+                    },
+                    icon: const Icon(Icons.tune, size: 16),
+                    label: const Text(
+                      'Cambiar tema',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_recetasGeneradas.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Configuración del Lote (${_recetasGeneradas.length} generadas)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              foregroundColor: Colors.orange.shade900,
+                              backgroundColor: Colors.orange.shade50,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _panelConfiguracionExpandido = false;
+                              });
+                            },
+                            icon: const Icon(Icons.expand_less, size: 16),
+                            label: const Text(
+                              'Ocultar panel',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.orange.shade800),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Lote de 20 Recetas Oficiales',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
                     // Botón Ruleta Sorpresa
                     TextButton.icon(
                       style: TextButton.styleFrom(
@@ -832,78 +1255,122 @@ class _PantallaCargaMasivaRecetasState
                         margin: const EdgeInsets.only(bottom: 10),
                         elevation: 2,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(12),
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              r['imagen_url'] ?? '',
-                              width: 55,
-                              height: 55,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                width: 55,
-                                height: 55,
-                                color: Colors.orange.shade100,
-                                child: Icon(
-                                  Icons.restaurant,
-                                  color: Colors.orange.shade800,
-                                ),
-                              ),
-                            ),
-                          ),
-                          title: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade100,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  cat,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange.shade900,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _mostrarDetallePrevisualizacion(r, index),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    r['imagen_url'] ?? '',
+                                    width: 65,
+                                    height: 65,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: 65,
+                                      height: 65,
+                                      color: Colors.orange.shade100,
+                                      child: Icon(
+                                        Icons.restaurant_rounded,
+                                        color: Colors.orange.shade800,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  tit,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.shade100,
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              cat,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.orange.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              tit,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14.5,
+                                                color: Color(0xFF1E2022),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        '🔥 $cal kcal  •  ${ings.length} ingredientes\n${r['descripcion'] ?? ''}',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700,
+                                          height: 1.25,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.touch_app_outlined,
+                                            size: 13,
+                                            color: Colors.teal.shade700,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Toca para revisar ingredientes y pasos',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.teal.shade800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              '🔥 $cal kcal  •  ${ings.length} ingredientes\n${r['descripcion'] ?? ''}',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      tooltip: 'Quitar de este lote',
+                                      onPressed: () {
+                                        setState(() {
+                                          _recetasGeneradas.remove(r);
+                                        });
+                                      },
+                                    ),
+                                    const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            tooltip: 'Quitar de este lote',
-                            onPressed: () {
-                              setState(() {
-                                _recetasGeneradas.remove(r);
-                              });
-                            },
                           ),
                         ),
                       );

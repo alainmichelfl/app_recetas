@@ -3390,7 +3390,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             context,
             MaterialPageRoute(
               builder: (context) => PantallaDetalleReceta(
-                idReceta: id,
+                idReceta: idInt,
                 titulo: titulo,
                 descripcion: descripcion,
                 imagenUrl: imagen,
