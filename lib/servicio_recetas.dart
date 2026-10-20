@@ -7,6 +7,7 @@ import 'servicio_admin.dart';
 enum FiltroAudienciaReceta {
   todas,
   oficiales,
+  recienSalidas,
   misRecetas,
   comunidad,
 }
@@ -32,6 +33,8 @@ class ServicioRecetas {
     String? tiempoPreparacion,
     bool? esOficial,
     bool? esPublica,
+    bool? esNovedad,
+    String? userIdOverride,
   }) async {
     final user = _client.auth.currentUser;
     final bool esAdmin = ServicioAdmin.esAdmin(user);
@@ -39,6 +42,7 @@ class ServicioRecetas {
     // Por defecto: Las recetas de Alain (admin) son oficiales; las de usuarios son privadas
     final bool oficialFinal = esOficial ?? esAdmin;
     final bool publicaFinal = esPublica ?? esAdmin;
+    final bool novedadFinal = esNovedad ?? false;
 
     final Map<String, dynamic> payloadCompleto = {
       'titulo': titulo,
@@ -46,6 +50,7 @@ class ServicioRecetas {
       'instrucciones': instrucciones,
       'es_oficial': oficialFinal,
       'es_publica': publicaFinal,
+      'es_novedad': novedadFinal,
     };
     if (tipoComida != null) payloadCompleto['tipo_comida'] = tipoComida;
     if (calorias != null) payloadCompleto['calorias'] = calorias;
@@ -57,7 +62,14 @@ class ServicioRecetas {
     if (tiempoPreparacion != null) {
       payloadCompleto['tiempo_preparacion'] = tiempoPreparacion;
     }
-    if (user != null) payloadCompleto['user_id'] = user.id;
+    // Si se pasa userIdOverride == 'none' o es creación masiva oficial, no vincular a cuenta personal
+    if (userIdOverride == 'none') {
+      // Dejar user_id como null explícito para que pertenezca al catálogo general
+    } else if (userIdOverride != null && userIdOverride.isNotEmpty) {
+      payloadCompleto['user_id'] = userIdOverride;
+    } else if (user != null && !oficialFinal) {
+      payloadCompleto['user_id'] = user.id;
+    }
 
     try {
       final res = await _client
@@ -68,6 +80,18 @@ class ServicioRecetas {
       return Map<String, dynamic>.from(res);
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
+      // Si la base de datos aún no tiene la columna es_novedad (error 42703)
+      if (errorStr.contains('es_novedad') && (errorStr.contains('42703') || errorStr.contains('does not exist'))) {
+        final payloadSinNovedad = Map<String, dynamic>.from(payloadCompleto)..remove('es_novedad');
+        try {
+          final res = await _client
+              .from('recetas')
+              .insert(payloadSinNovedad)
+              .select('id_receta, titulo, tipo_comida, calorias, macros')
+              .single();
+          return Map<String, dynamic>.from(res);
+        } catch (_) {}
+      }
       // Si la base de datos aún no tiene las columnas user_id o es_oficial (error 42703)
       if (errorStr.contains('42703') || errorStr.contains('does not exist')) {
         debugPrint(
@@ -109,6 +133,20 @@ class ServicioRecetas {
     }
     // Si no tiene user_id, es parte del recetario base predeterminado
     return receta['user_id'] == null;
+  }
+
+  /// Verifica si la receta pertenece al lote más reciente de "Recién Salidas del Sartén"
+  static bool esNovedad(Map<String, dynamic> receta) {
+    if (receta.containsKey('es_novedad')) {
+      final val = receta['es_novedad'];
+      if (val is bool) return val;
+      if (val is String) return val.toLowerCase() == 'true';
+    }
+    // Heurística defensiva: Si aún no se ha ejecutado el SQL en Supabase,
+    // las recetas del lote más reciente (IDs >= 102 que sean oficiales) son novedades
+    final id = receta['id_receta'];
+    final int idInt = id is int ? id : (int.tryParse(id?.toString() ?? '0') ?? 0);
+    return idInt >= 102 && esOficial(receta);
   }
 
   /// Verifica si la receta fue creada por el usuario actual

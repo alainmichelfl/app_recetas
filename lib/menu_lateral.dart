@@ -39,8 +39,10 @@ class MenuLateral extends StatelessWidget {
     // Si ya estamos en la misma ruta, no recargar
     if (rutaActual == rutaDestino) return;
 
-    if (rutaDestino == 'recetas' || rutaDestino == 'recetas_mias') {
-      // Si volvemos al catálogo principal o mis creaciones, limpiar el stack para mantenerlo en la base
+    if (rutaDestino == 'recetas' ||
+        rutaDestino == 'recetas_novedades' ||
+        rutaDestino == 'recetas_mias') {
+      // Si volvemos al catálogo principal, novedades o mis creaciones, limpiar el stack para mantenerlo en la base
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => constructorPantalla()),
@@ -199,6 +201,7 @@ class MenuLateral extends StatelessWidget {
 
   Widget _construirMenuRecetasConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'recetas' ||
+        rutaActual == 'recetas_novedades' ||
         rutaActual == 'recetas_mias' ||
         rutaActual == 'caninas';
 
@@ -239,8 +242,22 @@ class MenuLateral extends StatelessWidget {
           children: [
             _construirSubItem(
               context: context,
+              ruta: 'recetas_novedades',
+              titulo: 'Recién Salidas del Sartén 🔥',
+              subtitulo: 'Novedades de la temporada',
+              icono: Icons.local_fire_department_rounded,
+              colorIcono: const Color(0xFFE65100),
+              badge: 'NUEVAS',
+              pantalla: () => const PantallaRecetas(
+                filtroInicial: FiltroAudienciaReceta.recienSalidas,
+                rutaMenu: 'recetas_novedades',
+              ),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
               ruta: 'recetas',
-              titulo: 'Catálogo Oficial',
+              titulo: 'Catálogo Oficial ⭐',
               subtitulo: 'Recetas curadas por el chef',
               icono: Icons.star_rounded,
               colorIcono: colorGrupo,

@@ -292,6 +292,17 @@ class _PantallaCargaMasivaRecetasState
     final supabase = Supabase.instance.client;
     int guardadas = 0;
 
+    // 0. Rotación automática de "Recién Salidas del Sartén":
+    // El lote anterior se archiva permanentemente en el Catálogo Oficial general (es_novedad = false)
+    try {
+      await supabase
+          .from('recetas')
+          .update({'es_novedad': false})
+          .eq('es_novedad', true);
+    } catch (e) {
+      debugPrint('Aviso al archivar novedades previas en base de datos: $e');
+    }
+
     try {
       for (int i = 0; i < _recetasGeneradas.length; i++) {
         final r = _recetasGeneradas[i];
@@ -330,7 +341,7 @@ class _PantallaCargaMasivaRecetasState
         sb.writeln(instrucciones);
         final String descCompleta = sb.toString().trim();
 
-        // 2. Insertar en tabla recetas usando ServicioRecetas
+        // 2. Insertar en tabla recetas usando ServicioRecetas como Catálogo Oficial y Novedad Activa
         final resReceta = await ServicioRecetas.insertarReceta(
           titulo: titulo,
           descripcion: descCompleta,
@@ -341,6 +352,8 @@ class _PantallaCargaMasivaRecetasState
           imagenUrl: imagenUrl,
           esOficial: true,
           esPublica: true,
+          esNovedad: true,
+          userIdOverride: 'none',
         );
 
         final int idNueva = resReceta['id_receta'];

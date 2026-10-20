@@ -465,11 +465,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           return false;
         }
 
-        // Filtro por Audiencia (Oficiales vs Mis Recetas vs Comunidad vs Todas)
+        // Filtro por Audiencia (Oficiales vs Recién Salidas vs Mis Recetas vs Comunidad vs Todas)
         final bool coincideAudiencia;
         switch (_filtroAudiencia) {
           case FiltroAudienciaReceta.oficiales:
             coincideAudiencia = ServicioRecetas.esOficial(receta);
+            break;
+          case FiltroAudienciaReceta.recienSalidas:
+            coincideAudiencia = ServicioRecetas.esNovedad(receta);
             break;
           case FiltroAudienciaReceta.misRecetas:
             coincideAudiencia = ServicioRecetas.esMiReceta(receta);
@@ -1698,15 +1701,19 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     final String rutaActualMenu = widget.rutaMenu ??
         (widget.filtroInicial == FiltroAudienciaReceta.misRecetas
             ? 'recetas_mias'
-            : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-                ? 'recetas_oficiales'
-                : 'recetas'));
+            : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
+                ? 'recetas_novedades'
+                : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                    ? 'recetas_oficiales'
+                    : 'recetas')));
 
     final String tituloAppBar = widget.filtroInicial == FiltroAudienciaReceta.misRecetas
         ? 'Mis Creaciones 👨‍🍳'
-        : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-            ? 'Catálogo Oficial 🌟'
-            : 'Mis Recetas 📖');
+        : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
+            ? 'Recién Salidas 🔥'
+            : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                ? 'Catálogo Oficial 🌟'
+                : 'Mis Recetas 📖'));
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -1938,10 +1945,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // 🌟 Filtro de Audiencia y Origen (Oficiales, Mis Recetas, Comunidad, Todas)
+                // 🌟 Filtro de Audiencia y Origen (Oficiales, Recién Salidas, Mis Recetas, Comunidad, Todas)
                 Builder(
                   builder: (context) {
                     final int countOficiales = todasLasRecetas.where(ServicioRecetas.esOficial).length;
+                    final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
                     final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
                     final int countComunidad = todasLasRecetas.where(ServicioRecetas.esComunidad).length;
 
@@ -1958,6 +1966,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 filtro: FiltroAudienciaReceta.oficiales,
                                 colorActivo: const Color(0xFFD32F2F),
                                 fondoActivo: const Color(0xFFFBECEF),
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: '🔥 Recién Salidas ($countNovedades)',
+                                filtro: FiltroAudienciaReceta.recienSalidas,
+                                colorActivo: const Color(0xFFE65100),
+                                fondoActivo: const Color(0xFFFFF3E0),
                               ),
                               _construirChipAudiencia(
                                 etiqueta: '👨‍🍳 Mis Creaciones ($countMisRecetas)',
@@ -1980,6 +1994,41 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ],
                           ),
                         ),
+                        if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                _filtrarRecetas();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF3E0),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFFFB74D), width: 0.8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.local_fire_department_rounded, size: 15, color: Color(0xFFE65100)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Viendo las recetas recién salidas del sartén de esta edición ($countNovedades). Toca aquí para ver todo el Catálogo Oficial ($countOficiales).',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFFBF360C),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                         if (_filtroAudiencia == FiltroAudienciaReceta.misRecetas) ...[
                           const SizedBox(height: 6),
                           InkWell(
@@ -2196,18 +2245,54 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
-                                        Icons.search_off,
+                                        _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                                            ? Icons.local_fire_department_outlined
+                                            : Icons.search_off,
                                         size: 70,
-                                        color: Colors.grey[400],
+                                        color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                                            ? Colors.orange.shade400
+                                            : Colors.grey[400],
                                       ),
                                       const SizedBox(height: 10),
-                                      const Text(
-                                        'No se encontraron recetas',
+                                      Text(
+                                        _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                                            ? '¡Muy pronto nuevas recetas recién salidas del sartén!'
+                                            : 'No se encontraron recetas',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          color: Colors.grey,
+                                          fontWeight: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                                              ? Colors.brown.shade800
+                                              : Colors.grey,
                                         ),
                                       ),
+                                      if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'El Chef está preparando el próximo lote de temporada.',
+                                          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        ElevatedButton.icon(
+                                          onPressed: () {
+                                            setState(() {
+                                              _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                              _filtrarRecetas();
+                                            });
+                                          },
+                                          icon: const Icon(Icons.star_rounded, size: 18),
+                                          label: const Text('Explorar Catálogo Oficial'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFD32F2F),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -2429,6 +2514,45 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                               fontSize: 10,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.indigo.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (ServicioRecetas.esNovedad(receta))
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFFE65100), Color(0xFFFF8F00)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFE65100).withValues(alpha: 0.25),
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.local_fire_department_rounded,
+                                            size: 11,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Recién salida 🔥',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ],

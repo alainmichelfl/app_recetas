@@ -108,6 +108,48 @@ void main() {
         isFalse,
       );
     });
+
+    test('Identifica recetas de Recién Salidas del Sartén por es_novedad o heurística de lote', () {
+      final recetaNovedadExplicita = {
+        'id_receta': 150,
+        'titulo': 'Nuevo Guisado',
+        'es_novedad': true,
+        'es_oficial': true,
+      };
+
+      final recetaNovedadTexto = {
+        'id_receta': 151,
+        'titulo': 'Nuevo Postre',
+        'es_novedad': 'true',
+        'es_oficial': true,
+      };
+
+      final recetaAntiguaNoNovedad = {
+        'id_receta': 40,
+        'titulo': 'Pechuga al Limón',
+        'es_novedad': false,
+        'es_oficial': true,
+      };
+
+      final recetaHeuristicaLote102 = {
+        'id_receta': 110,
+        'titulo': 'Picadillo Tradicional',
+        'es_oficial': true,
+      };
+
+      final recetaHeuristicaPrivada = {
+        'id_receta': 115,
+        'titulo': 'Privada',
+        'es_oficial': false,
+        'user_id': 'usuario-123',
+      };
+
+      expect(ServicioRecetas.esNovedad(recetaNovedadExplicita), isTrue);
+      expect(ServicioRecetas.esNovedad(recetaNovedadTexto), isTrue);
+      expect(ServicioRecetas.esNovedad(recetaAntiguaNoNovedad), isFalse);
+      expect(ServicioRecetas.esNovedad(recetaHeuristicaLote102), isTrue);
+      expect(ServicioRecetas.esNovedad(recetaHeuristicaPrivada), isFalse);
+    });
   });
 
   group('ServicioRecetas - Resolución y Optimización de Imágenes', () {
