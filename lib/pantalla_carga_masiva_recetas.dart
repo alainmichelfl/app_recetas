@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config_api.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
+import 'servicio_temporadas_mexico.dart';
 
 class PantallaCargaMasivaRecetas extends StatefulWidget {
   const PantallaCargaMasivaRecetas({super.key});
@@ -17,9 +18,8 @@ class PantallaCargaMasivaRecetas extends StatefulWidget {
 
 class _PantallaCargaMasivaRecetasState
     extends State<PantallaCargaMasivaRecetas> {
-  final TextEditingController _temaController = TextEditingController(
-    text: 'Especial Sabores de Temporada y Cocina Práctica',
-  );
+  late TemporadaMes _temporadaSeleccionada;
+  late final TextEditingController _temaController;
 
   bool _generandoIA = false;
   bool _insertandoEnBd = false;
@@ -32,6 +32,10 @@ class _PantallaCargaMasivaRecetasState
   @override
   void initState() {
     super.initState();
+    _temporadaSeleccionada = ServicioTemporadasMexico.obtenerTemporadaActual();
+    _temaController = TextEditingController(
+      text: _temporadaSeleccionada.temaSugerido,
+    );
     if (!ServicioAdmin.esAdmin()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -165,6 +169,8 @@ class _PantallaCargaMasivaRecetasState
       Tu objetivo es generar exactamente 20 recetas oficiales de alta calidad para el catálogo de la app.
       
       TEMA / ENFOQUE DEL MES: "$tema"
+      
+      ${ServicioTemporadasMexico.generarDirectrizEstacionalPrompt(_temporadaSeleccionada)}
       
       DISTRIBUCIÓN ESTRICTA (5 recetas por categoría):
       - Exactamente 5 recetas de "Desayuno"
@@ -476,6 +482,49 @@ class _PantallaCargaMasivaRecetasState
                   ],
                 ),
                 const SizedBox(height: 10),
+                // Selector rápido de meses y temporadas mexicanas
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: ServicioTemporadasMexico.obtenerTodosLosMeses().map((temp) {
+                      final esSeleccionado = _temporadaSeleccionada.mesNumero == temp.mesNumero;
+                      final esMesActual = DateTime.now().month == temp.mesNumero;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6, bottom: 6),
+                        child: FilterChip(
+                          showCheckmark: false,
+                          selected: esSeleccionado,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _temporadaSeleccionada = temp;
+                                _temaController.text = temp.temaSugerido;
+                              });
+                            }
+                          },
+                          avatar: Text(temp.icono, style: const TextStyle(fontSize: 14)),
+                          label: Text(
+                            '${temp.nombreMes}${esMesActual ? ' (Hoy)' : ''}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: esSeleccionado ? FontWeight.bold : FontWeight.w500,
+                              color: esSeleccionado ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          selectedColor: Colors.orange.shade800,
+                          backgroundColor: Colors.grey.shade100,
+                          side: BorderSide(
+                            color: esSeleccionado
+                                ? Colors.orange.shade900
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: _temaController,
                   decoration: InputDecoration(
@@ -485,6 +534,60 @@ class _PantallaCargaMasivaRecetasState
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Tarjeta informativa de la cosecha estacional de México
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _temporadaSeleccionada.icono,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Cosecha de ${_temporadaSeleccionada.nombreMes} en México (${_temporadaSeleccionada.nombreTemporada}):',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _temporadaSeleccionada.resumenIngredientes,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.brown.shade800,
+                                height: 1.25,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '🌱 Directriz Estacional: Las recetas generadas usarán estos ingredientes reales y no se generarán al azar.',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.orange.shade900,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
