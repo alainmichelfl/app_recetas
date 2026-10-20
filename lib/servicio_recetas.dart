@@ -353,11 +353,91 @@ class ServicioRecetas {
     124: 'https://images.unsplash.com/photo-1784571246476-ae530d147e2e?auto=format&fit=crop&w=600&q=80', // Salmón Crujiente al Romero con Puré de Camote y Espárragos
   };
 
+  /// Lista negra de URLs erróneas conocidas (tocadiscos de vinilo, placeholders o fotos discordantes)
+  static const List<String> urlsNegras = [
+    'photo-1539185441755', // Tocadiscos de vinilo
+    'placeholder',
+  ];
+
+  /// Banco semántico determinista de imágenes gastronómicas curadas y verificadas (HTTP 200)
+  static String resolverImagenPorSemantica(String titulo, [String? tipoComida]) {
+    final t = titulo.toLowerCase().trim();
+
+    if (t.contains('avena') || t.contains('oatmeal') || t.contains('overnight')) {
+      return 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate'))) {
+      return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('picadillo')) {
+      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('chilaquil')) {
+      return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pancake') || t.contains('hot cake') || t.contains('hotcake')) {
+      return 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pan francés') || t.contains('pan frances')) {
+      return 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido')) {
+      return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('zoodle') || (t.contains('calabacita') && t.contains('espiral'))) {
+      return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('rollito') && t.contains('pavo')) {
+      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('salmon') || t.contains('salmón') || t.contains('pescado') || t.contains('atún') || t.contains('atun')) {
+      return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('pollo') || t.contains('pechuga') || t.contains('tinga')) {
+      return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('res') || t.contains('carne') || t.contains('bistec') || t.contains('arrachera')) {
+      return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('ensalada') || t.contains('salad') || t.contains('caprese') || t.contains('quinoa')) {
+      return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('sopa') || t.contains('crema') || t.contains('caldo') || t.contains('lenteja')) {
+      return 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('taco')) {
+      return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('huevo') || t.contains('omelette')) {
+      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('perro') || t.contains('canin') || t.contains('lomito')) {
+      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('snack') || t.contains('yogurt') || t.contains('fruta') || t.contains('manzana')) {
+      return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80';
+    }
+
+    final tipo = (tipoComida ?? '').toLowerCase();
+    switch (tipo) {
+      case 'desayuno':
+        return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
+      case 'comida':
+        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+      case 'cena':
+        return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
+      case 'snack':
+      default:
+        return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80';
+    }
+  }
+
   /// Resuelve la URL optimizada y verificada para cualquier receta de la aplicación
   static String? obtenerImagenOptimizada({
     dynamic idReceta,
     String? titulo,
     String? rawUrl,
+    String? tipoComida,
   }) {
     final int idInt = idReceta is int
         ? idReceta
@@ -368,18 +448,27 @@ class ServicioRecetas {
       return imagenesVerificadasPorId[idInt];
     }
 
-    // 2. Control especial para picadillo tradicional por título
-    final t = (titulo ?? '').toLowerCase();
-    if (t.contains('picadillo') &&
-        (rawUrl == null || rawUrl.contains('546069901') || rawUrl.isEmpty)) {
-      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
-    }
+    // 2. Control defensivo contra URLs nulas, vacías o en lista negra (ej. vinilo)
+    final bool esUrlInvalida = rawUrl == null ||
+        rawUrl.trim().isEmpty ||
+        urlsNegras.any((negra) => rawUrl.contains(negra));
 
-    if (rawUrl == null || rawUrl.trim().isEmpty) return null;
+    if (esUrlInvalida) {
+      if (titulo != null && titulo.trim().isNotEmpty) {
+        return resolverImagenPorSemantica(titulo, tipoComida);
+      }
+      return null;
+    }
 
     final trimmed = rawUrl.trim();
 
-    // 3. Si es de Unsplash, optimizar parámetros de resolución y compresión para móvil
+    // 3. Control especial para picadillo tradicional por título
+    final t = (titulo ?? '').toLowerCase();
+    if (t.contains('picadillo') && trimmed.contains('546069901')) {
+      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
+    }
+
+    // 4. Si es de Unsplash, optimizar parámetros de resolución y compresión para móvil
     if (trimmed.contains('images.unsplash.com') || trimmed.contains('plus.unsplash.com')) {
       if (!trimmed.contains('w=') && !trimmed.contains('fit=')) {
         final sep = trimmed.contains('?') ? '&' : '?';

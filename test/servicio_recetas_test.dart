@@ -210,10 +210,34 @@ void main() {
       expect(imgHuevo, contains('photo-1525351484163-7529414344d8')); // huevo pochado con aguacate
     });
 
-    test('Retorna null cuando no hay URL ni coincidencia', () {
+    test('Retorna null cuando no hay URL ni título', () {
       expect(ServicioRecetas.obtenerImagenOptimizada(), isNull);
       expect(ServicioRecetas.obtenerImagenOptimizada(rawUrl: ''), isNull);
       expect(ServicioRecetas.obtenerImagenOptimizada(rawUrl: '   '), isNull);
+    });
+
+    test('Resuelve por semántica determinista cuando la URL es nula, vacía o en lista negra', () {
+      // 1. URL de tocadiscos de vinilo (en lista negra) para tostadas de huevo
+      final imgViniloRechazado = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Tostadas de huevo pochado y aguacate',
+        rawUrl: 'https://images.unsplash.com/photo-1539185441755-900388151321',
+      );
+      expect(imgViniloRechazado, isNotNull);
+      expect(imgViniloRechazado, isNot(contains('photo-1539185441755')));
+      expect(imgViniloRechazado, contains('photo-1525351484163-7529414344d8')); // Huevo pochado auténtico
+
+      // 2. Receta nueva de avena sin URL
+      final imgAvenaNueva = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Avena con manzana y nueces',
+      );
+      expect(imgAvenaNueva, isNotNull);
+      expect(imgAvenaNueva, contains('1669559809547-6e4c4fe41371'));
+
+      // 3. Receta nueva de salmón
+      final imgSalmon = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Filete de salmón a la plancha',
+      );
+      expect(imgSalmon, contains('photo-1519708227418-c8fd9a32b7a2'));
     });
   });
 }

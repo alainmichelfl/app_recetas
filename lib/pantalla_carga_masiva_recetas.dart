@@ -118,26 +118,19 @@ class _PantallaCargaMasivaRecetasState
       return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
     }
 
-    // 2. Si la URL sugerida es válida y no es un hotcake erróneo ni un placeholder
+    // 2. Si la URL sugerida está explícitamente en nuestro catálogo verificado y no es un vinilo ni placeholder
     if (urlSugerida != null &&
         urlSugerida.trim().isNotEmpty &&
         !urlSugerida.contains('placeholder') &&
-        !urlSugerida.contains('photo-1541288097308-7b8e3f58c4c6')) {
-      return urlSugerida.trim();
+        !urlSugerida.contains('photo-1539185441755') &&
+        !urlSugerida.contains('photo-1541288097308-7b8e3f58c4c6') &&
+        (urlSugerida.contains('auto=format') || urlSugerida.contains('images.unsplash.com'))) {
+      // Validar si concuerda con la semántica
+      return ServicioRecetas.resolverImagenPorSemantica(titulo, tipoComida);
     }
 
-    // 3. Fallbacks temáticos según el tipo de comida
-    switch (tipoComida.toLowerCase()) {
-      case 'desayuno':
-        return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
-      case 'comida':
-        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
-      case 'cena':
-        return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
-      case 'snack':
-      default:
-        return 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80';
-    }
+    // 3. Fallback semántico determinista del banco gastronómico oficial
+    return ServicioRecetas.resolverImagenPorSemantica(titulo, tipoComida);
   }
 
   Future<void> _generarLoteConGemini() async {
