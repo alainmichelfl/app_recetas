@@ -1807,53 +1807,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  saludo,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () {
-                  ServicioPerfilUsuario.mostrarDialogoEditarNombre(
-                    context,
-                    alGuardar: () => setState(() {}),
-                  );
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD32F2F).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFD32F2F), width: 0.8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.edit, size: 11, color: Color(0xFFEF5350)),
-                      SizedBox(width: 4),
-                      Text(
-                        'Apodo',
-                        style: TextStyle(
-                          color: Color(0xFFEF5350),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            saludo,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 14.5,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 2),
           Text(

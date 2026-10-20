@@ -18,6 +18,9 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="Jitomate y Cebolla 🍅🧅: Tu asistente culinario y financiero. Planifica tus comidas semanales con IA, cocina guiado paso a paso y cotiza tu despensa en Walmart, Soriana, La Comer y Central de Abasto.">
   <meta name="keywords" content="recetas, cocina, planeador de comidas, cotizador de supermercados, despensa, chef ia, jitomate y cebolla">
@@ -103,6 +106,19 @@
     }
   </style>
   <script>
+    // Detección y auto-actualización del Service Worker ante nuevas versiones
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        console.log('[PWA] Nueva versión desplegada detectada. Recargando automáticamente...');
+        window.location.reload();
+      });
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (var reg of registrations) {
+          reg.update();
+        }
+      });
+    }
+
     window.addEventListener('flutter-first-frame', function () {
       var loader = document.getElementById('splash-loader');
       if (loader) {
