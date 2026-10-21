@@ -71,11 +71,13 @@ class MenuLateral extends StatelessWidget {
     String? badge,
   }) {
     final bool esActiva = rutaActual == ruta;
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
 
     return ListTile(
       dense: true,
       selected: esActiva,
-      selectedTileColor: colorIcono.withValues(alpha: 0.12),
+      selectedTileColor: colorIcono.withValues(alpha: esOscuro ? 0.22 : 0.12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -84,12 +86,12 @@ class MenuLateral extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: esActiva ? colorIcono : colorIcono.withValues(alpha: 0.15),
+          color: esActiva ? colorIcono : colorIcono.withValues(alpha: esOscuro ? 0.25 : 0.15),
           shape: BoxShape.circle,
         ),
         child: Icon(
           icono,
-          color: esActiva ? Colors.white : colorIcono,
+          color: esActiva ? Colors.white : (esOscuro && colorIcono.computeLuminance() < 0.1 ? Colors.white70 : colorIcono),
           size: 20,
         ),
       ),
@@ -97,7 +99,7 @@ class MenuLateral extends StatelessWidget {
         titulo,
         style: TextStyle(
           fontWeight: esActiva ? FontWeight.bold : FontWeight.w600,
-          color: esActiva ? colorIcono : Colors.black87,
+          color: esActiva ? colorIcono : colorTexto,
           fontSize: 15,
         ),
       ),
@@ -136,11 +138,14 @@ class MenuLateral extends StatelessWidget {
     String? badge,
   }) {
     final bool esActiva = rutaActual == ruta;
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
+    final Color colorSubTexto = esOscuro ? Colors.white60 : Colors.grey.shade600;
 
     return ListTile(
       dense: true,
       selected: esActiva,
-      selectedTileColor: colorIcono.withValues(alpha: 0.12),
+      selectedTileColor: colorIcono.withValues(alpha: esOscuro ? 0.22 : 0.12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -149,7 +154,7 @@ class MenuLateral extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
-          color: esActiva ? colorIcono : colorIcono.withValues(alpha: 0.15),
+          color: esActiva ? colorIcono : colorIcono.withValues(alpha: esOscuro ? 0.25 : 0.15),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
@@ -162,7 +167,7 @@ class MenuLateral extends StatelessWidget {
         titulo,
         style: TextStyle(
           fontWeight: esActiva ? FontWeight.bold : FontWeight.w600,
-          color: esActiva ? colorIcono : Colors.black87,
+          color: esActiva ? colorIcono : colorTexto,
           fontSize: 13.5,
         ),
       ),
@@ -171,7 +176,7 @@ class MenuLateral extends StatelessWidget {
               subtitulo,
               style: TextStyle(
                 fontSize: 11,
-                color: esActiva ? colorIcono.withValues(alpha: 0.85) : Colors.grey.shade600,
+                color: esActiva ? colorIcono.withValues(alpha: 0.85) : colorSubTexto,
               ),
             )
           : null,
@@ -209,7 +214,8 @@ class MenuLateral extends StatelessWidget {
         rutaActual == 'recetas_novedades' ||
         rutaActual == 'recetas_mias' ||
         rutaActual == 'caninas';
-
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
     const Color colorGrupo = Color(0xFFC62828); // Rojo Jitomate Gourmet
 
     return Theme(
@@ -217,7 +223,7 @@ class MenuLateral extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -227,7 +233,7 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: esOscuro ? 0.25 : 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -240,7 +246,7 @@ class MenuLateral extends StatelessWidget {
             'Recetario',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? colorGrupo : Colors.black87,
+              color: esGrupoActivo ? colorGrupo : colorTexto,
               fontSize: 15,
             ),
           ),
@@ -278,7 +284,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Mis Creaciones',
               subtitulo: 'Tus recetas y las del Chef IA',
               icono: Icons.person_pin_circle_outlined,
-              colorIcono: const Color(0xFF1E2022),
+              colorIcono: esOscuro ? Colors.orange.shade300 : const Color(0xFF455A64),
               pantalla: () => const PantallaRecetas(
                 filtroInicial: FiltroAudienciaReceta.misRecetas,
                 rutaMenu: 'recetas_mias',
@@ -291,7 +297,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Recetas Caninas 🐾',
               subtitulo: 'Nutrición casera para perritos',
               icono: Icons.pets,
-              colorIcono: Colors.brown.shade700,
+              colorIcono: esOscuro ? Colors.brown.shade300 : Colors.brown.shade700,
               badge: ServicioRecetas.contadorCaninas > 0
                   ? '${ServicioRecetas.contadorCaninas}'
                   : null,
@@ -305,13 +311,15 @@ class MenuLateral extends StatelessWidget {
 
   Widget _construirMenuPlaneadorConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'planeador' || rutaActual == 'calendario';
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? Colors.teal.withValues(alpha: 0.05) : Colors.transparent,
+          color: esGrupoActivo ? Colors.teal.withValues(alpha: esOscuro ? 0.15 : 0.05) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -321,7 +329,7 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? Colors.teal : Colors.teal.withValues(alpha: 0.15),
+              color: esGrupoActivo ? Colors.teal : Colors.teal.withValues(alpha: esOscuro ? 0.25 : 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -334,7 +342,7 @@ class MenuLateral extends StatelessWidget {
             'Mi Planeador',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? Colors.teal.shade800 : Colors.black87,
+              color: esGrupoActivo ? (esOscuro ? Colors.tealAccent : Colors.teal.shade800) : colorTexto,
               fontSize: 15,
             ),
           ),
@@ -370,7 +378,8 @@ class MenuLateral extends StatelessWidget {
         rutaActual == 'carrito' ||
         rutaActual == 'cotizador' ||
         rutaActual == 'hogar';
-
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
     const Color colorGrupo = Color(0xFF2E7D32); // Verde Huerto / Despensa Gourmet
 
     return Theme(
@@ -378,7 +387,7 @@ class MenuLateral extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -388,7 +397,7 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: esOscuro ? 0.25 : 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -401,7 +410,7 @@ class MenuLateral extends StatelessWidget {
             'Despensa y Compras',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? colorGrupo : Colors.black87,
+              color: esGrupoActivo ? (esOscuro ? Colors.greenAccent : colorGrupo) : colorTexto,
               fontSize: 15,
             ),
           ),
@@ -432,7 +441,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Cotizador Dinámico',
               subtitulo: 'Compara precios de supermercados',
               icono: Icons.calculate,
-              colorIcono: const Color(0xFF455A64),
+              colorIcono: esOscuro ? Colors.blueGrey.shade200 : const Color(0xFF455A64),
               pantalla: () => const PantallaCotizador(),
             ),
             const SizedBox(height: 2),
@@ -442,7 +451,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Hogar Familiar',
               subtitulo: 'Despensa compartida en casa',
               icono: Icons.family_restroom_rounded,
-              colorIcono: const Color(0xFF1976D2),
+              colorIcono: esOscuro ? Colors.lightBlueAccent : const Color(0xFF1976D2),
               badge: 'Familia 👨‍👩‍👧‍👦',
               alPresionar: () {
                 Navigator.pop(context);
@@ -457,13 +466,15 @@ class MenuLateral extends StatelessWidget {
 
   Widget _construirMenuAsistentesIAConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'chef' || rutaActual == 'sommelier';
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? Colors.amber.withValues(alpha: 0.06) : Colors.transparent,
+          color: esGrupoActivo ? Colors.amber.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -473,7 +484,7 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? Colors.amber.shade800 : Colors.amber.shade800.withValues(alpha: 0.15),
+              color: esGrupoActivo ? Colors.amber.shade800 : Colors.amber.shade800.withValues(alpha: esOscuro ? 0.25 : 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -486,7 +497,7 @@ class MenuLateral extends StatelessWidget {
             'Asistentes IA Culinarios',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? Colors.amber.shade900 : Colors.black87,
+              color: esGrupoActivo ? (esOscuro ? Colors.amberAccent : Colors.amber.shade900) : colorTexto,
               fontSize: 15,
             ),
           ),
@@ -507,7 +518,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Sommelier IA 🍷',
               subtitulo: 'Cava, Maridaje & Coctelería',
               icono: Icons.wine_bar,
-              colorIcono: const Color(0xFF800020),
+              colorIcono: esOscuro ? const Color(0xFFD81B60) : const Color(0xFF800020),
               badge: 'Nuevo ✨',
               pantalla: () => const PantallaSommelier(),
             ),
@@ -519,6 +530,8 @@ class MenuLateral extends StatelessWidget {
 
   Widget _construirMenuBienestarYFinanzasConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'salud' || rutaActual == 'finanzas';
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
     const Color colorGrupo = Color(0xFF00695C); // Verde Pino / Balance Bienestar
 
     return Theme(
@@ -526,7 +539,7 @@ class MenuLateral extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 2),
         decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: 0.06) : Colors.transparent,
+          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ExpansionTile(
@@ -536,7 +549,7 @@ class MenuLateral extends StatelessWidget {
           leading: Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: 0.15),
+              color: esGrupoActivo ? colorGrupo : colorGrupo.withValues(alpha: esOscuro ? 0.25 : 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -549,7 +562,7 @@ class MenuLateral extends StatelessWidget {
             'Bienestar y Finanzas',
             style: TextStyle(
               fontWeight: esGrupoActivo ? FontWeight.bold : FontWeight.w600,
-              color: esGrupoActivo ? colorGrupo : Colors.black87,
+              color: esGrupoActivo ? (esOscuro ? Colors.tealAccent : colorGrupo) : colorTexto,
               fontSize: 15,
             ),
           ),
@@ -570,7 +583,7 @@ class MenuLateral extends StatelessWidget {
               titulo: 'Mis Finanzas',
               subtitulo: 'Presupuesto, gastos y tickets',
               icono: Icons.account_balance_wallet,
-              colorIcono: Colors.indigo,
+              colorIcono: esOscuro ? Colors.indigoAccent : Colors.indigo,
               pantalla: () => const PantallaFinanzas(),
             ),
           ],
@@ -584,28 +597,40 @@ class MenuLateral extends StatelessWidget {
     final user = Supabase.instance.client.auth.currentUser;
     final String nombreUsuario = ServicioPerfilUsuario.obtenerNombreSincrono();
     final String emailUsuario = user?.email ?? 'Chef Invitado';
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorFondoDrawer = esOscuro ? const Color(0xFF16181A) : Colors.white;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
+    final Color colorSubtexto = esOscuro ? Colors.white60 : Colors.grey.shade600;
+    final Color colorMuted = esOscuro ? Colors.white38 : Colors.grey.shade500;
+    final Color colorDivisor = esOscuro ? const Color(0xFF2C3035) : Colors.grey.shade200;
 
     return Drawer(
+      backgroundColor: colorFondoDrawer,
       child: SafeArea(
         top: false,
         child: Column(
           children: [
-            // Cabecera elegante Bistró Minimalista Dark
+            // Cabecera elegante dinámica (Rojo Gourmet en Claro / Pizarra Carbón en Oscuro)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF1E2022), // Negro Carbón Grafito
-                    Color(0xFF2C3437), // Pizarra oscura
-                  ],
+                gradient: LinearGradient(
+                  colors: esOscuro
+                      ? const [
+                          Color(0xFF1E2022), // Negro Carbón Grafito
+                          Color(0xFF2C3437), // Pizarra oscura
+                        ]
+                      : const [
+                          Color(0xFFD32F2F), // Rojo Jitomate Gourmet
+                          Color(0xFFB71C1C), // Terracota profundo
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withValues(alpha: esOscuro ? 0.35 : 0.18),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -619,11 +644,13 @@ class MenuLateral extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD32F2F), // Sello Rojo Jitomate
+                          color: esOscuro
+                              ? const Color(0xFFD32F2F)
+                              : Colors.white.withValues(alpha: 0.22),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.25),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 6,
                             ),
                           ],
@@ -675,10 +702,14 @@ class MenuLateral extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.28),
+                        color: esOscuro
+                            ? Colors.black.withValues(alpha: 0.28)
+                            : Colors.black.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFFD32F2F).withValues(alpha: 0.4),
+                          color: esOscuro
+                              ? const Color(0xFFD32F2F).withValues(alpha: 0.4)
+                              : Colors.white.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -686,8 +717,10 @@ class MenuLateral extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(5),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFD32F2F),
+                            decoration: BoxDecoration(
+                              color: esOscuro
+                                  ? const Color(0xFFD32F2F)
+                                  : Colors.white.withValues(alpha: 0.3),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.person, color: Colors.white, size: 14),
@@ -745,14 +778,14 @@ class MenuLateral extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: Text(
                       'PRINCIPAL',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: esOscuro ? Colors.white54 : Colors.grey,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -769,9 +802,9 @@ class MenuLateral extends StatelessWidget {
                       ),
                       child: const Icon(Icons.search_rounded, color: Colors.deepOrange, size: 20),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Búsqueda Spotlight',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: colorTexto, fontSize: 15),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -792,19 +825,19 @@ class MenuLateral extends StatelessWidget {
                   _construirMenuAsistentesIAConSubmenu(context),
                   _construirMenuBienestarYFinanzasConSubmenu(context),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    child: Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Divider(height: 1, color: colorDivisor),
                   ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: Text(
                       'AJUSTES Y COMUNIDAD',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey,
+                        color: esOscuro ? Colors.white54 : Colors.grey,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -861,19 +894,19 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        color: Colors.blueAccent.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.notifications_active_rounded, color: Colors.blueAccent, size: 20),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Centro de Recordatorios',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: colorTexto, fontSize: 15),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.12),
+                        color: Colors.blueAccent.withValues(alpha: esOscuro ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text('🔔 Alertas', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
@@ -890,19 +923,19 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.15),
+                        color: Colors.teal.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.explore_rounded, color: Colors.teal, size: 20),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Tour de Bienvenida',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 15),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: colorTexto, fontSize: 15),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.12),
+                        color: Colors.teal.withValues(alpha: esOscuro ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text('🧭 3 Pasos', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.teal)),
@@ -921,7 +954,7 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
+                        color: Colors.amber.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -930,18 +963,18 @@ class MenuLateral extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Nuestro Manifiesto',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: colorTexto,
                         fontSize: 15,
                       ),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
+                        color: Colors.amber.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -967,7 +1000,7 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                        color: const Color(0xFFD32F2F).withValues(alpha: esOscuro ? 0.25 : 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -976,18 +1009,18 @@ class MenuLateral extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Instalar en tu Celular',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: colorTexto,
                         fontSize: 15,
                       ),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                        color: const Color(0xFFD32F2F).withValues(alpha: esOscuro ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -1013,39 +1046,39 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.blueGrey.withValues(alpha: 0.15),
+                        color: (esOscuro ? Colors.lightBlueAccent : Colors.blueGrey).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.system_update_rounded,
-                        color: Colors.blueGrey,
+                        color: esOscuro ? Colors.lightBlueAccent : Colors.blueGrey,
                         size: 20,
                       ),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Actualizar App al Instante',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: colorTexto,
                         fontSize: 15,
                       ),
                     ),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Refrescar últimas mejoras en 1 toque',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(fontSize: 11, color: colorSubtexto),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.blueGrey.withValues(alpha: 0.12),
+                        color: (esOscuro ? Colors.lightBlueAccent : Colors.blueGrey).withValues(alpha: esOscuro ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
+                      child: Text(
                         '1 Toque ⚡',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey,
+                          color: esOscuro ? Colors.lightBlueAccent : Colors.blueGrey,
                         ),
                       ),
                     ),
@@ -1063,7 +1096,7 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                        color: const Color(0xFF25D366).withValues(alpha: esOscuro ? 0.25 : 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -1072,32 +1105,33 @@ class MenuLateral extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Danos tu Opinión por WhatsApp',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
+                        color: colorTexto,
                         fontSize: 15,
                       ),
                     ),
-                    subtitle: const Text(
+                    subtitle: Text(
                       'Feedback directo al Chef Alain',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey,
+                        color: colorSubtexto,
                       ),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF25D366).withValues(alpha: 0.18),
+                        color: const Color(0xFF25D366).withValues(alpha: esOscuro ? 0.25 : 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Text(
+                      child: Text(
                         '1 Toque 💬',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D32),
+                          color: esOscuro ? Colors.greenAccent : const Color(0xFF2E7D32),
                         ),
                       ),
                     ),
@@ -1115,7 +1149,7 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        color: Colors.blueAccent.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -1124,25 +1158,25 @@ class MenuLateral extends StatelessWidget {
                         size: 20,
                       ),
                     ),
-                    title: const Text(
+                    title: Text(
                       'Contacto y Soporte',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: colorTexto,
                         fontSize: 15,
                       ),
                     ),
-                    subtitle: const Text(
+                    subtitle: Text(
                       '@jitomateycebolla.com',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey,
+                        color: colorSubtexto,
                       ),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        color: Colors.blueAccent.withValues(alpha: esOscuro ? 0.25 : 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -1164,13 +1198,13 @@ class MenuLateral extends StatelessWidget {
             ),
 
             // Pie con Cerrar Sesión
-            const Divider(height: 1),
+            Divider(height: 1, color: colorDivisor),
             ListTile(
               dense: true,
               leading: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: esOscuro ? Colors.red.withValues(alpha: 0.15) : Colors.red.shade50,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.exit_to_app, color: Colors.red, size: 20),
@@ -1204,7 +1238,7 @@ class MenuLateral extends StatelessWidget {
                 children: [
                   Text(
                     'Jitomate y Cebolla v1.0.4',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 11, color: colorMuted),
                   ),
                   if (kIsWeb)
                     InkWell(
@@ -1230,20 +1264,27 @@ class MenuLateral extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.teal.shade50,
+                          color: esOscuro ? const Color(0xFF1B2B28) : Colors.teal.shade50,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.teal.shade200, width: 0.8),
+                          border: Border.all(
+                            color: esOscuro ? Colors.teal.shade700 : Colors.teal.shade200,
+                            width: 0.8,
+                          ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.refresh_rounded, size: 12, color: Colors.teal),
-                            SizedBox(width: 4),
+                            Icon(
+                              Icons.refresh_rounded,
+                              size: 12,
+                              color: esOscuro ? Colors.tealAccent : Colors.teal,
+                            ),
+                            const SizedBox(width: 4),
                             Text(
                               'Buscar mejoras',
                               style: TextStyle(
                                 fontSize: 10.5,
-                                color: Colors.teal,
+                                color: esOscuro ? Colors.tealAccent : Colors.teal,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1262,6 +1303,11 @@ class MenuLateral extends StatelessWidget {
   }
 
   void _mostrarModalInstalacionPwa(BuildContext context) {
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final Color colorFondo = esOscuro ? const Color(0xFF1E2022) : Colors.white;
+    final Color colorTexto = esOscuro ? Colors.white : Colors.black87;
+    final Color colorSubtexto = esOscuro ? Colors.white60 : Colors.grey;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1271,9 +1317,9 @@ class MenuLateral extends StatelessWidget {
           maxHeight: MediaQuery.of(ctx).size.height * 0.85,
         ),
         padding: const EdgeInsets.all(22),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        decoration: BoxDecoration(
+          color: colorFondo,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -1285,7 +1331,7 @@ class MenuLateral extends StatelessWidget {
                   width: 45,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: esOscuro ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -1296,7 +1342,7 @@ class MenuLateral extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                      color: const Color(0xFFD32F2F).withValues(alpha: esOscuro ? 0.25 : 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -1306,7 +1352,7 @@ class MenuLateral extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1315,14 +1361,14 @@ class MenuLateral extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: colorTexto,
                           ),
                         ),
                         Text(
                           'Acceso directo en pantalla completa (Sin tiendas)',
                           style: TextStyle(
                             fontSize: 12.5,
-                            color: Colors.grey,
+                            color: colorSubtexto,
                           ),
                         ),
                       ],
@@ -1336,20 +1382,26 @@ class MenuLateral extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: esOscuro ? const Color(0xFF25282A) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(
+                    color: esOscuro ? const Color(0xFF383C40) : Colors.grey.shade200,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.apple, color: Colors.black87, size: 22),
-                        SizedBox(width: 8),
+                        Icon(Icons.apple, color: colorTexto, size: 22),
+                        const SizedBox(width: 8),
                         Text(
                           'En iPhone / iPad (Safari)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: colorTexto,
+                          ),
                         ),
                       ],
                     ),
@@ -1357,16 +1409,19 @@ class MenuLateral extends StatelessWidget {
                     _construirPasoInstalacion(
                       numero: '1',
                       texto: 'Abre esta página en Safari y toca el botón Compartir (el cuadrito con flecha hacia arriba ⎋).',
+                      esOscuro: esOscuro,
                     ),
                     const SizedBox(height: 8),
                     _construirPasoInstalacion(
                       numero: '2',
                       texto: 'Desliza hacia abajo en el menú y selecciona "Agregar a pantalla de inicio" (+).',
+                      esOscuro: esOscuro,
                     ),
                     const SizedBox(height: 8),
                     _construirPasoInstalacion(
                       numero: '3',
                       texto: 'Presiona "Agregar" arriba a la derecha. ¡Listo! Ya tienes el icono oficial en tu pantalla.',
+                      esOscuro: esOscuro,
                     ),
                   ],
                 ),
@@ -1377,20 +1432,30 @@ class MenuLateral extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.teal.shade50.withValues(alpha: 0.5),
+                  color: esOscuro ? const Color(0xFF162B28) : Colors.teal.shade50.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.teal.shade200),
+                  border: Border.all(
+                    color: esOscuro ? Colors.teal.shade700 : Colors.teal.shade200,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.android, color: Colors.green.shade800, size: 22),
+                        Icon(
+                          Icons.android,
+                          color: esOscuro ? Colors.tealAccent : Colors.green.shade800,
+                          size: 22,
+                        ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'En Android (Chrome)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: colorTexto,
+                          ),
                         ),
                       ],
                     ),
@@ -1398,16 +1463,19 @@ class MenuLateral extends StatelessWidget {
                     _construirPasoInstalacion(
                       numero: '1',
                       texto: 'Toca los tres puntos (⋮) en la esquina superior derecha de Chrome.',
+                      esOscuro: esOscuro,
                     ),
                     const SizedBox(height: 8),
                     _construirPasoInstalacion(
                       numero: '2',
                       texto: 'Selecciona "Instalar aplicación" o "Agregar a la pantalla principal".',
+                      esOscuro: esOscuro,
                     ),
                     const SizedBox(height: 8),
                     _construirPasoInstalacion(
                       numero: '3',
                       texto: 'Confirma presionando "Instalar". ¡Se abrirá en pantalla completa como app nativa!',
+                      esOscuro: esOscuro,
                     ),
                   ],
                 ),
@@ -1438,7 +1506,11 @@ class MenuLateral extends StatelessWidget {
     );
   }
 
-  Widget _construirPasoInstalacion({required String numero, required String texto}) {
+  Widget _construirPasoInstalacion({
+    required String numero,
+    required String texto,
+    bool esOscuro = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1463,7 +1535,11 @@ class MenuLateral extends StatelessWidget {
         Expanded(
           child: Text(
             texto,
-            style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.3),
+            style: TextStyle(
+              fontSize: 13,
+              color: esOscuro ? Colors.white70 : Colors.black87,
+              height: 1.3,
+            ),
           ),
         ),
       ],

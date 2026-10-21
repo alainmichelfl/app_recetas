@@ -1889,15 +1889,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     final String saludo = ServicioPerfilUsuario.obtenerSaludoHorario();
     final String subtitulo = ServicioPerfilUsuario.obtenerSubtituloHorario();
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: isLandscape ? 5 : 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFF16171D),
+      decoration: BoxDecoration(
+        color: esOscuro ? const Color(0xFF16171D) : const Color(0xFFD32F2F),
         border: Border(
           bottom: BorderSide(
-            color: Color(0xFF262833),
+            color: esOscuro ? const Color(0xFF262833) : const Color(0xFFB71C1C),
             width: 1,
           ),
         ),
@@ -2067,8 +2068,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     ? 'Catálogo Oficial 🌟'
                     : 'Mis Recetas 📖')));
 
+    final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: esOscuro ? const Color(0xFF121416) : Colors.grey[100],
       drawer: MenuLateral(rutaActual: rutaActualMenu),
       appBar: AppBar(
         leadingWidth: 56,
@@ -2209,14 +2212,20 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                         _construirBannerSaludo(),
           Container(
             padding: const EdgeInsets.all(15),
-            color: Colors.white,
+            color: esOscuro ? const Color(0xFF1E2022) : Colors.white,
             child: Column(
               children: [
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Buscar receta por nombre...',
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF1E2022)),
+                    hintStyle: TextStyle(
+                      color: esOscuro ? Colors.white38 : Colors.grey.shade600,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: esOscuro ? Colors.white70 : const Color(0xFF1E2022),
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear),
@@ -2227,7 +2236,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: esOscuro ? const Color(0xFF16181A) : Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide.none,
