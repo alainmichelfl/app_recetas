@@ -107,4 +107,36 @@ Mezclar y servir.
       expect(etiquetas, contains('Alto en Proteína'));
     });
   });
+
+  group('Vida Útil Inteligente y Frescura en Despensa', () {
+    test('Estima vida útil realista por tipo de alimento', () {
+      expect(ServicioDespensa.estimarVidaUtilDias('Filete de salmón fresco'), equals(2));
+      expect(ServicioDespensa.estimarVidaUtilDias('Pechuga de pollo'), equals(4));
+      expect(ServicioDespensa.estimarVidaUtilDias('Leche entera'), equals(6));
+      expect(ServicioDespensa.estimarVidaUtilDias('Fresas frescas'), equals(5));
+      expect(ServicioDespensa.estimarVidaUtilDias('Zanahoria'), equals(15));
+      expect(ServicioDespensa.estimarVidaUtilDias('Huevo blanco'), equals(21));
+      expect(ServicioDespensa.estimarVidaUtilDias('Arroz blanco'), equals(90));
+    });
+
+    test('Evalúa frescura correctamente: pescado de 3 días está por vencer', () {
+      final itemPescado = {
+        'nombre': 'Camarones',
+        'fecha_ingreso': DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
+      };
+      final frescura = ServicioDespensa.evaluarFrescuraItem(itemPescado);
+      expect(frescura.nivel, equals(NivelFrescura.porVencer));
+      expect(frescura.esAlerta, isTrue);
+    });
+
+    test('Evalúa frescura correctamente: arroz de 5 días sigue fresco', () {
+      final itemArroz = {
+        'nombre': 'Arroz integral',
+        'fecha_ingreso': DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
+      };
+      final frescura = ServicioDespensa.evaluarFrescuraItem(itemArroz);
+      expect(frescura.nivel, equals(NivelFrescura.fresco));
+      expect(frescura.esAlerta, isFalse);
+    });
+  });
 }

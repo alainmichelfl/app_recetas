@@ -143,9 +143,9 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
       minChildSize: 0.5,
       maxChildSize: 0.96,
       builder: (ctx, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -381,10 +381,10 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: esBloqueActivo ? etapa.color : Colors.grey.shade200,
+          color: esBloqueActivo ? etapa.color : Colors.grey.withValues(alpha: 0.25),
           width: esBloqueActivo ? 2 : 1,
         ),
         boxShadow: [

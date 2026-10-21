@@ -11,6 +11,8 @@ class RegistroCocina {
   final int veces;
   final int? idPlaneador;
   final String origen;
+  final int? calificacion; // 1 a 5 estrellas
+  final String? notaPersonal; // Notas privadas del chef
 
   RegistroCocina({
     required this.idReceta,
@@ -19,6 +21,8 @@ class RegistroCocina {
     this.veces = 1,
     this.idPlaneador,
     this.origen = 'detalle',
+    this.calificacion,
+    this.notaPersonal,
   });
 
   Map<String, dynamic> toMap() => {
@@ -28,6 +32,8 @@ class RegistroCocina {
         'veces': veces,
         'id_planeador': idPlaneador,
         'origen': origen,
+        'calificacion': calificacion,
+        'nota_personal': notaPersonal,
       };
 
   factory RegistroCocina.fromMap(Map<String, dynamic> map) {
@@ -41,6 +47,10 @@ class RegistroCocina {
           ? int.tryParse(map['id_planeador'].toString())
           : null,
       origen: map['origen']?.toString() ?? 'detalle',
+      calificacion: map['calificacion'] != null
+          ? int.tryParse(map['calificacion'].toString())
+          : null,
+      notaPersonal: map['nota_personal']?.toString(),
     );
   }
 }
@@ -97,6 +107,8 @@ class ServicioHistorialCocina {
     required String titulo,
     int? idPlaneador,
     String origen = 'detalle',
+    int? calificacion,
+    String? notaPersonal,
   }) async {
     final mapa = await _cargar();
     final key = _clave(idReceta, titulo);
@@ -109,12 +121,46 @@ class ServicioHistorialCocina {
       veces: (anterior?.veces ?? 0) + 1,
       idPlaneador: idPlaneador ?? anterior?.idPlaneador,
       origen: origen,
+      calificacion: calificacion ?? anterior?.calificacion,
+      notaPersonal: notaPersonal ?? anterior?.notaPersonal,
     );
 
     mapa[key] = nuevo;
     await _guardar();
 
     // Intentar sincronización con Supabase en segundo plano sin bloquear
+    _sincronizarConSupabase(nuevo).catchError((e) {
+      debugPrint('ℹ️ Supabase recetas_cocinadas sync omitido/offline: $e');
+    });
+
+    return nuevo;
+  }
+
+  /// Guarda o actualiza la calificación (1-5 estrellas) y nota personal
+  static Future<RegistroCocina> guardarCalificacionYNota({
+    required int idReceta,
+    required String titulo,
+    required int calificacion,
+    String? notaPersonal,
+  }) async {
+    final mapa = await _cargar();
+    final key = _clave(idReceta, titulo);
+
+    final anterior = mapa[key];
+    final nuevo = RegistroCocina(
+      idReceta: idReceta,
+      titulo: titulo.trim(),
+      fecha: anterior?.fecha ?? DateTime.now(),
+      veces: anterior?.veces ?? 1,
+      idPlaneador: anterior?.idPlaneador,
+      origen: anterior?.origen ?? 'detalle',
+      calificacion: calificacion.clamp(1, 5),
+      notaPersonal: notaPersonal ?? anterior?.notaPersonal,
+    );
+
+    mapa[key] = nuevo;
+    await _guardar();
+
     _sincronizarConSupabase(nuevo).catchError((e) {
       debugPrint('ℹ️ Supabase recetas_cocinadas sync omitido/offline: $e');
     });

@@ -1585,6 +1585,175 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     );
   }
 
+  void mostrarModalDictadoRapido() {
+    final textoCtrl = TextEditingController();
+    bool parseando = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2022) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomPadding),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.deepOrange.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.playlist_add_rounded, color: Colors.deepOrange, size: 24),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Dictado Rápido & Multilista 🎙️📝',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            Text(
+                              'Escribe o pega varios artículos separados por coma o renglón',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: textoCtrl,
+                    maxLines: 4,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Ej:\n2 aguacates\n1 kg de jitomate\nmedio kilo de queso panela\ntortillas de maíz',
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF121416) : Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (_) => setModalState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  () {
+                    final raw = textoCtrl.text.trim();
+                    if (raw.isEmpty) return const SizedBox.shrink();
+                    final lineas = raw
+                        .split(RegExp(r'[\n,;]'))
+                        .map((l) => l.trim())
+                        .where((l) => l.isNotEmpty && !ConversorUnidades.esAgua(l))
+                        .toList();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_outline, size: 16, color: Colors.green.shade700),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${lineas.length} insumos listos para clasificar y agregar',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }(),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: parseando || textoCtrl.text.trim().isEmpty
+                        ? null
+                        : () async {
+                            setModalState(() => parseando = true);
+                            final raw = textoCtrl.text.trim();
+                            final articulos = raw
+                                .split(RegExp(r'[\n,;]'))
+                                .map((l) => l.trim())
+                                .where((l) => l.isNotEmpty && !ConversorUnidades.esAgua(l))
+                                .toList();
+
+                            int agregados = 0;
+                            for (var art in articulos) {
+                              final item = ConversorUnidades.parsearLineaIngrediente(art);
+                              if (item.nombre.isNotEmpty && !ConversorUnidades.esAgua(item.nombre)) {
+                                await ConversorUnidades.agregarOActualizarItemEnCarrito(
+                                  supabase,
+                                  item,
+                                );
+                                agregados++;
+                              }
+                            }
+
+                            _recalcularPresupuesto();
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('🛒 ¡Se agregaron $agregados insumos a tu carrito de compras!'),
+                                  backgroundColor: Colors.green.shade800,
+                                ),
+                              );
+                            }
+                          },
+                    icon: parseando
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Icon(Icons.playlist_add_check_rounded, size: 20),
+                    label: Text(parseando ? 'Agregando insumos...' : 'Agregar Insumos al Carrito'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1810,7 +1979,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
           : Container(
               padding: const EdgeInsets.only(bottom: 12, top: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -1820,24 +1989,44 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Row(
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      tooltip: 'Agregar insumo individual',
+                      style: IconButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(color: Colors.grey.shade400),
+                        ),
+                      ),
+                      onPressed: mostrarModalAgregarManual,
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Insumo'),
-                        onPressed: mostrarModalAgregarManual,
+                        icon: const Icon(Icons.playlist_add_rounded, size: 20),
+                        label: const Text('Multilista / Dictado'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.deepOrange,
+                          side: const BorderSide(color: Colors.deepOrange),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: mostrarModalDictadoRapido,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.storefront),
+                        icon: const Icon(Icons.storefront, size: 20),
                         label: const Text('Cotizar Súper'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: _estaCargando ? null : mostrarModalCotizaciones,
                       ),

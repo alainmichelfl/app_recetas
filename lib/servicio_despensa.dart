@@ -2,6 +2,29 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'conversor_unidades.dart';
 
+enum NivelFrescura {
+  fresco,
+  consumirPronto,
+  porVencer,
+}
+
+class EstadoFrescuraItem {
+  final NivelFrescura nivel;
+  final int diasIngresado;
+  final int vidaUtilEstimadaDias;
+  final String etiqueta;
+
+  const EstadoFrescuraItem({
+    required this.nivel,
+    required this.diasIngresado,
+    required this.vidaUtilEstimadaDias,
+    required this.etiqueta,
+  });
+
+  bool get esAlerta => nivel != NivelFrescura.fresco;
+  bool get esUrgente => nivel == NivelFrescura.porVencer;
+}
+
 class ResultadoMatchDespensa {
   final int totalPrincipales;
   final int disponibles;
@@ -233,5 +256,101 @@ class ServicioDespensa {
       faltantes: faltantes,
       porcentaje: pct,
     );
+  }
+
+  /// Estima la vida útil realista en días para anaquel o refrigerador
+  /// según la naturaleza y categoría del alimento en el contexto de México.
+  static int estimarVidaUtilDias(String nombre) {
+    final n = nombre.toLowerCase().trim();
+
+    // 1. Pescados y mariscos frescos (1-2 días)
+    if (n.contains('pescado') || n.contains('camar') || n.contains('salmon') ||
+        n.contains('salmón') || n.contains('atún fresco') || n.contains('marisco') ||
+        n.contains('filete')) {
+      return 2;
+    }
+
+    // 2. Carnes y aves frescas (3-4 días)
+    if (n.contains('pollo') || n.contains('pechuga') || n.contains('carne molida') ||
+        n.contains('bistec') || n.contains('costilla') || n.contains('carne de res') ||
+        n.contains('cerdo') || n.contains('chuleta') || n.contains('milanesa') ||
+        n.contains('arrachera') || RegExp(r'\bres\b').hasMatch(n)) {
+      return 4;
+    }
+
+    // 3. Lácteos abiertos y embutidos (5-7 días)
+    if (n.contains('leche') || n.contains('yogurt') || n.contains('crema') ||
+        n.contains('queso panela') || n.contains('queso oaxaca') || n.contains('jamón') ||
+        n.contains('jamon') || n.contains('salchicha') || n.contains('tocino')) {
+      return 6;
+    }
+
+    // 4. Frutas y vegetales tiernos / delicados (4-6 días)
+    if (n.contains('aguacate') || n.contains('fresa') || n.contains('espinaca') ||
+        n.contains('lechuga') || n.contains('cilantro') || n.contains('perejil') ||
+        n.contains('plátano') || n.contains('platano') || n.contains('jitomate') ||
+        n.contains('tomate') || n.contains('champiñ') || n.contains('hongo') ||
+        n.contains('frambuesa') || n.contains('mora') || n.contains('uva')) {
+      return 5;
+    }
+
+    // 5. Verduras duras y raíces (14-21 días)
+    if (n.contains('papa') || n.contains('cebolla') || n.contains('zanahoria') ||
+        n.contains('ajo') || n.contains('calabaza') || n.contains('chayote') ||
+        n.contains('manzana') || n.contains('naranja') || n.contains('limón') ||
+        n.contains('limon')) {
+      return 15;
+    }
+
+    // 6. Huevo fresco (21-28 días)
+    if (n.contains('huevo')) {
+      return 21;
+    }
+
+    // 7. Abarrotes, cereales, semillas, aceites, especias, congelados, enlatados (60 - 180 días)
+    if (n.contains('arroz') || n.contains('frijol') || n.contains('lenteja') ||
+        n.contains('pasta') || n.contains('avena') || n.contains('harina') ||
+        n.contains('azúcar') || n.contains('azucar') || n.contains('sal') ||
+        n.contains('aceite') || n.contains('atún en lata') || n.contains('atun') ||
+        n.contains('lata') || n.contains('canela') || n.contains('orégano') ||
+        n.contains('oregano') || n.contains('pimienta') || n.contains('miel') ||
+        n.contains('congelad') || n.contains('vainilla')) {
+      return 90;
+    }
+
+    // Por defecto para productos varios: 10 días
+    return 10;
+  }
+
+  /// Evalúa el estado de frescura y semáforo de un artículo de la despensa
+  static EstadoFrescuraItem evaluarFrescuraItem(Map<String, dynamic> item) {
+    final String nombre = (item['nombre'] ?? '').toString();
+    final fStr = item['fecha_ingreso']?.toString();
+    final dt = fStr != null ? DateTime.tryParse(fStr) : null;
+    final int dias = dt != null ? DateTime.now().difference(dt).inDays : 0;
+    final int vidaUtil = estimarVidaUtilDias(nombre);
+
+    if (dias >= vidaUtil) {
+      return EstadoFrescuraItem(
+        nivel: NivelFrescura.porVencer,
+        diasIngresado: dias,
+        vidaUtilEstimadaDias: vidaUtil,
+        etiqueta: '¡Por vencer! (${dias}d) 🔴',
+      );
+    } else if (dias >= (vidaUtil * 0.6).round()) {
+      return EstadoFrescuraItem(
+        nivel: NivelFrescura.consumirPronto,
+        diasIngresado: dias,
+        vidaUtilEstimadaDias: vidaUtil,
+        etiqueta: 'Consumir pronto (${dias}d) 🟡',
+      );
+    } else {
+      return EstadoFrescuraItem(
+        nivel: NivelFrescura.fresco,
+        diasIngresado: dias,
+        vidaUtilEstimadaDias: vidaUtil,
+        etiqueta: 'Fresco 🟢',
+      );
+    }
   }
 }

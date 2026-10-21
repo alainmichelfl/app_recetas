@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -313,6 +314,293 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     }
   }
 
+  // =========================================================================
+  // 🖨️ FICHA DE COCINA & MODO IMPRIMIR
+  // =========================================================================
+
+  void _mostrarFichaImpresionCocina({
+    required String bloqueNutricional,
+    required List<String> listaIngredientes,
+    required String bloqueInstrucciones,
+  }) {
+    final sb = StringBuffer();
+    sb.writeln('========================================');
+    sb.writeln('      JITOMATE Y CEBOLLA • FICHA DE COCINA');
+    sb.writeln('========================================');
+    sb.writeln('🍳 RECETA: ${widget.titulo.toUpperCase()}');
+    sb.writeln('👥 PORCIONES: $porcionesActuales personas');
+    if (bloqueNutricional.isNotEmpty) {
+      sb.writeln('🔥 INFO NUTRICIONAL: ${bloqueNutricional.replaceAll('\n', ' • ')}');
+    }
+    sb.writeln('----------------------------------------');
+    sb.writeln('🛒 INGREDIENTES:');
+    for (var ing in listaIngredientes) {
+      final clean = ing.replaceFirst(RegExp(r'^[\-\*]\s*'), '').trim();
+      if (clean.isNotEmpty) {
+        sb.writeln('  [ ] $clean');
+      }
+    }
+    sb.writeln('----------------------------------------');
+    sb.writeln('👨‍🍳 PREPARACIÓN:');
+    final pasos = _extraerPasosIndividuales(bloqueInstrucciones);
+    for (int i = 0; i < pasos.length; i++) {
+      sb.writeln('  ${i + 1}. ${pasos[i]}');
+    }
+    sb.writeln('----------------------------------------');
+    sb.writeln('🌐 https://www.jitomateycebolla.com/');
+    sb.writeln('========================================');
+
+    final textoFicha = sb.toString();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollCtrl) => Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2022) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.print_outlined, color: Colors.deepOrange, size: 26),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Ficha de Cocina & Modo Imprimir 🖨️',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF121416) : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                    ),
+                    child: SingleChildScrollView(
+                      controller: scrollCtrl,
+                      child: SelectableText(
+                        textoFicha,
+                        style: const TextStyle(
+                          fontFamily: 'Courier',
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: textoFicha));
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('📋 ¡Ficha de cocina copiada! Lista para imprimir o pegar.'),
+                              backgroundColor: Colors.teal,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: const Text('Copiar Texto'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepOrange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await SharePlus.instance.share(
+                            ShareParams(
+                              text: textoFicha,
+                              subject: 'Ficha de Cocina: ${widget.titulo}',
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.share, size: 18),
+                        label: const Text('Compartir / PDF'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // =========================================================================
+  // 🌟 DIÁLOGO DE CALIFICACIÓN Y NOTAS DEL CHEF
+  // =========================================================================
+
+  Future<void> _mostrarDialogoCalificacionYNotas(RegistroCocina registro) async {
+    int estrellasSeleccionadas = registro.calificacion ?? 5;
+    final textController = TextEditingController(text: registro.notaPersonal ?? '');
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E2022) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: const [
+                Text('👨‍🍳', style: TextStyle(fontSize: 26)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '¡Platillo Terminado!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    '¿Cómo te quedó esta receta? Califícala para tu bitácora personal:',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final star = index + 1;
+                      return IconButton(
+                        iconSize: 34,
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        icon: Icon(
+                          star <= estrellasSeleccionadas
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: Colors.amber.shade600,
+                        ),
+                        onPressed: () {
+                          setModalState(() => estrellasSeleccionadas = star);
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    estrellasSeleccionadas == 5
+                        ? '⭐⭐⭐⭐⭐ ¡Obra Maestra Gourmet!'
+                        : estrellasSeleccionadas == 4
+                            ? '⭐⭐⭐⭐ Muy sabrosa'
+                            : estrellasSeleccionadas == 3
+                                ? '⭐⭐⭐ Buena'
+                                : '⭐ Puede mejorar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.amber.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: textController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: 'Mi toque secreto o notas privadas',
+                      hintText: 'Ej. Le puse extra de limón o chipotle...',
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF121416) : Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Omitir'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: rojoJitomate,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  final regActualizado = await ServicioHistorialCocina.guardarCalificacionYNota(
+                    idReceta: widget.idReceta,
+                    titulo: widget.titulo,
+                    calificacion: estrellasSeleccionadas,
+                    notaPersonal: textController.text.trim().isNotEmpty
+                        ? textController.text.trim()
+                        : null,
+                  );
+                  if (mounted) {
+                    setState(() => _registroCocina = regActualizado);
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                icon: const Icon(Icons.bookmark_added_rounded, size: 18),
+                label: const Text('Guardar en Bitácora'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _verificarPermisosYReceta() async {
     if (widget.idReceta > 0) {
       try {
@@ -553,6 +841,14 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     });
   }
 
+  void fijarPorciones(int nuevasPorciones) {
+    if (nuevasPorciones <= 0) return;
+    setState(() {
+      porcionesActuales = nuevasPorciones;
+      multiplicador = porcionesActuales / porcionesOriginales;
+    });
+  }
+
   String _ajustarCantidadesEnTexto(String textoOriginal) {
     if (multiplicador == 1.0) return textoOriginal;
 
@@ -733,6 +1029,27 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 ),
                 tooltip: 'Compartir Receta Gourmet 📲',
                 onPressed: () => _compartirRecetaGourmet(
+                  bloqueNutricional: bloqueNutricional,
+                  listaIngredientes: listaIngredientes,
+                  bloqueInstrucciones: bloqueInstrucciones,
+                ),
+              ),
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30, width: 1.0),
+                  ),
+                  child: const Icon(
+                    Icons.print_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                tooltip: 'Ficha de Cocina & Modo Imprimir 🖨️',
+                onPressed: () => _mostrarFichaImpresionCocina(
                   bloqueNutricional: bloqueNutricional,
                   listaIngredientes: listaIngredientes,
                   bloqueInstrucciones: bloqueInstrucciones,
@@ -969,8 +1286,49 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                if (_registroCocina!.calificacion != null) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      ...List.generate(
+                                        _registroCocina!.calificacion!,
+                                        (_) => const Icon(
+                                          Icons.star_rounded,
+                                          size: 16,
+                                          color: Colors.amber,
+                                        ),
+                                      ),
+                                      if (_registroCocina!.notaPersonal != null &&
+                                          _registroCocina!.notaPersonal!.isNotEmpty) ...[
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            '"${_registroCocina!.notaPersonal}"',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontStyle: FontStyle.italic,
+                                              color: Colors.green.shade900,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit_note_rounded,
+                              color: Color(0xFF1B5E20),
+                              size: 24,
+                            ),
+                            tooltip: 'Editar calificación y notas',
+                            onPressed: () =>
+                                _mostrarDialogoCalificacionYNotas(_registroCocina!),
                           ),
                         ],
                       ),
@@ -1330,11 +1688,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                   // 🧑‍🍳 CONTROLADOR DE PORCIONES
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                      horizontal: 18,
+                      vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -1344,62 +1702,90 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.restaurant_menu,
-                              color: naranjaZanahoria,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.restaurant_menu,
+                                  color: naranjaZanahoria,
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Porciones',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Porciones',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.remove_circle_outline,
+                                    color: rojoJitomate,
+                                    size: 30,
+                                  ),
+                                  onPressed: () => cambiarPorciones(-1),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: rojoJitomate.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$porcionesActuales',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: rojoJitomate,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.add_circle_outline,
+                                    color: rojoJitomate,
+                                    size: 30,
+                                  ),
+                                  onPressed: () => cambiarPorciones(1),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.remove_circle_outline,
-                                color: rojoJitomate,
-                                size: 30,
-                              ),
-                              onPressed: () => cambiarPorciones(-1),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: rojoJitomate.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '$porcionesActuales',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: rojoJitomate,
+                        const SizedBox(height: 8),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [1, 2, 4, 6, 8].map((p) {
+                              final bool seleccionado = porcionesActuales == p;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: ChoiceChip(
+                                  label: Text('$p ${p == 1 ? "persona" : "personas"}'),
+                                  selected: seleccionado,
+                                  selectedColor: rojoJitomate.withValues(alpha: 0.15),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                                    color: seleccionado ? rojoJitomate : null,
+                                  ),
+                                  onSelected: (_) => fijarPorciones(p),
                                 ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.add_circle_outline,
-                                color: rojoJitomate,
-                                size: 30,
-                              ),
-                              onPressed: () => cambiarPorciones(1),
-                            ),
-                          ],
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ],
                     ),
@@ -1943,6 +2329,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
           backgroundColor: Colors.teal,
         ),
       );
+    }
+
+    // 🌟 Diálogo de felicitación, calificación con estrellas y notas privadas
+    if (mounted) {
+      await _mostrarDialogoCalificacionYNotas(nuevoRegistro);
     }
   }
 

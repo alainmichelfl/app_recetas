@@ -9,6 +9,7 @@ import 'servicio_ia.dart';
 import 'servicio_hogar.dart';
 import 'servicio_recordatorios.dart';
 import 'servicio_zonas_despensa.dart';
+import 'servicio_despensa.dart';
 import 'menu_lateral.dart';
 
 class PantallaDespensa extends StatefulWidget {
@@ -23,6 +24,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
   bool procesandoTicket = false;
   int _cantidadNueva = 1;
   String _filtroZona = 'Todos';
+  bool _filtrarSoloPorVencer = false;
   ZonaDespensa? _zonaParaAgregarManual;
   Map<String, String> _overridesZonas = {};
 
@@ -1504,12 +1506,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
 
   Widget _construirListaDespensa(List despensaItems) {
     final porVencer = despensaItems.where((item) {
-      final fStr = item['fecha_ingreso']?.toString();
-      if (fStr == null) return false;
-      final dt = DateTime.tryParse(fStr);
-      if (dt == null) return false;
-      return DateTime.now().difference(dt).inDays >= 4;
+      final frescura = ServicioDespensa.evaluarFrescuraItem(Map<String, dynamic>.from(item));
+      return frescura.esAlerta;
     }).toList();
+
+    final itemsFiltrados = _filtrarSoloPorVencer
+        ? despensaItems.where((item) {
+            final frescura = ServicioDespensa.evaluarFrescuraItem(Map<String, dynamic>.from(item));
+            return frescura.esAlerta;
+          }).toList()
+        : despensaItems;
 
     return Column(
       children: [
@@ -1538,7 +1544,7 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '🚨 ${porVencer.length} ingrediente(s) por vencer',
+                        '🚨 ${porVencer.length} ingrediente(s) por vencer / consumir pronto',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -1557,6 +1563,39 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => setState(() => _filtrarSoloPorVencer = !_filtrarSoloPorVencer),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: _filtrarSoloPorVencer ? Colors.brown.shade800 : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.amber.shade600),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _filtrarSoloPorVencer ? Icons.check : Icons.filter_alt_outlined,
+                          size: 14,
+                          color: _filtrarSoloPorVencer ? Colors.white : Colors.brown.shade900,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _filtrarSoloPorVencer ? 'Ver todos' : 'Filtrar',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _filtrarSoloPorVencer ? Colors.white : Colors.brown.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepOrange,
@@ -1604,28 +1643,23 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
             child: ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-              itemCount: despensaItems.length,
+              itemCount: itemsFiltrados.length,
               itemBuilder: (context, index) {
-                final item = despensaItems[index];
+                final item = itemsFiltrados[index];
                 final idItem = item['id_item'];
                 final nombre = item['nombre'] ?? '';
                 final cant = item['cantidad'];
                 final cantidadTexto =
                     ConversorUnidades.formatearParaDespensa(nombre, cant);
 
-                final fStr = item['fecha_ingreso']?.toString();
-                final dt = fStr != null ? DateTime.tryParse(fStr) : null;
-                final int dias = dt != null ? DateTime.now().difference(dt).inDays : 0;
-
+                final frescura = ServicioDespensa.evaluarFrescuraItem(Map<String, dynamic>.from(item));
                 Color semaforoColor = Colors.green;
-                String semaforoTexto = 'Fresco 🟢';
-                if (dias >= 7) {
+                if (frescura.nivel == NivelFrescura.porVencer) {
                   semaforoColor = Colors.red.shade700;
-                  semaforoTexto = '¡Por vencer! (${dias}d) 🔴';
-                } else if (dias >= 4) {
+                } else if (frescura.nivel == NivelFrescura.consumirPronto) {
                   semaforoColor = Colors.orange.shade800;
-                  semaforoTexto = 'Consumir pronto (${dias}d) 🟡';
                 }
+                final semaforoTexto = frescura.etiqueta;
 
                 final zona = ServicioZonasDespensa.resolverZona(item, _overridesZonas);
 
