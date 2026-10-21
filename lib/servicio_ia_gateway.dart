@@ -17,7 +17,7 @@ import 'servicio_rate_limit_ia.dart';
 ///    en Supabase o hay un fallo de red, recurre de forma transparente a la conexión local
 ///    con [ConfigApi.geminiKey], garantizando que la app NUNCA se interrumpa para los usuarios.
 class ServicioIAGateway {
-  static const String _nombreFuncionSupabase = 'gemini-proxy';
+  static const List<String> _nombresFuncionSupabase = ['gemini-proxy', 'gemin-proxy'];
 
   /// Bandera para forzar el fallback local durante pruebas unitarias o depuración
   @visibleForTesting
@@ -72,7 +72,7 @@ class ServicioIAGateway {
       ],
     };
 
-    // 2. Ruta Blindada Primaria: Supabase Edge Function 'gemini-proxy'
+    // 2. Ruta Blindada Primaria: Supabase Edge Function 'gemini-proxy' (o alias 'gemin-proxy')
     if (!forzarFallbackLocal) {
       try {
         final respuestaEdge = await _invocarSupabaseEdgeFunction(payload);
@@ -101,25 +101,31 @@ class ServicioIAGateway {
     return resultadoFallback;
   }
 
-  /// Invoca la Supabase Edge Function 'gemini-proxy'
+  /// Invoca la Supabase Edge Function probando 'gemini-proxy' (y 'gemin-proxy' como alias defensivo)
   static Future<String?> _invocarSupabaseEdgeFunction(Map<String, dynamic> payload) async {
     try {
       final client = Supabase.instance.client;
-      final FunctionResponse response = await client.functions.invoke(
-        _nombreFuncionSupabase,
-        body: payload,
-      );
+      for (final nombre in _nombresFuncionSupabase) {
+        try {
+          final FunctionResponse response = await client.functions.invoke(
+            nombre,
+            body: payload,
+          );
 
-      if (response.status == 200 && response.data != null) {
-        final data = response.data;
-        if (data is Map && data['texto'] != null) {
-          return data['texto'].toString();
-        } else if (data is String) {
-          return data;
+          if (response.status == 200 && response.data != null) {
+            final data = response.data;
+            if (data is Map && data['texto'] != null) {
+              return data['texto'].toString();
+            } else if (data is String) {
+              return data;
+            }
+          }
+        } catch (_) {
+          // Continuar al siguiente alias si este no responde
         }
       }
     } catch (_) {
-      // Si la función no ha sido desplegada o Supabase no está inicializado, devolvemos null para activar el fallback
+      // Supabase no inicializado o fallo total
       return null;
     }
     return null;
