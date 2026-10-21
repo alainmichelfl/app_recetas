@@ -3105,16 +3105,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 ),
                 const SizedBox(width: 4),
                 Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      titulo,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: colorTema,
-                      ),
+                  child: Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: colorTema,
                     ),
                   ),
                 ),
@@ -3228,15 +3226,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ),
                 ),
         ),
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            titulo,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+        title: Text(
+          titulo,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15.5,
+            height: 1.25,
           ),
         ),
         subtitle: Column(

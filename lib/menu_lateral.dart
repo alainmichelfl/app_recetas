@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'pantalla_recetas.dart';
 import 'servicio_recetas.dart';
@@ -1012,6 +1013,56 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
+                        color: Colors.blueGrey.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.system_update_rounded,
+                        color: Colors.blueGrey,
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Actualizar App al Instante',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 15,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Refrescar últimas mejoras en 1 toque',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '1 Toque ⚡',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _forzarRecargaUltimaVersion(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
                         color: const Color(0xFF25D366).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
@@ -1417,5 +1468,44 @@ class MenuLateral extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _forzarRecargaUltimaVersion(BuildContext context) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Sincronizando con la nube y descargando la última versión...',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        duration: Duration(seconds: 3),
+        backgroundColor: Color(0xFF1E2022),
+      ),
+    );
+
+    await Future.delayed(const Duration(milliseconds: 700));
+
+    if (kIsWeb) {
+      final cacheBustUri = Uri.parse(
+        'https://www.jitomateycebolla.com/?v=${DateTime.now().millisecondsSinceEpoch}',
+      );
+      try {
+        await launchUrl(cacheBustUri, webOnlyWindowName: '_self');
+      } catch (_) {}
+    }
   }
 }

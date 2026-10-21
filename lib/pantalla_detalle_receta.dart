@@ -1102,24 +1102,21 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 end: 72,
                 bottom: 16,
               ),
-              title: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  widget.titulo,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    shadows: [
-                      Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
-                      Shadow(color: Colors.black, blurRadius: 20),
-                      Shadow(color: Colors.black, blurRadius: 4),
-                    ],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
+              title: Text(
+                widget.titulo,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  shadows: [
+                    Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
+                    Shadow(color: Colors.black, blurRadius: 20),
+                    Shadow(color: Colors.black, blurRadius: 4),
+                  ],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
               background: Stack(
                 fit: StackFit.expand,

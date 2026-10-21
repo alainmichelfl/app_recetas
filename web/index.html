@@ -108,13 +108,37 @@
   <script>
     // Detección y auto-actualización del Service Worker ante nuevas versiones
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', function () {
-        console.log('[PWA] Nueva versión desplegada detectada. Recargando automáticamente...');
-        window.location.reload();
-      });
+      function activarNuevoWorker(reg) {
+        if (!reg) return;
+        if (reg.waiting) {
+          reg.waiting.postMessage({type: 'SKIP_WAITING'});
+        }
+        reg.addEventListener('updatefound', function () {
+          var newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', function () {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] Activando nueva versión del Service Worker...');
+                newWorker.postMessage({type: 'SKIP_WAITING'});
+              }
+            });
+          }
+        });
+      }
+
       navigator.serviceWorker.getRegistrations().then(function (registrations) {
         for (var reg of registrations) {
+          activarNuevoWorker(reg);
           reg.update();
+        }
+      });
+
+      var recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!recargando) {
+          recargando = true;
+          console.log('[PWA] Nueva versión desplegada detectada. Recargando automáticamente...');
+          window.location.reload();
         }
       });
     }

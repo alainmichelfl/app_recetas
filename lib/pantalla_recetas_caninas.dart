@@ -495,9 +495,12 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
                           ),
                           title: Text(
                             titulo,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 15.5,
+                              height: 1.25,
                             ),
                           ),
                           subtitle: Padding(
