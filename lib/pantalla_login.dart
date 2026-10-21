@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'pantalla_planeador.dart';
+import 'pantalla_recetas.dart';
 // 💡 NUEVO: Importamos la pantalla de instrucciones
 import 'pantalla_instrucciones.dart';
 
@@ -134,7 +134,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       // Si todo sale bien, lo mandamos al planeador
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const PantallaPlaneador()),
+          MaterialPageRoute(builder: (context) => const PantallaRecetas()),
         );
       }
     } catch (e) {
@@ -251,7 +251,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       // Si Supabase no requiere confirmación de correo o auto-inició sesión
       if (res.session != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const PantallaPlaneador()),
+          MaterialPageRoute(builder: (context) => const PantallaRecetas()),
         );
       } else if (res.user != null) {
         if (res.user!.identities != null && res.user!.identities!.isEmpty) {
