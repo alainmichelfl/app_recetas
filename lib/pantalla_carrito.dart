@@ -523,6 +523,35 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                   ),
                 );
               }),
+                const SizedBox(height: 10),
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
+                  ),
+                  tileColor: Colors.deepOrange.withValues(alpha: 0.12),
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.deepOrange,
+                    child: Icon(Icons.analytics_outlined, color: Colors.white, size: 20),
+                  ),
+                  title: const Text(
+                    'Comparar Precios en Cotizador 📊',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Ver desglose comparativo por súper y usar en Finanzas',
+                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.deepOrangeAccent, size: 14),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    mostrarModalCotizaciones();
+                  },
+                ),
             ],
           ),
         ),
@@ -663,6 +692,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
           SizedBox(height: isLandscape ? 6 : 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Padding(
@@ -685,41 +715,81 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        '$pendientes pendientes · $comprados en carrito',
-                        style:
-                            TextStyle(fontSize: isLandscape ? 10 : 11, color: Colors.grey.shade600),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        children: [
+                          Text(
+                            '$pendientes pendientes · $comprados en carrito',
+                            style: TextStyle(
+                              fontSize: isLandscape ? 10 : 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          Text(
+                            excedido
+                                ? '• Excedido: +\$${(-restante).toStringAsFixed(2)}'
+                                : '• Disp: \$${restante.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: isLandscape ? 10 : 11,
+                              fontWeight: FontWeight.bold,
+                              color: excedido
+                                  ? Colors.red.shade900
+                                  : Colors.green.shade800,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isLandscape ? 8 : 10,
-                    vertical: isLandscape ? 3 : 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: excedido ? Colors.red.shade50 : Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color:
-                          excedido ? Colors.red.shade300 : Colors.green.shade200,
+              // 🛒 PÍLDORA "COMPRAR SÚPER EN LÍNEA"
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _mostrarModalElegirSupermercadoOnline,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 10 : 12,
+                      vertical: isLandscape ? 6 : 8,
                     ),
-                  ),
-                  child: Text(
-                    excedido
-                        ? 'Excedido: +\$${(-restante).toStringAsFixed(2)}'
-                        : 'Disponible: \$${restante.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: isLandscape ? 10 : 11,
-                      fontWeight: FontWeight.bold,
-                      color: excedido
-                          ? Colors.red.shade900
-                          : Colors.green.shade800,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.deepOrange.shade600,
+                          Colors.deepOrange.shade800,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepOrange.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Comprar Súper',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isLandscape ? 11 : 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -2352,52 +2422,44 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.add),
+                      icon: const Icon(Icons.add, color: Colors.deepOrange),
                       tooltip: 'Agregar insumo individual',
                       style: IconButton.styleFrom(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.deepOrange, width: 1.5),
                         ),
                       ),
                       onPressed: mostrarModalAgregarManual,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                        label: const FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text('Multilista / Dictado'),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.deepOrange,
-                          side: const BorderSide(color: Colors.deepOrange),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: mostrarModalDictadoRapido,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.storefront, size: 20),
+                        icon: const Icon(Icons.playlist_add_rounded, size: 22),
                         label: const FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text('Cotizar Súper'),
+                          child: Text(
+                            'Multilista / Dictado Rápido',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                            ),
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
                         ),
-                        onPressed: _estaCargando ? null : mostrarModalCotizaciones,
+                        onPressed: mostrarModalDictadoRapido,
                       ),
                     ),
                   ],
