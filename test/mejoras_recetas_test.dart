@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_recetas/perfiles_nutricionales.dart';
 import 'package:app_recetas/servicio_cotizador.dart';
 import 'package:app_recetas/servicio_despensa.dart';
+import 'package:app_recetas/servicio_carrito_offline.dart';
 
 void main() {
   group('Calibración de Precios y Unidades de Supermercado', () {
@@ -137,6 +139,43 @@ Mezclar y servir.
       final frescura = ServicioDespensa.evaluarFrescuraItem(itemArroz);
       expect(frescura.nivel, equals(NivelFrescura.fresco));
       expect(frescura.esAlerta, isFalse);
+    });
+  });
+
+  group('Prioridad R3: Resiliencia Offline y Sincronización en Supermercado', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('Guarda y recupera la lista de compras en caché local', () async {
+      final itemsSimulados = [
+        {'id': 101, 'nombre': 'Jitomate saladet', 'cantidad': 1.0, 'comprado': false},
+        {'id': 102, 'nombre': 'Pechuga de pollo', 'cantidad': 0.5, 'comprado': true},
+      ];
+
+      await ServicioCarritoOffline.guardarCacheLocal(itemsSimulados);
+      final cacheRecuperada = await ServicioCarritoOffline.obtenerCacheLocal();
+
+      expect(cacheRecuperada.length, equals(2));
+      expect(cacheRecuperada.first['nombre'], equals('Jitomate saladet'));
+      expect(cacheRecuperada.last['comprado'], isTrue);
+    });
+
+    test('Serialización y deserialización de AccionPendienteCarrito', () {
+      final ahora = DateTime.now();
+      final accion = AccionPendienteCarrito(
+        idItem: 55,
+        tipo: 'update_comprado',
+        valorComprado: true,
+        timestamp: ahora,
+      );
+
+      final map = accion.toMap();
+      final clon = AccionPendienteCarrito.fromMap(map);
+
+      expect(clon.idItem, equals(55));
+      expect(clon.tipo, equals('update_comprado'));
+      expect(clon.valorComprado, isTrue);
     });
   });
 }

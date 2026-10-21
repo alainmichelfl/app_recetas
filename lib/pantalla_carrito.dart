@@ -9,6 +9,7 @@ import 'pantalla_cotizador.dart';
 import 'pantalla_finanzas.dart';
 import 'servicio_preferencias.dart';
 import 'servicio_hogar.dart';
+import 'servicio_carrito_offline.dart';
 import 'menu_lateral.dart';
 
 export 'servicio_cotizador.dart';
@@ -30,6 +31,7 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   String _nombreSuperDestacado = 'Walmart';
   bool _esSuperFavoritoActivo = false;
   List<Map<String, dynamic>> _ultimosItems = [];
+  List<Map<String, dynamic>> _cacheOffline = [];
   int _ultimoTotalItems = -1;
   final Set<String> _categoriasColapsadas = {};
   bool _modoSuperFocus = false;
@@ -40,6 +42,25 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     super.initState();
     _cargarPreferencias();
     _consolidarYRecalcular();
+    _inicializarResilienciaOffline();
+  }
+
+  Future<void> _inicializarResilienciaOffline() async {
+    final cache = await ServicioCarritoOffline.obtenerCacheLocal();
+    if (mounted && cache.isNotEmpty && _ultimosItems.isEmpty) {
+      setState(() => _cacheOffline = cache);
+    }
+    await ServicioCarritoOffline.obtenerConteoPendientes();
+    final sincronizados = await ServicioCarritoOffline.sincronizarPendientes(supabase);
+    if (sincronizados > 0 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('☁️ $sincronizados cambios del súper sincronizados con la nube.'),
+          backgroundColor: Colors.teal,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   Future<void> _consolidarYRecalcular() async {
@@ -1504,15 +1525,39 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   }
 
   Future<void> alternarComprado(int id, bool estadoActual) async {
-    await supabase
-        .from('lista_compras')
-        .update({'comprado': !estadoActual})
-        .eq('id', id);
+    final nuevoEstado = !estadoActual;
+    // 1. Reflejo optimista inmediato en memoria
+    if (mounted) {
+      setState(() {
+        for (var item in _ultimosItems) {
+          if (item['id'] == id) {
+            item['comprado'] = nuevoEstado;
+            break;
+          }
+        }
+      });
+    }
+
+    // 2. Resiliencia offline y sincronización diferida (Prioridad R3)
+    await ServicioCarritoOffline.actualizarEstadoComprado(
+      idItem: id,
+      comprado: nuevoEstado,
+      supabaseClient: supabase,
+    );
     _recalcularPresupuesto();
   }
 
   Future<void> eliminarItem(int id) async {
-    await supabase.from('lista_compras').delete().eq('id', id);
+    if (mounted) {
+      setState(() {
+        _ultimosItems.removeWhere((item) => item['id'] == id);
+      });
+    }
+
+    await ServicioCarritoOffline.eliminarItem(
+      idItem: id,
+      supabaseClient: supabase,
+    );
     _recalcularPresupuesto();
   }
 
@@ -1777,6 +1822,54 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
+          // 📶 Indicador de Resiliencia Offline y Sincronización (Prioridad R3)
+          ValueListenableBuilder<int>(
+            valueListenable: ServicioCarritoOffline.pendientesNotifier,
+            builder: (context, pendientes, _) {
+              if (pendientes > 0) {
+                return IconButton(
+                  tooltip: '📶 $pendientes cambios offline guardados. Toca para sincronizar con la nube.',
+                  icon: Badge(
+                    label: Text('$pendientes'),
+                    backgroundColor: Colors.amber.shade900,
+                    child: const Icon(
+                      Icons.cloud_upload_outlined,
+                      color: Colors.amberAccent,
+                      size: 22,
+                    ),
+                  ),
+                  onPressed: () async {
+                    final syncCount =
+                        await ServicioCarritoOffline.sincronizarPendientes(supabase);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            syncCount > 0
+                                ? '☁️ ¡$syncCount cambios sincronizados con éxito!'
+                                : '📶 Sigues sin conexión estable en el supermercado.',
+                          ),
+                          backgroundColor:
+                              syncCount > 0 ? Colors.teal : Colors.brown,
+                        ),
+                      );
+                    }
+                  },
+                );
+              }
+              return const Tooltip(
+                message: '☁️ Lista protegida contra caídas de red en el súper',
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(
+                    Icons.cloud_done_rounded,
+                    color: Colors.greenAccent,
+                    size: 20,
+                  ),
+                ),
+              );
+            },
+          ),
           // ⚡ Modo Supermercado Focus (Una Sola Mano)
           IconButton(
             tooltip: _modoSuperFocus
@@ -1845,10 +1938,22 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                   .stream(primaryKey: ['id'])
                   .order('comprado', ascending: true),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                List<Map<String, dynamic>> items;
+                if (snapshot.hasData && snapshot.data != null) {
+                  items = snapshot.data!;
+                  _ultimosItems = items;
+                  ServicioCarritoOffline.guardarCacheLocal(items);
+                } else if (snapshot.hasError ||
+                    (snapshot.connectionState == ConnectionState.waiting &&
+                        _cacheOffline.isNotEmpty)) {
+                  // Resiliencia Offline (R3): en sótanos de súper usamos la caché local
+                  items = _cacheOffline.isNotEmpty ? _cacheOffline : _ultimosItems;
+                } else {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  items = snapshot.data ?? [];
                 }
-                final items = snapshot.data ?? [];
                 _ultimosItems = items;
                 _verificarYRecalcular(items.length);
 
