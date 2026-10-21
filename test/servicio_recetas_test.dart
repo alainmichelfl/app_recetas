@@ -271,6 +271,41 @@ void main() {
       expect(imgTostadaCamote, isNot(contains('photo-1525351484163'))); // no aguacate
       expect(imgTostadaCamote, contains('tostada_camote_huevo_poche'));
 
+      // Bloque 3: Platos Fuertes y Guisados
+      // ID 101: Tazón Mediterráneo de Pollo (no dip de hummus)
+      final imgTazonMed = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 101,
+        titulo: 'Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki',
+      );
+      expect(imgTazonMed, isNotNull);
+      expect(imgTazonMed, isNot(contains('photo-1511690656952'))); // no hummus
+      expect(imgTazonMed, contains('photo-1540420773420'));
+
+      // ID 111: Lentejas Guisadas con Zanahoria y Plátano Macho
+      final imgLentejasPlatano = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 111,
+        titulo: 'Lentejas Guisadas con Zanahoria y Plátano Macho',
+      );
+      expect(imgLentejasPlatano, isNotNull);
+      expect(imgLentejasPlatano, contains('lentejas_platano_macho'));
+
+      // ID 114: Quesadillas de Nopal Asado con Queso Oaxaca
+      final imgQuesadillaNopal = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 114,
+        titulo: 'Quesadillas de Nopal Asado con Queso Oaxaca',
+      );
+      expect(imgQuesadillaNopal, isNotNull);
+      expect(imgQuesadillaNopal, contains('quesadillas_nopal_oaxaca'));
+
+      // ID 133: Guisado Casero de Pollo con Camote Morado y Tejocote (no crema de calabacita)
+      final imgGuisadoPollo = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 133,
+        titulo: 'Guisado Casero de Pollo con Camote Morado y Tejocote',
+      );
+      expect(imgGuisadoPollo, isNotNull);
+      expect(imgGuisadoPollo, isNot(contains('photo-1547592166'))); // no crema de verdura
+      expect(imgGuisadoPollo, contains('guisado_pollo_camote_tejocote'));
+
       // ID 104: Molletes tradicionales con pico de gallo fresco (no tostadas de aguacate)
       final imgMolletes = ServicioRecetas.obtenerImagenOptimizada(
         idReceta: 104,

@@ -335,7 +335,7 @@ class ServicioRecetas {
     98: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén en Salsa Rústica de Jitomate y Cebolla con Arroz
     99: 'https://images.unsplash.com/photo-1560717845-968823efbee1?auto=format&fit=crop&w=600&q=80', // Salmón Sellado con Espárragos Salteados y Aguacate
     100: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pollo al Mojo de Ajo Cítrico con Lentejas Rostizadas y Espinacas
-    101: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80', // Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki
+    101: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80', // Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki
     102: 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80', // Chilaquiles Verdes Ligeros con Pollo Deshebrado
     103: 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80', // Omelette de Espinacas, Champiñones y Queso Panela
     104: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg', // Molletes Tradicionales con Pico de Gallo Fresco
@@ -345,10 +345,10 @@ class ServicioRecetas {
     108: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80', // Pescado a la Veracruzana con Arroz Integral
     109: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80', // Tinga de Pollo Casera en Tostadas Horneadas
     110: 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80', // Picadillo Tradicional de Res con Verduras Mixtas
-    111: 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80', // Lentejas Guisadas con Zanahoria y Plátano Macho
+    111: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/lentejas_platano_macho.jpg', // Lentejas Guisadas con Zanahoria y Plátano Macho
     112: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lechuga_salpicon_pollo.jpg', // Tacos de Lechuga con Salpicón de Pollo
     113: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Crema Ligera de Calabacita con Queso Panela
-    114: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80', // Quesadillas de Nopal Asado con Queso Oaxaca
+    114: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_nopal_oaxaca.jpg', // Quesadillas de Nopal Asado con Queso Oaxaca
     115: 'https://images.unsplash.com/photo-1622756144420-6877b1b7476e?auto=format&fit=crop&w=600&q=80', // Ensalada Fresca de Atún con Jitomate y Aguacate
     116: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg', // Sopa de Tortilla Tradicional Saludable
     117: 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80', // Guacamole Rústico con Totopos Horneados
@@ -367,7 +367,7 @@ class ServicioRecetas {
     130: 'https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?auto=format&fit=crop&w=600&q=80', // Crema Aterciopelada de Calabaza de Castilla Rostizada
     131: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén con Glaseado de Mandarina y Camote
     132: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80', // Ensalada Tibia de Lentejas con Betabel y Hongos
-    133: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Guisado Casero de Pollo con Camote Morado y Tejocote
+    133: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/guisado_pollo_camote_tejocote.jpg', // Guisado Casero de Pollo con Camote Morado y Tejocote
     134: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', // Fajitas Express de Pechuga con Hongos y Manzana
     135: 'https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=600&q=80', // Sopa Ligera de Hongos Silvestres y Epazote
     136: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80', // Ensalada Nocturna de Manzana, Betabel y Panela
@@ -455,6 +455,9 @@ class ServicioRecetas {
     if (t.contains('guacamole')) {
       return 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80';
     }
+    if ((t.contains('quesadilla') || t.contains('quesadillas')) && t.contains('nopal')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_nopal_oaxaca.jpg';
+    }
     if (t.contains('quesadilla') || t.contains('sincronizada')) {
       return 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80';
     }
@@ -488,6 +491,9 @@ class ServicioRecetas {
     }
     if (t.contains('camote relleno') || t.contains('camote horneado')) {
       return 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('tejocote') || (t.contains('pollo') && t.contains('camote morado'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/guisado_pollo_camote_tejocote.jpg';
     }
     if (t.contains('guisado') || t.contains('estofado')) {
       return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80';
@@ -537,6 +543,9 @@ class ServicioRecetas {
     }
 
     // 9. Sopas, cremas y caldos
+    if (t.contains('lenteja') && (t.contains('plátano') || t.contains('platano') || t.contains('macho'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/lentejas_platano_macho.jpg';
+    }
     if (t.contains('lenteja') || t.contains('lentejas')) {
       return 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80';
     }
