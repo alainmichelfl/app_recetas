@@ -1998,31 +1998,6 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     );
   }
 
-  Widget _construirChipAudiencia({
-    required String etiqueta,
-    required FiltroAudienciaReceta filtro,
-    required Color colorActivo,
-    required Color fondoActivo,
-  }) {
-    final bool seleccionado = _filtroAudiencia == filtro;
-    return _construirPildoraFiltro(
-      etiqueta: etiqueta,
-      seleccionado: seleccionado,
-      colorActivo: colorActivo,
-      fondoActivo: fondoActivo,
-      onTap: () {
-        setState(() {
-          if (filtro == FiltroAudienciaReceta.oficiales) {
-            _filtroAudiencia = FiltroAudienciaReceta.oficiales;
-          } else {
-            _filtroAudiencia = seleccionado ? FiltroAudienciaReceta.oficiales : filtro;
-          }
-          _filtrarRecetas();
-        });
-      },
-    );
-  }
-
   Future<void> _confirmarEliminarReceta(int idReceta, String titulo) async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -2340,7 +2315,6 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   builder: (context) {
                     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
                     final double alturaFiltro = isLandscape ? 40 : 48;
-                    final double espaciadoFiltro = isLandscape ? 5 : 10;
 
                     final int countOficiales = todasLasRecetas.where(ServicioRecetas.esOficial).length;
                     final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
@@ -2351,106 +2325,195 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       final m = _evaluarMatchReceta(r);
                       return m.listoParaCocinar || m.faltaUno;
                     }).length;
+                    final int countMenos20 = todasLasRecetas.where(ServicioCocinaExpress.esExpress20).length;
+                    final int countUnSarten = todasLasRecetas.where(ServicioCocinaExpress.esCeroTrastes).length;
+                    final int countFacil5 = todasLasRecetas.where(ServicioCocinaExpress.esFacil5).length;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. Selector de Audiencia y Origen
+                        // 🌟 Única Fila Unificada y Deslizable de Filtros de Decisión
                         SizedBox(
                           height: alturaFiltro,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             children: [
-                              _construirChipAudiencia(
+                              // 1. Oficiales
+                              _construirPildoraFiltro(
                                 etiqueta: '🌟 Oficiales ($countOficiales)',
-                                filtro: FiltroAudienciaReceta.oficiales,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.oficiales &&
+                                    _filtroExpress == FiltroExpress.todos,
                                 colorActivo: const Color(0xFFD32F2F),
                                 fondoActivo: const Color(0xFFFBECEF),
+                                onTap: () {
+                                  setState(() {
+                                    _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    _filtroExpress = FiltroExpress.todos;
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
-                              _construirChipAudiencia(
+                              // 2. Recién Salidas
+                              _construirPildoraFiltro(
                                 etiqueta: '🔥 Recién Salidas ($countNovedades)',
-                                filtro: FiltroAudienciaReceta.recienSalidas,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas,
                                 colorActivo: const Color(0xFFE65100),
                                 fondoActivo: const Color(0xFFFFF3E0),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.recienSalidas;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
-                              _construirChipAudiencia(
+                              // 3. Puedo cocinar hoy
+                              _construirPildoraFiltro(
                                 etiqueta: '🟢 Puedo cocinar hoy ($countPuedoCocinar)',
-                                filtro: FiltroAudienciaReceta.puedoCocinarHoy,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy,
                                 colorActivo: const Color(0xFF2E7D32),
                                 fondoActivo: const Color(0xFFE8F5E9),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.puedoCocinarHoy;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
-                              _construirChipAudiencia(
+                              // 4. Rápidas < 20 min
+                              _construirPildoraFiltro(
+                                etiqueta: '⚡ <20 min ($countMenos20)',
+                                icono: const Text('⚡', style: TextStyle(fontSize: 14)),
+                                seleccionado: _filtroExpress == FiltroExpress.express20,
+                                colorActivo: const Color(0xFFE65100),
+                                fondoActivo: const Color(0xFFFFF3E0),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroExpress == FiltroExpress.express20) {
+                                      _filtroExpress = FiltroExpress.todos;
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroExpress = FiltroExpress.express20;
+                                      _filtroAudiencia = FiltroAudienciaReceta.todas;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
+                              ),
+                              // 5. 1 Sartén
+                              _construirPildoraFiltro(
+                                etiqueta: '🍳 1 Sartén ($countUnSarten)',
+                                icono: const Text('🍳', style: TextStyle(fontSize: 14)),
+                                seleccionado: _filtroExpress == FiltroExpress.ceroTrastes,
+                                colorActivo: const Color(0xFF00695C),
+                                fondoActivo: const Color(0xFFE0F2F1),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroExpress == FiltroExpress.ceroTrastes) {
+                                      _filtroExpress = FiltroExpress.todos;
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroExpress = FiltroExpress.ceroTrastes;
+                                      _filtroAudiencia = FiltroAudienciaReceta.todas;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
+                              ),
+                              // 6. 5 Ingredientes
+                              _construirPildoraFiltro(
+                                etiqueta: '✨ 5 Ingredientes ($countFacil5)',
+                                icono: const Text('✨', style: TextStyle(fontSize: 14)),
+                                seleccionado: _filtroExpress == FiltroExpress.faciles5,
+                                colorActivo: const Color(0xFF6A1B9A),
+                                fondoActivo: const Color(0xFFF3E5F5),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroExpress == FiltroExpress.faciles5) {
+                                      _filtroExpress = FiltroExpress.todos;
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroExpress = FiltroExpress.faciles5;
+                                      _filtroAudiencia = FiltroAudienciaReceta.todas;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
+                              ),
+                              // 7. Mis Creaciones
+                              _construirPildoraFiltro(
                                 etiqueta: '👨‍🍳 Mis Creaciones ($countMisRecetas)',
-                                filtro: FiltroAudienciaReceta.misRecetas,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.misRecetas,
                                 colorActivo: const Color(0xFF1E2022),
                                 fondoActivo: Colors.grey.shade200,
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.misRecetas) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.misRecetas;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
-                              _construirChipAudiencia(
+                              // 8. Comunidad
+                              _construirPildoraFiltro(
                                 etiqueta: '🌎 Comunidad ($countComunidad)',
-                                filtro: FiltroAudienciaReceta.comunidad,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.comunidad,
                                 colorActivo: Colors.indigo.shade800,
                                 fondoActivo: Colors.indigo.shade50,
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.comunidad) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.comunidad;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
-                              _construirChipAudiencia(
+                              // 9. Caninas
+                              _construirPildoraFiltro(
                                 etiqueta: '🐾 Caninas ($countCaninas)',
-                                filtro: FiltroAudienciaReceta.caninas,
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.caninas,
                                 colorActivo: const Color(0xFF6D4C41),
                                 fondoActivo: const Color(0xFFEFEBE9),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.caninas) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.caninas;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
                               ),
                             ],
-                          ),
-                        ),
-                        SizedBox(height: espaciadoFiltro),
-                        // 2. Selector de Tiempos de Comida
-                        SizedBox(
-                          height: alturaFiltro,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            children: categorias.map((cat) {
-                              final bool seleccionado = categoriaSeleccionada == cat;
-                              final int countCat = cat == 'Todos'
-                                  ? todasLasRecetas.length
-                                  : todasLasRecetas.where((r) => (r['tipo_comida'] ?? '') == cat).length;
-                              return _construirPildoraFiltro(
-                                etiqueta: cat == 'Todos' ? 'Todas ($countCat)' : '$cat ($countCat)',
-                                seleccionado: seleccionado,
-                                colorActivo: Colors.white,
-                                fondoActivo: const Color(0xFF1E2022),
-                                colorInactivo: Colors.black87,
-                                fondoInactivo: Colors.grey[200],
-                                onTap: () {
-                                  setState(() => categoriaSeleccionada = cat);
-                                  _filtrarRecetas();
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        SizedBox(height: espaciadoFiltro),
-                        // 3. Selector de Cocina Práctica y Express
-                        SizedBox(
-                          height: alturaFiltro,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            children: FiltroExpress.values.map((f) {
-                              final bool seleccionado = _filtroExpress == f;
-                              return _construirPildoraFiltro(
-                                etiqueta: f.etiqueta,
-                                icono: Text(f.emoji, style: const TextStyle(fontSize: 14)),
-                                seleccionado: seleccionado,
-                                colorActivo: f == FiltroExpress.todos ? Colors.white : f.color,
-                                fondoActivo: f == FiltroExpress.todos ? const Color(0xFF1E2022) : f.fondoColor,
-                                colorInactivo: f == FiltroExpress.todos ? Colors.black87 : f.color,
-                                fondoInactivo: Colors.grey[100],
-                                onTap: () {
-                                  setState(() => _filtroExpress = f);
-                                  _filtrarRecetas();
-                                },
-                              );
-                            }).toList(),
                           ),
                         ),
                         // Banners informativos ubicados DEBAJO de todos los selectores para evitar saltos de altura
