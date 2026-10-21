@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -197,28 +198,22 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     {'nombre': 'Otros', 'icono': Icons.shopping_basket_outlined, 'color': Colors.blueGrey, 'pasillo': 'Pasillo General'},
   ];
 
-  Future<void> _compartirListaPorWhatsApp(
-    List<Map<String, dynamic>> items,
-  ) async {
-    if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tu lista de compras está vacía.')),
-      );
-      return;
-    }
-
+  String _generarTextoTicketSuper(List<Map<String, dynamic>> items) {
     final pendientes = items.where((i) => !(i['comprado'] ?? false)).toList();
     final comprados = items.where((i) => i['comprado'] ?? false).toList();
 
     final StringBuffer buffer = StringBuffer();
-    buffer.writeln('🛒 *Lista de Compras - Jitomate y Cebolla*');
-    buffer.writeln(
-      '📅 ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-    );
-    buffer.writeln('');
+    buffer.writeln('🧾 *TICKET DE SÚPER INTELIGENTE*');
+    buffer.writeln('🍅🧅 *Jitomate y Cebolla*');
+    final now = DateTime.now();
+    buffer.writeln('📅 ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}');
+    if (_nombreSuperDestacado.isNotEmpty) {
+      buffer.writeln('🏪 Supermercado: $_nombreSuperDestacado');
+    }
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
 
     if (pendientes.isNotEmpty) {
-      buffer.writeln('*Por comprar (${pendientes.length}):*');
+      buffer.writeln('*POR COMPRAR (${pendientes.length} artículos):*');
 
       final Map<String, List<Map<String, dynamic>>> pendientesPorCat = {};
       for (var p in pendientes) {
@@ -235,8 +230,15 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
               ));
           buffer.writeln('\n📍 *${nombreCat.toUpperCase()}*');
           for (var p in listCat) {
-            final cant = p['cantidad'] != null ? ' (${p['cantidad']})' : '';
-            buffer.writeln('  ▫️ ${p['nombre']}$cant');
+            final cant = (p['cantidad'] != null && p['cantidad'].toString().isNotEmpty)
+                ? ' (${p['cantidad']})'
+                : '';
+            final id = p['id'] as int?;
+            final double? precioEst = id != null ? _preciosEstimadosPorItem[id] : null;
+            final String precioStr = (precioEst != null && precioEst > 0)
+                ? ' — ~\$${precioEst.toStringAsFixed(2)} MXN'
+                : '';
+            buffer.writeln('  [ ] ${p['nombre']}$cant$precioStr');
           }
         }
       }
@@ -244,43 +246,160 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
     }
 
     if (comprados.isNotEmpty) {
-      buffer.writeln('*Ya en el carrito (${comprados.length}):*');
+      buffer.writeln('*YA EN EL CARRITO (${comprados.length}):*');
       for (var c in comprados) {
-        buffer.writeln('  ✅ ~${c['nombre']}~');
+        buffer.writeln('  [x] ~${c['nombre']}~');
       }
       buffer.writeln('');
     }
 
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
     if (_mejorCotizacion != null && _mejorCotizacion!.total > 0) {
       buffer.writeln(
-        '💰 *Total estimado:* \$${_mejorCotizacion!.total.toStringAsFixed(2)} MXN (${_mejorCotizacion!.nombreSupermercado})',
+        '💰 *TOTAL PRESUPUESTO:* \$${_mejorCotizacion!.total.toStringAsFixed(2)} MXN',
       );
+      buffer.writeln('🏷️ Estimado en: ${_mejorCotizacion!.nombreSupermercado}');
+    } else {
+      buffer.writeln('💰 Total de artículos: ${items.length}');
     }
 
-    buffer.writeln('\n_Generado con Jitomate y Cebolla_ 🍅🧅');
+    buffer.writeln('\n_Generado automáticamente con Jitomate y Cebolla_ 🍅🧅');
+    buffer.writeln('👉 https://www.jitomateycebolla.com/');
+    return buffer.toString();
+  }
 
-    final texto = buffer.toString();
-    final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(texto)}');
-
-    try {
-      final bool lanzado = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
+  void _mostrarMenuExportarTicket(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu lista de compras está vacía.')),
       );
-      if (!lanzado) {
-        await SharePlus.instance.share(ShareParams(text: texto));
-      }
-    } catch (_) {
-      try {
-        await SharePlus.instance.share(ShareParams(text: texto));
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('No se pudo compartir la lista: $e')),
-          );
-        }
-      }
+      return;
     }
+
+    final texto = _generarTextoTicketSuper(items);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E2022),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.receipt_long_rounded, color: Colors.greenAccent, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exportar Ticket de Súper',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+                    ),
+                    Text(
+                      'Formato con casillas [ ] y precios estimados',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.06),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFF25D366),
+                child: Icon(Icons.chat_bubble_outline, color: Colors.white, size: 20),
+              ),
+              title: const Text('Enviar por WhatsApp 📲', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Comparte la lista ordenada con casillas para tu familia', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(texto)}');
+                try {
+                  final lanzado = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (!lanzado) {
+                    await SharePlus.instance.share(ShareParams(text: texto, subject: 'Lista de compras Jitomate y Cebolla'));
+                  }
+                } catch (_) {
+                  await SharePlus.instance.share(ShareParams(text: texto, subject: 'Lista de compras Jitomate y Cebolla'));
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.06),
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blueAccent,
+                child: Icon(Icons.copy_rounded, color: Colors.white, size: 20),
+              ),
+              title: const Text('Copiar Ticket al Portapapeles 📋', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Pega la lista en cualquier app de notas o mensajería', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await Clipboard.setData(ClipboardData(text: texto));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.greenAccent),
+                          SizedBox(width: 8),
+                          Text('¡Ticket copiado al portapapeles! 📋'),
+                        ],
+                      ),
+                      backgroundColor: Color(0xFF1E2022),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              tileColor: Colors.white.withValues(alpha: 0.06),
+              leading: const CircleAvatar(
+                backgroundColor: Colors.deepOrange,
+                child: Icon(Icons.share_rounded, color: Colors.white, size: 20),
+              ),
+              title: const Text('Compartir con otra Aplicación 📤', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Telegram, Correo, Slack o imprimir', style: TextStyle(color: Colors.white70, fontSize: 11.5)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await SharePlus.instance.share(ShareParams(text: texto, subject: 'Ticket de compras Jitomate y Cebolla'));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _construirBarraPresupuesto(List<Map<String, dynamic>> items) {
@@ -1521,11 +1640,11 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             icon: const Icon(Icons.storefront, color: Colors.white),
             onPressed: _estaCargando ? null : mostrarModalCotizaciones,
           ),
-          // 💬 Compartir por WhatsApp
+          // 🧾 Exportar Ticket / Compartir Lista Inteligente (Mejora 4)
           IconButton(
-            tooltip: 'Compartir por WhatsApp',
+            tooltip: 'Exportar Ticket / Compartir Lista',
             icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: () => _compartirListaPorWhatsApp(_ultimosItems),
+            onPressed: () => _mostrarMenuExportarTicket(_ultimosItems),
           ),
           // 🗑️ Botón para vaciar toda la lista
           IconButton(

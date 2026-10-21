@@ -1545,19 +1545,39 @@ class ConversorUnidades {
                 .single();
             idGen = nuevoGen['id_ingrediente'];
 
-            // Asignar precios estimados para los 3 supermercados
-            final double p1 = (25 + (item.nombre.length % 20)).toDouble();
+            // Asignar precios estimados calibrados para los 4 supermercados
+            final String cat = determinarCategoria(item.nombre);
+            double baseCat = 28.0;
+            if (cat == 'Carnes y Aves') {
+              baseCat = 95.0;
+            } else if (cat == 'Pescados y Mariscos') {
+              baseCat = 110.0;
+            } else if (cat == 'Lácteos y Huevos') {
+              baseCat = 42.0;
+            } else if (cat == 'Frutas y Verduras') {
+              baseCat = 28.0;
+            } else if (cat == 'Panadería y Tortillería') {
+              baseCat = 24.0;
+            } else if (cat == 'Especias y Condimentos') {
+              baseCat = 18.0;
+            }
+            final double p1 = baseCat;
             await supabase.from('precios_supermercado').insert([
               {'id_ingrediente': idGen, 'id_supermercado': 1, 'precio': p1},
               {
                 'id_ingrediente': idGen,
                 'id_supermercado': 2,
-                'precio': (p1 * 0.95).roundToDouble(),
+                'precio': ((p1 * 0.95) * 100).round() / 100.0,
               },
               {
                 'id_ingrediente': idGen,
                 'id_supermercado': 3,
-                'precio': (p1 * 1.08).roundToDouble(),
+                'precio': ((p1 * 1.08) * 100).round() / 100.0,
+              },
+              {
+                'id_ingrediente': idGen,
+                'id_supermercado': 4,
+                'precio': ((p1 * 0.82) * 100).round() / 100.0,
               },
             ]);
           }

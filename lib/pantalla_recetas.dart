@@ -14,6 +14,8 @@ import 'menu_lateral.dart';
 import 'servicio_admin.dart';
 import 'servicio_recetas.dart';
 import 'servicio_cocina_express.dart';
+import 'servicio_despensa.dart';
+import 'perfiles_nutricionales.dart';
 import 'pantalla_carga_masiva_recetas.dart';
 import 'dialogo_manifiesto_bienvenida.dart';
 import 'dialogo_busqueda_spotlight.dart';
@@ -62,6 +64,64 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   // 🧊 Búsqueda por ingredientes disponibles ("¿Qué cocino con lo que tengo?")
   final Set<String> _ingredientesSeleccionados = {};
   List<String> _ingredientesDespensa = [];
+  final Map<int, ResultadoMatchDespensa> _cacheMatchDespensa = {};
+
+  Future<void> _cargarDespensaSilenciosa() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('despensa_usuario')
+          .select('nombre');
+      final List items = data as List;
+      final list = items
+          .map((e) => (e['nombre'] ?? '').toString().trim())
+          .where((n) => n.isNotEmpty)
+          .toList();
+      if (mounted) {
+        setState(() {
+          _ingredientesDespensa = list;
+          _cacheMatchDespensa.clear();
+        });
+      }
+    } catch (_) {}
+  }
+
+  ResultadoMatchDespensa _evaluarMatchReceta(Map<String, dynamic> receta) {
+    final int id = receta['id_receta'] as int? ?? 0;
+    if (_cacheMatchDespensa.containsKey(id)) {
+      return _cacheMatchDespensa[id]!;
+    }
+    final res = ServicioDespensa.evaluarMatchReceta(
+      descripcionReceta: "${receta['descripcion'] ?? ''}\n${receta['instrucciones'] ?? ''}",
+      nombresEnDespensa: _ingredientesDespensa,
+    );
+    if (id > 0) {
+      _cacheMatchDespensa[id] = res;
+    }
+    return res;
+  }
+
+  List<SelloNutricional> _obtenerSellosReceta(Map<String, dynamic> receta) {
+    final desc = "${receta['descripcion'] ?? ''} ${receta['macros'] ?? ''}";
+    final matchCal = RegExp(r'calor[ií]as\s*:\s*(\d+)', caseSensitive: false).firstMatch(desc);
+    final matchProt = RegExp(r'prote[ií]nas?\s*:\s*(\d+)', caseSensitive: false).firstMatch(desc);
+    final matchCarb = RegExp(r'carbohidratos?\s*:\s*(\d+)', caseSensitive: false).firstMatch(desc);
+    final matchGras = RegExp(r'grasas?\s*:\s*(\d+)', caseSensitive: false).firstMatch(desc);
+
+    final int cals = matchCal != null
+        ? int.tryParse(matchCal.group(1) ?? '0') ?? 0
+        : (receta['calorias'] is num ? (receta['calorias'] as num).toInt() : 0);
+    final int prots = matchProt != null ? int.tryParse(matchProt.group(1) ?? '0') ?? 0 : 0;
+    final int carbs = matchCarb != null ? int.tryParse(matchCarb.group(1) ?? '0') ?? 0 : 0;
+    final int gras = matchGras != null ? int.tryParse(matchGras.group(1) ?? '0') ?? 0 : 0;
+
+    return PerfilesNutricionales.calcularSellosNutricionales(
+      calorias: cals,
+      proteinas: prots,
+      carbs: carbs,
+      grasas: gras,
+      titulo: receta['titulo']?.toString(),
+    );
+  }
 
   // 💡 Tarjeta explicativa de inicio (4 Pilares)
   bool _mostrarBannerInicioExplicativo = true;
@@ -72,6 +132,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     if (widget.filtroInicial != null) {
       _filtroAudiencia = widget.filtroInicial!;
     }
+    _cargarDespensaSilenciosa();
     cargarRecetas();
     _cargarPreferenciaBannerInicio();
     _searchController.addListener(_filtrarRecetas);
@@ -469,7 +530,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           return false;
         }
 
-        // Filtro por Audiencia (Oficiales vs Recién Salidas vs Mis Recetas vs Comunidad vs Todas)
+        // Filtro por Audiencia (Oficiales vs Recién Salidas vs Puedo Cocinar Hoy vs Mis Recetas vs Comunidad vs Todas)
         final bool coincideAudiencia;
         switch (_filtroAudiencia) {
           case FiltroAudienciaReceta.oficiales:
@@ -477,6 +538,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             break;
           case FiltroAudienciaReceta.recienSalidas:
             coincideAudiencia = ServicioRecetas.esNovedad(receta);
+            break;
+          case FiltroAudienciaReceta.puedoCocinarHoy:
+            final match = _evaluarMatchReceta(receta);
+            coincideAudiencia = match.listoParaCocinar || match.faltaUno;
             break;
           case FiltroAudienciaReceta.misRecetas:
             coincideAudiencia = ServicioRecetas.esMiReceta(receta);
@@ -499,7 +564,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         return true;
       }).toList();
 
-      if (_ingredientesSeleccionados.isNotEmpty) {
+      if (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy) {
+        base.sort((a, b) {
+          final mA = _evaluarMatchReceta(a);
+          final mB = _evaluarMatchReceta(b);
+          // Priorizar 100% disponibles sobre falta 1
+          if (mA.listoParaCocinar && !mB.listoParaCocinar) return -1;
+          if (!mA.listoParaCocinar && mB.listoParaCocinar) return 1;
+          return mB.porcentaje.compareTo(mA.porcentaje);
+        });
+      } else if (_ingredientesSeleccionados.isNotEmpty) {
         base.sort((a, b) {
           final cA = _contarCoincidenciasIngredientes(a);
           final cB = _contarCoincidenciasIngredientes(b);
@@ -2233,6 +2307,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
                     final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
                     final int countComunidad = todasLasRecetas.where(ServicioRecetas.esComunidad).length;
+                    final int countPuedoCocinar = todasLasRecetas.where((r) {
+                      final m = _evaluarMatchReceta(r);
+                      return m.listoParaCocinar || m.faltaUno;
+                    }).length;
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2255,6 +2333,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 filtro: FiltroAudienciaReceta.recienSalidas,
                                 colorActivo: const Color(0xFFE65100),
                                 fondoActivo: const Color(0xFFFFF3E0),
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: '🟢 Puedo cocinar hoy ($countPuedoCocinar)',
+                                filtro: FiltroAudienciaReceta.puedoCocinarHoy,
+                                colorActivo: const Color(0xFF2E7D32),
+                                fondoActivo: const Color(0xFFE8F5E9),
                               ),
                               _construirChipAudiencia(
                                 etiqueta: '👨‍🍳 Mis Creaciones ($countMisRecetas)',
@@ -2597,26 +2681,35 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             Icon(
               _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? Icons.local_fire_department_outlined
-                  : Icons.search_off,
+                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                      ? Icons.kitchen_outlined
+                      : Icons.search_off),
               size: 70,
               color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? Colors.orange.shade400
-                  : Colors.grey[400],
+                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                      ? Colors.teal.shade400
+                      : Colors.grey[400]),
             ),
             const SizedBox(height: 10),
             Text(
               _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? '¡Muy pronto nuevas recetas recién salidas del sartén!'
-                  : 'No se encontraron recetas con los filtros aplicados',
+                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                      ? 'No hay recetas completas con tu despensa actual'
+                      : 'No se encontraron recetas con los filtros aplicados'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
+                fontWeight: (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas ||
+                        _filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy)
                     ? FontWeight.bold
                     : FontWeight.normal,
                 color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                     ? Colors.brown.shade800
-                    : Colors.grey,
+                    : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                        ? Colors.teal.shade900
+                        : Colors.grey),
               ),
             ),
             if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
@@ -2636,6 +2729,31 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 },
                 icon: const Icon(Icons.star_rounded, size: 18),
                 label: const Text('Explorar Catálogo Oficial'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD32F2F),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ] else if (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Registra tus alimentos en "Mi Despensa" o explora el catálogo para ver recetas faltantes.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _filtroAudiencia = FiltroAudienciaReceta.todas;
+                    _filtrarRecetas();
+                  });
+                },
+                icon: const Icon(Icons.menu_book_rounded, size: 18),
+                label: const Text('Ver todas las recetas'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD32F2F),
                   foregroundColor: Colors.white,
@@ -3136,6 +3254,89 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       ],
                     ),
                   ),
+                // 🟢 Sello de Match con Mi Despensa (Mejora 3)
+                () {
+                  final m = _evaluarMatchReceta(receta);
+                  if (_ingredientesDespensa.isNotEmpty && m.totalPrincipales > 0) {
+                    if (m.listoParaCocinar) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF81C784), width: 0.8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle_rounded, size: 10.5, color: Color(0xFF2E7D32)),
+                            SizedBox(width: 3),
+                            Text(
+                              '🟢 ¡Tienes todo!',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B5E20),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (m.faltaUno) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFD54F), width: 0.8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.shopping_basket_outlined, size: 10.5, color: Color(0xFFF57F17)),
+                            const SizedBox(width: 3),
+                            Text(
+                              '🟡 Falta 1: ${m.faltantes.first}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE65100),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  }
+                  return const SizedBox.shrink();
+                }(),
+                // 🏷️ Sellos y Semáforo Nutricional Automático (Mejora 5)
+                ...() {
+                  final sellos = _obtenerSellosReceta(receta);
+                  return sellos.take(2).map((s) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: s.colorFondo,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: s.colorTexto.withValues(alpha: 0.3), width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(s.emoji, style: const TextStyle(fontSize: 10)),
+                        const SizedBox(width: 3),
+                        Text(
+                          s.etiqueta,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: s.colorTexto,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )).toList();
+                }(),
                 if (_ingredientesSeleccionados.isNotEmpty)
                   Builder(
                     builder: (context) {

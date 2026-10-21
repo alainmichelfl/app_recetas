@@ -2,6 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'conversor_unidades.dart';
 
+class ResultadoMatchDespensa {
+  final int totalPrincipales;
+  final int disponibles;
+  final List<String> faltantes;
+  final double porcentaje;
+
+  const ResultadoMatchDespensa({
+    required this.totalPrincipales,
+    required this.disponibles,
+    required this.faltantes,
+    required this.porcentaje,
+  });
+
+  bool get listoParaCocinar => faltantes.isEmpty && totalPrincipales > 0;
+  bool get faltaUno => faltantes.length == 1;
+}
+
 class ServicioDespensa {
   ServicioDespensa._();
 
@@ -165,5 +182,56 @@ class ServicioDespensa {
     }
 
     return resultado;
+  }
+
+  /// Analiza qué tan disponible está una receta con base en la despensa actual del usuario.
+  static ResultadoMatchDespensa evaluarMatchReceta({
+    required String descripcionReceta,
+    required List<String> nombresEnDespensa,
+  }) {
+    final ingReceta = _extraerIngredientesDeTexto(descripcionReceta, 1.0);
+    // Filtrar ingredientes principales (excluyendo agua y especias comunes de alacena)
+    final principales = ingReceta.where((i) {
+      final String n = (i['nombre'] ?? '').toString();
+      if (ConversorUnidades.esAgua(n)) return false;
+      if (ConversorUnidades.esEspecia(n)) return false;
+      return true;
+    }).toList();
+
+    if (principales.isEmpty) {
+      return const ResultadoMatchDespensa(
+        totalPrincipales: 0,
+        disponibles: 0,
+        faltantes: [],
+        porcentaje: 0.0,
+      );
+    }
+
+    int disp = 0;
+    final List<String> faltantes = [];
+
+    for (var ing in principales) {
+      final String nombreIng = ing['nombre'].toString();
+      bool encontrado = false;
+      for (var enDesp in nombresEnDespensa) {
+        if (ConversorUnidades.nombresCoinciden(enDesp, nombreIng)) {
+          encontrado = true;
+          break;
+        }
+      }
+      if (encontrado) {
+        disp++;
+      } else {
+        faltantes.add(nombreIng);
+      }
+    }
+
+    final double pct = principales.isNotEmpty ? (disp / principales.length) : 0.0;
+    return ResultadoMatchDespensa(
+      totalPrincipales: principales.length,
+      disponibles: disp,
+      faltantes: faltantes,
+      porcentaje: pct,
+    );
   }
 }

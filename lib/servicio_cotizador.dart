@@ -154,40 +154,33 @@ class ServicioCotizador {
           }
         }
 
-        // Si no hay precio en DB para este súper o ingrediente, estimar referencia de anaquel
-        if (costoUnitario <= 0.0) {
-          final String cat = ConversorUnidades.determinarCategoria(nombreItem);
-          double baseRef = 28.0;
-          if (cat == 'Carnes y Aves') {
-            baseRef = 85.0;
-          } else if (cat == 'Pescados y Mariscos') {
-            baseRef = 95.0;
-          } else if (cat == 'Lácteos y Huevos') {
-            baseRef = 38.0;
-          } else if (cat == 'Frutas y Verduras') {
-            baseRef = 24.0;
-          } else if (cat == 'Panadería y Tortillería') {
-            baseRef = 22.0;
-          } else if (cat == 'Especias y Condimentos') {
-            baseRef = 16.0;
-          }
-          final double factorSuper = idSuper == 4 ? 0.85 : (idSuper == 3 ? 1.08 : (idSuper == 2 ? 0.95 : 1.0));
-          costoUnitario = (baseRef * factorSuper * 100).round() / 100.0;
-        }
+        // Calibrar y sanear precios contra valores mayoristas anómalos o faltantes
+        costoUnitario = calibrarPrecioUnitario(nombreItem, idSuper, costoUnitario);
 
-        // Ajuste proporcional para frutas/verduras por kilo y cartones de huevo cuando la unidad es "pza"
+        // Ajuste proporcional para frutas/verduras por kilo, carnes, gramos y huevos
         final String u = ConversorUnidades.extraerUnidadSegura(
           item['cantidad'],
           nombreItem,
         );
         double multiplicador = cantidadLimpia;
-        if (ConversorUnidades.sinAcentos(nombreItem).contains('huevo')) {
+        final cleanNom = ConversorUnidades.sinAcentos(nombreItem);
+
+        if (cleanNom.contains('huevo')) {
           // De 1 a 18 huevos o hasta 1 cartón, siempre es exactamente 1 cartera / cartón
           if (cantidadLimpia <= 18.0) {
             multiplicador = 1.0;
           } else {
             multiplicador = (cantidadLimpia / 18.0).ceilToDouble().clamp(1.0, 3.0);
           }
+        } else if (u == 'g' || u == 'gr' || u == 'gramo' || u == 'gramos') {
+          // Si la cantidad viene en gramos de receta (>25g), convertir a fracción de kg para el precio de súper
+          multiplicador = (cantidadLimpia / 1000.0).clamp(0.05, 50.0);
+        } else if (u == 'ml' || u == 'mililitros') {
+          // Si viene en mililitros (>50ml), convertir a fracción de litro
+          multiplicador = (cantidadLimpia / 1000.0).clamp(0.1, 50.0);
+        } else if (u == 'cda' || u == 'cdita' || u == 'pizca' || u == 'cucharada' || u == 'cucharadita') {
+          // Especias en porción mínima: se adquiere 1 pieza/frasco en el supermercado
+          multiplicador = 1.0;
         } else if (u == 'pza') {
           if (ConversorUnidades.esFrutaOVerduraPorKilo(nombreItem)) {
             multiplicador = cantidadLimpia *
@@ -249,6 +242,93 @@ class ServicioCotizador {
       return 4;
     }
     return 1; // Default: Walmart / Bodega Aurrera
+  }
+
+  /// Calibra y sanea el precio unitario en caso de faltar en DB o de haber sido registrado
+  /// erróneamente con costo mayorista por bulto/costal/kilo en lugar de la presentación de anaquel.
+  static double calibrarPrecioUnitario(String nombreItem, int idSuper, double precioDB) {
+    final clean = ConversorUnidades.sinAcentos(nombreItem).trim();
+    final double factorSuper = idSuper == 4 ? 0.82 : (idSuper == 3 ? 1.08 : (idSuper == 2 ? 0.95 : 1.0));
+
+    // 1. Detección y calibración de especias y condimentos secos
+    final bool esEspecia = ConversorUnidades.esEspecia(nombreItem) ||
+        clean.contains('canela') ||
+        clean.contains('pimienta') ||
+        clean.contains('oregano') ||
+        clean.contains('comino') ||
+        clean.contains('clavo') ||
+        clean.contains('paprika') ||
+        clean.contains('pimenton') ||
+        clean.contains('curcuma') ||
+        clean.contains('achiote');
+
+    if (esEspecia) {
+      if (precioDB <= 0.0 || precioDB > 35.0) {
+        // En supermercado mexicano, un frasco o sobre de especia ronda $14 - $22 MXN
+        return ((18.0 * factorSuper) * 100).round() / 100.0;
+      }
+      return precioDB;
+    }
+
+    // 2. Detección de frutos secos y semillas (bolsitas 100g-250g)
+    final bool esFrutoSeco = clean.contains('nuez') ||
+        clean.contains('almendra') ||
+        clean.contains('chia') ||
+        clean.contains('ajonjoli') ||
+        clean.contains('cacahuate') ||
+        clean.contains('pepitas') ||
+        clean.contains('semillas de calabaza');
+
+    if (esFrutoSeco) {
+      if (precioDB <= 0.0 || precioDB > 75.0) {
+        // Bolsa de consumo estándar 100g de nueces o almendras ronda $45 - $60 MXN
+        return ((55.0 * factorSuper) * 100).round() / 100.0;
+      }
+      return precioDB;
+    }
+
+    // 3. Cacao en polvo / chocolate amargo
+    if (clean.contains('cacao') || clean.contains('chocolate')) {
+      if (precioDB <= 0.0 || precioDB > 65.0) {
+        return ((42.0 * factorSuper) * 100).round() / 100.0;
+      }
+      return precioDB;
+    }
+
+    // 4. Yogurt griego (bote 900g-1kg)
+    if (clean.contains('yogurt') || clean.contains('yogur')) {
+      if (precioDB < 25.0 || precioDB > 75.0) {
+        return ((42.0 * factorSuper) * 100).round() / 100.0;
+      }
+      return precioDB;
+    }
+
+    // 5. Si no había precio en DB, deducir por categoría de canasta básica mexicana
+    if (precioDB <= 0.0) {
+      final String cat = ConversorUnidades.determinarCategoria(nombreItem);
+      double baseRef = 28.0;
+      if (cat == 'Carnes y Aves') {
+        baseRef = 85.0;
+      } else if (cat == 'Pescados y Mariscos') {
+        baseRef = 95.0;
+      } else if (cat == 'Lácteos y Huevos') {
+        baseRef = 38.0;
+      } else if (cat == 'Frutas y Verduras') {
+        baseRef = 24.0;
+      } else if (cat == 'Panadería y Tortillería') {
+        baseRef = 22.0;
+      } else if (cat == 'Especias y Condimentos') {
+        baseRef = 16.0;
+      }
+      return ((baseRef * factorSuper) * 100).round() / 100.0;
+    }
+
+    // 6. Salvaguarda de Central de Abasto: no debe ser más cara que el anaquel de autoservicio
+    if (idSuper == 4 && precioDB > 150.0 && !clean.contains('bistec') && !clean.contains('arrachera') && !clean.contains('salmon')) {
+      return ((80.0 * 0.82) * 100).round() / 100.0;
+    }
+
+    return precioDB;
   }
 
   /// Calcula el nuevo precio ponderado (40% histórico + 60% nuevo ticket)

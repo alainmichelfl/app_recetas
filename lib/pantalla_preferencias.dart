@@ -8,6 +8,7 @@ import 'servicio_preferencias.dart';
 import 'servicio_perfil_usuario.dart';
 import 'menu_lateral.dart';
 import 'dialogo_contacto_soporte.dart';
+import 'main.dart';
 
 class PantallaPreferencias extends StatefulWidget {
   const PantallaPreferencias({super.key});
@@ -1157,6 +1158,33 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                           value: notificacionesActivas,
                           onChanged: (val) =>
                               setState(() => notificacionesActivas = val),
+                        ),
+                        const Divider(height: 1),
+                        ValueListenableBuilder<ThemeMode>(
+                          valueListenable: themeModeNotifier,
+                          builder: (context, mode, _) {
+                            final bool esOscuro = mode == ThemeMode.dark;
+                            return SwitchListTile(
+                              secondary: Icon(
+                                esOscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                color: esOscuro ? Colors.amber : Colors.indigo,
+                              ),
+                              title: const Text(
+                                'Modo Nocturno Culinario 🌙',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Tema oscuro descansado para tus ojos al preparar la cena o cocinar de noche.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              activeThumbColor: const Color(0xFFD32F2F),
+                              value: esOscuro,
+                              onChanged: (val) => alternarModoOscuro(val),
+                            );
+                          },
                         ),
                       ],
                     ),

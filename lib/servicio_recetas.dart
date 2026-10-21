@@ -8,6 +8,7 @@ enum FiltroAudienciaReceta {
   todas,
   oficiales,
   recienSalidas,
+  puedoCocinarHoy,
   misRecetas,
   comunidad,
 }

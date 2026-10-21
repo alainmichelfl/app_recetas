@@ -1,3 +1,22 @@
+import 'package:flutter/material.dart';
+
+/// Representa un sello de calidad nutricional y semáforo dietético calculado automáticamente
+class SelloNutricional {
+  final String etiqueta;
+  final String emoji;
+  final Color colorTexto;
+  final Color colorFondo;
+  final String descripcionCorta;
+
+  const SelloNutricional({
+    required this.etiqueta,
+    required this.emoji,
+    required this.colorTexto,
+    required this.colorFondo,
+    required this.descripcionCorta,
+  });
+}
+
 /// Fuente única de verdad para objetivos calóricos y estilos de dieta.
 /// Lo usan Preferencias, Planeador, Salud y Chef IA.
 class PerfilesNutricionales {
@@ -217,5 +236,73 @@ class PerfilesNutricionales {
       if (_contienePalabra(t, termino)) return false;
     }
     return true;
+  }
+
+  /// Calcula dinámicamente los sellos nutricionales y semáforo dietético de una receta
+  static List<SelloNutricional> calcularSellosNutricionales({
+    required int calorias,
+    required int proteinas,
+    required int carbs,
+    required int grasas,
+    String? titulo,
+  }) {
+    final List<SelloNutricional> sellos = [];
+
+    // 1. Alto en Proteína (> 25g)
+    if (proteinas >= 25) {
+      sellos.add(const SelloNutricional(
+        etiqueta: 'Alto en Proteína',
+        emoji: '🥩',
+        colorTexto: Color(0xFFC62828),
+        colorFondo: Color(0xFFFFEBEE),
+        descripcionCorta: 'Aporta más de 25g de proteína magra',
+      ));
+    }
+
+    // 2. Keto / Low-Carb (carbs <= 12g)
+    if (carbs > 0 && carbs <= 12) {
+      sellos.add(const SelloNutricional(
+        etiqueta: 'Keto / Low-Carb',
+        emoji: '🥑',
+        colorTexto: Color(0xFF2E7D32),
+        colorFondo: Color(0xFFE8F5E9),
+        descripcionCorta: 'Máximo 12g de carbohidratos netos',
+      ));
+    }
+
+    // 3. Bajo en Calorías (<= 350 kcal)
+    if (calorias > 0 && calorias <= 350) {
+      sellos.add(const SelloNutricional(
+        etiqueta: 'Ligero / Déficit',
+        emoji: '🥗',
+        colorTexto: Color(0xFF00695C),
+        colorFondo: Color(0xFFE0F2F1),
+        descripcionCorta: 'Menos de 350 kcal por porción',
+      ));
+    }
+
+    // 4. Bajo en Grasa (<= 10g)
+    if (grasas > 0 && grasas <= 10) {
+      sellos.add(const SelloNutricional(
+        etiqueta: 'Bajo en Grasa',
+        emoji: '⚡',
+        colorTexto: Color(0xFFE65100),
+        colorFondo: Color(0xFFFFF3E0),
+        descripcionCorta: 'Menos de 10g de grasa por porción',
+      ));
+    }
+
+    // 5. Apto Diabéticos (carbs <= 20g y bajo impacto calórico)
+    if (carbs > 0 && carbs <= 20 && calorias <= 450) {
+      sellos.add(const SelloNutricional(
+        etiqueta: 'Apto Diabéticos',
+        emoji: '🩺',
+        colorTexto: Color(0xFF1565C0),
+        colorFondo: Color(0xFFE3F2FD),
+        descripcionCorta: 'Índice glucémico controlado y bajo impacto de glucosa',
+      ));
+    }
+
+    return sellos;
   }
 }

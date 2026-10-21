@@ -23,6 +23,7 @@ import 'dialogo_busqueda_spotlight.dart';
 import 'dialogo_onboarding_bienvenida.dart';
 import 'servicio_recordatorios.dart';
 import 'servicio_perfil_usuario.dart';
+import 'main.dart';
 
 /// Menú lateral (Drawer) reutilizable presente en todas las páginas de la app.
 /// Proporciona acceso rápido y consistente a todas las secciones principales.
@@ -811,6 +812,43 @@ class MenuLateral extends StatelessWidget {
                     icono: Icons.tune,
                     colorIcono: const Color(0xFF455A64),
                     pantalla: () => const PantallaPreferencias(),
+                  ),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: themeModeNotifier,
+                    builder: (context, mode, _) {
+                      final bool esOscuro = mode == ThemeMode.dark;
+                      return ListTile(
+                        dense: true,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                        leading: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: esOscuro ? Colors.amber.withValues(alpha: 0.15) : Colors.indigo.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            esOscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                            color: esOscuro ? Colors.amber : Colors.indigo,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          esOscuro ? 'Modo Nocturno Culinario' : 'Modo Claro',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: esOscuro ? Colors.white : Colors.black87,
+                            fontSize: 15,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: esOscuro,
+                          activeThumbColor: const Color(0xFFD32F2F),
+                          onChanged: (val) => alternarModoOscuro(val),
+                        ),
+                        onTap: () => alternarModoOscuro(!esOscuro),
+                      );
+                    },
                   ),
                   ListTile(
                     dense: true,

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pantalla_modo_cocina.dart';
 import 'pantalla_cotizador.dart';
+import 'perfiles_nutricionales.dart';
 import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
 import 'servicio_recetas.dart';
@@ -43,6 +45,12 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
   String? _textoCargado;
   String? _recipeUserId;
 
+  // ⏱️ Temporizador inteligente interactivo de un toque en pasos
+  Timer? _temporizadorPaso;
+  int _segundosRestantesPaso = 0;
+  bool _temporizadorPasoActivo = false;
+  String _tituloPasoTemporizador = '';
+
   MaridajeReceta? _maridaje;
   int _tabMaridaje = 0; // 0: Vino, 1: Destilado, 2: Mocktail
   bool _cargandoSommelierIA = false;
@@ -67,6 +75,242 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     _inicializarDatosReceta();
     _verificarPermisosYReceta();
     _cargarEstadoCocinada(mostrarAvisoAlEntrar: true);
+  }
+
+  @override
+  void dispose() {
+    _temporizadorPaso?.cancel();
+    super.dispose();
+  }
+
+  // =========================================================================
+  // ⏱️ TEMPORIZADOR INTELIGENTE DE 1 TOQUE EN PASOS
+  // =========================================================================
+
+  void _iniciarTemporizadorPaso(int segundos, String titulo) {
+    _temporizadorPaso?.cancel();
+    setState(() {
+      _segundosRestantesPaso = segundos;
+      _tituloPasoTemporizador = titulo;
+      _temporizadorPasoActivo = true;
+    });
+
+    _temporizadorPaso = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_segundosRestantesPaso <= 1) {
+        timer.cancel();
+        setState(() {
+          _segundosRestantesPaso = 0;
+          _temporizadorPasoActivo = false;
+        });
+        _notificarFinTemporizador();
+      } else {
+        setState(() {
+          _segundosRestantesPaso--;
+        });
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.timer, color: Colors.amber, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '⏱️ Temporizador iniciado: $titulo (${_formatearTiempoRestante(segundos)})',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF1E2022),
+      ),
+    );
+  }
+
+  void _alternarPausaTemporizadorPaso() {
+    if (_temporizadorPasoActivo) {
+      _temporizadorPaso?.cancel();
+      setState(() => _temporizadorPasoActivo = false);
+    } else {
+      if (_segundosRestantesPaso <= 0) return;
+      setState(() => _temporizadorPasoActivo = true);
+      _temporizadorPaso = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        if (_segundosRestantesPaso <= 1) {
+          timer.cancel();
+          setState(() {
+            _segundosRestantesPaso = 0;
+            _temporizadorPasoActivo = false;
+          });
+          _notificarFinTemporizador();
+        } else {
+          setState(() => _segundosRestantesPaso--);
+        }
+      });
+    }
+  }
+
+  void _cancelarTemporizadorPaso() {
+    _temporizadorPaso?.cancel();
+    setState(() {
+      _segundosRestantesPaso = 0;
+      _temporizadorPasoActivo = false;
+      _tituloPasoTemporizador = '';
+    });
+  }
+
+  void _notificarFinTemporizador() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Text('🔔', style: TextStyle(fontSize: 26)),
+            SizedBox(width: 8),
+            Text('¡Tiempo cumplido!'),
+          ],
+        ),
+        content: Text(
+          'El tiempo para "$_tituloPasoTemporizador" ha terminado. Revisa tu platillo en la estufa u horno.',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD32F2F),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido 👍'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatearTiempoRestante(int totalSegundos) {
+    final int minutos = totalSegundos ~/ 60;
+    final int segundos = totalSegundos % 60;
+    return '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
+  }
+
+  int? _extraerSegundosDePaso(String texto) {
+    final t = texto.toLowerCase();
+    final matchHora = RegExp(r'(\d+(?:\.\d+)?)\s*(?:horas?|hrs?|h)\b').firstMatch(t);
+    if (matchHora != null) {
+      final v = double.tryParse(matchHora.group(1) ?? '');
+      if (v != null) return (v * 3600).round();
+    }
+    final matchMin = RegExp(r'(\d+(?:\.\d+)?)\s*(?:minutos?|mins?|min)\b').firstMatch(t);
+    if (matchMin != null) {
+      final v = double.tryParse(matchMin.group(1) ?? '');
+      if (v != null) return (v * 60).round();
+    }
+    final matchSeg = RegExp(r'(\d+(?:\.\d+)?)\s*(?:segundos?|segs?|s)\b').firstMatch(t);
+    if (matchSeg != null) {
+      final v = double.tryParse(matchSeg.group(1) ?? '');
+      if (v != null) return v.round();
+    }
+    return null;
+  }
+
+  String _formatearDuracionChip(int seg) {
+    if (seg >= 3600) {
+      final h = seg / 3600.0;
+      return h == h.toInt() ? '${h.toInt()} h' : '${h.toStringAsFixed(1)} h';
+    }
+    final m = (seg / 60.0).round();
+    return '$m min';
+  }
+
+  List<String> _extraerPasosIndividuales(String bloque) {
+    if (bloque.trim().isEmpty) return [];
+    final lineas = bloque.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+    if (lineas.isEmpty) return [];
+
+    final List<String> pasos = [];
+    String bufferActual = '';
+
+    for (var linea in lineas) {
+      final bool esNuevoPaso = RegExp(r'^(?:paso\s*\d+|[0-9]+[\.\)\-]|•|\*)\s+', caseSensitive: false).hasMatch(linea);
+      if (esNuevoPaso) {
+        if (bufferActual.isNotEmpty) {
+          pasos.add(bufferActual);
+        }
+        bufferActual = linea.replaceFirst(RegExp(r'^(?:paso\s*\d+|[0-9]+[\.\)\-]|•|\*)\s+', caseSensitive: false), '').trim();
+      } else {
+        if (bufferActual.isEmpty) {
+          bufferActual = linea;
+        } else {
+          bufferActual += ' $linea';
+        }
+      }
+    }
+    if (bufferActual.isNotEmpty) {
+      pasos.add(bufferActual);
+    }
+    return pasos.isNotEmpty ? pasos : [bloque];
+  }
+
+  // =========================================================================
+  // 📲 COMPARTIR RECETA GOURMET
+  // =========================================================================
+
+  Future<void> _compartirRecetaGourmet({
+    required String bloqueNutricional,
+    required List<String> listaIngredientes,
+    required String bloqueInstrucciones,
+  }) async {
+    final sb = StringBuffer();
+    sb.writeln('🍅🧅 *${widget.titulo}*');
+    sb.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    sb.writeln('🍽️ *Porciones:* $porcionesActuales personas');
+    if (bloqueNutricional.isNotEmpty) {
+      sb.writeln('🔥 *Información:* ${bloqueNutricional.replaceAll('\n', ' • ')}');
+    }
+    sb.writeln('');
+    sb.writeln('🛒 *INGREDIENTES:*');
+    for (var ing in listaIngredientes) {
+      final itemLimpio = ing.replaceFirst(RegExp(r'^[\-\*]\s*'), '').trim();
+      if (itemLimpio.isNotEmpty) {
+        sb.writeln('• $itemLimpio');
+      }
+    }
+    sb.writeln('');
+    if (bloqueInstrucciones.isNotEmpty) {
+      sb.writeln('👩‍🍳 *PREPARACIÓN:*');
+      sb.writeln(bloqueInstrucciones.trim());
+      sb.writeln('');
+    }
+    sb.writeln('✨ _Descubre más recetas gourmet y saludables en:_');
+    sb.writeln('👉 https://www.jitomateycebolla.com/');
+
+    final texto = sb.toString();
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: texto,
+          subject: 'Receta: ${widget.titulo} | Jitomate y Cebolla',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo compartir la receta: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _verificarPermisosYReceta() async {
@@ -481,6 +725,27 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white30, width: 1.0),
                   ),
+                  child: const Icon(
+                    Icons.share_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                tooltip: 'Compartir Receta Gourmet 📲',
+                onPressed: () => _compartirRecetaGourmet(
+                  bloqueNutricional: bloqueNutricional,
+                  listaIngredientes: listaIngredientes,
+                  bloqueInstrucciones: bloqueInstrucciones,
+                ),
+              ),
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30, width: 1.0),
+                  ),
                   child: Icon(
                     _registroCocina != null
                         ? Icons.check_circle
@@ -745,7 +1010,85 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    // 🏷️ SEMÁFORO Y SELLOS NUTRICIONALES AUTOMÁTICOS
+                    () {
+                      final matchCal = RegExp(r'calor[ií]as\s*:\s*(\d+)', caseSensitive: false).firstMatch(bloqueNutricional);
+                      final matchProt = RegExp(r'prote[ií]nas?\s*:\s*(\d+)', caseSensitive: false).firstMatch(bloqueNutricional);
+                      final matchCarb = RegExp(r'carbohidratos?\s*:\s*(\d+)', caseSensitive: false).firstMatch(bloqueNutricional);
+                      final matchGras = RegExp(r'grasas?\s*:\s*(\d+)', caseSensitive: false).firstMatch(bloqueNutricional);
+
+                      final int cals = matchCal != null ? int.tryParse(matchCal.group(1) ?? '0') ?? 0 : 0;
+                      final int prots = matchProt != null ? int.tryParse(matchProt.group(1) ?? '0') ?? 0 : 0;
+                      final int carbs = matchCarb != null ? int.tryParse(matchCarb.group(1) ?? '0') ?? 0 : 0;
+                      final int gras = matchGras != null ? int.tryParse(matchGras.group(1) ?? '0') ?? 0 : 0;
+
+                      final sellos = PerfilesNutricionales.calcularSellosNutricionales(
+                        calorias: cals,
+                        proteinas: prots,
+                        carbs: carbs,
+                        grasas: gras,
+                        titulo: widget.titulo,
+                      );
+
+                      if (sellos.isEmpty) return const SizedBox.shrink();
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.verified_rounded, size: 16, color: Color(0xFF2E7D32)),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Sellos y Semáforo Dietético Calibrado',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2E7D32),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: sellos.map((sello) {
+                                return Tooltip(
+                                  message: sello.descripcionCorta,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: sello.colorFondo,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: sello.colorTexto.withValues(alpha: 0.35)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(sello.emoji, style: const TextStyle(fontSize: 14)),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          sello.etiqueta,
+                                          style: TextStyle(
+                                            color: sello.colorTexto,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      );
+                    }(),
                   ],
 
                   // ⏱️ TARJETA DE TIEMPO REAL (ACTIVO VS. PASIVO) Y CONVENIENCIA
@@ -1250,14 +1593,14 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
 
                   const SizedBox(height: 35),
 
-                  // 🍳 SECCIÓN PREPARACIÓN
+                  // 🍳 SECCIÓN PREPARACIÓN CON TEMPORIZADORES DE 1 TOQUE
                   if (bloqueInstrucciones.isNotEmpty) ...[
                     Row(
                       children: [
                         Icon(Icons.soup_kitchen, color: rojoJitomate),
                         const SizedBox(width: 10),
                         const Text(
-                          'Preparación',
+                          'Preparación Paso a Paso',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -1266,15 +1609,104 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 6),
                     Text(
-                      bloqueInstrucciones,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        height: 1.6,
-                        color: Colors.black87,
-                      ),
+                      'Toca cualquier temporizador ⏱️ para iniciar la cuenta regresiva en vivo.',
+                      style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                     ),
+                    const SizedBox(height: 15),
+                    ...() {
+                      final pasos = _extraerPasosIndividuales(bloqueInstrucciones);
+                      return List<Widget>.generate(pasos.length, (index) {
+                        final paso = pasos[index];
+                        final seg = _extraerSegundosDePaso(paso);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: rojoJitomate.withValues(alpha: 0.12),
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: rojoJitomate,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      paso,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        height: 1.5,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (seg != null && seg > 0) ...[
+                                const SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: InkWell(
+                                    onTap: () => _iniciarTemporizadorPaso(
+                                      seg,
+                                      'Paso ${index + 1}',
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepOrange.shade50,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: Colors.deepOrange.shade200),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.timer_outlined, size: 16, color: Colors.deepOrange.shade800),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '⏱️ Iniciar ${_formatearDuracionChip(seg)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.deepOrange.shade900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      });
+                    }(),
                   ],
 
                   // 🍷 SOMMELIER IA & CAVA VIRTUAL
@@ -1294,6 +1726,58 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // ⏱️ Banner flotante interactivo del Temporizador en curso
+          if (_segundosRestantesPaso > 0)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E2022),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.amber.shade400, width: 1.2),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 3)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _temporizadorPasoActivo ? Icons.timer : Icons.timer_off_outlined,
+                    color: Colors.amber,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$_tituloPasoTemporizador: ${_formatearTiempoRestante(_segundosRestantesPaso)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
+                    icon: Icon(
+                      _temporizadorPasoActivo ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    onPressed: _alternarPausaTemporizadorPaso,
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
+                    icon: const Icon(Icons.close, color: Colors.white70, size: 18),
+                    onPressed: _cancelarTemporizadorPaso,
+                  ),
+                ],
+              ),
+            ),
           if (_registroCocina != null)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
