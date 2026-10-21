@@ -47,7 +47,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   Set<String> _titulosCocinados = {};
   bool cargando = true;
 
-  FiltroAudienciaReceta _filtroAudiencia = FiltroAudienciaReceta.todas;
+  FiltroAudienciaReceta _filtroAudiencia = FiltroAudienciaReceta.oficiales;
   FiltroExpress _filtroExpress = FiltroExpress.todos;
 
   final TextEditingController _searchController = TextEditingController();
@@ -2012,10 +2012,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       fondoActivo: fondoActivo,
       onTap: () {
         setState(() {
-          if (filtro == FiltroAudienciaReceta.todas) {
-            _filtroAudiencia = FiltroAudienciaReceta.todas;
+          if (filtro == FiltroAudienciaReceta.oficiales) {
+            _filtroAudiencia = FiltroAudienciaReceta.oficiales;
           } else {
-            _filtroAudiencia = seleccionado ? FiltroAudienciaReceta.todas : filtro;
+            _filtroAudiencia = seleccionado ? FiltroAudienciaReceta.oficiales : filtro;
           }
           _filtrarRecetas();
         });
@@ -2397,12 +2397,6 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 filtro: FiltroAudienciaReceta.caninas,
                                 colorActivo: const Color(0xFF6D4C41),
                                 fondoActivo: const Color(0xFFEFEBE9),
-                              ),
-                              _construirChipAudiencia(
-                                etiqueta: 'Todas (${todasLasRecetas.length})',
-                                filtro: FiltroAudienciaReceta.todas,
-                                colorActivo: Colors.grey.shade900,
-                                fondoActivo: Colors.grey.shade200,
                               ),
                             ],
                           ),
@@ -2842,12 +2836,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               ElevatedButton.icon(
                 onPressed: () {
                   setState(() {
-                    _filtroAudiencia = FiltroAudienciaReceta.todas;
+                    _filtroAudiencia = FiltroAudienciaReceta.oficiales;
                     _filtrarRecetas();
                   });
                 },
-                icon: const Icon(Icons.menu_book_rounded, size: 18),
-                label: const Text('Ver todas las recetas'),
+                icon: const Icon(Icons.star_rounded, size: 18),
+                label: const Text('Ver Catálogo Oficial'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD32F2F),
                   foregroundColor: Colors.white,
@@ -2888,7 +2882,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
               OutlinedButton.icon(
                 onPressed: () {
                   setState(() {
-                    _filtroAudiencia = FiltroAudienciaReceta.todas;
+                    _filtroAudiencia = FiltroAudienciaReceta.oficiales;
                     categoriaSeleccionada = 'Todos';
                     _filtroExpress = FiltroExpress.todos;
                     _ingredientesSeleccionados.clear();
@@ -3228,12 +3222,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         ),
         title: Text(
           titulo,
-          maxLines: 2,
+          maxLines: 3,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 15.5,
-            height: 1.25,
+            fontSize: 15.0,
+            height: 1.22,
           ),
         ),
         subtitle: Column(
