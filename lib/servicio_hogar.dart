@@ -425,9 +425,11 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
   Widget build(BuildContext context) {
     if (_cargando) return const SizedBox.shrink();
 
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     if (_hogar == null) {
       return Container(
-        margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+        margin: EdgeInsets.fromLTRB(12, isLandscape ? 4 : 10, 12, isLandscape ? 2 : 4),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.teal.shade50, Colors.green.shade50],
@@ -439,37 +441,44 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
           borderRadius: BorderRadius.circular(14),
           onTap: _abrirModal,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: isLandscape ? 6 : 10),
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 18,
+                  radius: isLandscape ? 15 : 18,
                   backgroundColor: Colors.teal.shade700,
-                  child: const Icon(
+                  child: Icon(
                     Icons.family_restroom_rounded,
                     color: Colors.white,
-                    size: 20,
+                    size: isLandscape ? 17 : 20,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '¿Compras y cocinas en familia? 👨‍👩‍👧‍👦',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
-                          color: Colors.teal.shade900,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '¿Compras y cocinas en familia? 👨‍👩‍👧‍👦',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isLandscape ? 12.5 : 13.5,
+                            color: Colors.teal.shade900,
+                          ),
                         ),
                       ),
                       Text(
                         'Crea o únete a un Hogar para compartir despensa y lista del súper en vivo.',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: isLandscape ? 10.5 : 11.5,
                           color: Colors.teal.shade800,
                         ),
+                        maxLines: isLandscape ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -481,12 +490,15 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
                     color: Colors.teal.shade700,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Vincular',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Vincular',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -500,7 +512,7 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
     final numMiembros = _hogar!.miembros.isEmpty ? 1 : _hogar!.miembros.length;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      margin: EdgeInsets.fromLTRB(12, isLandscape ? 4 : 10, 12, isLandscape ? 2 : 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.teal.shade800, Colors.teal.shade600],
@@ -518,7 +530,7 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
         borderRadius: BorderRadius.circular(14),
         onTap: _abrirModal,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: isLandscape ? 6 : 10),
           child: Row(
             children: [
               Container(
@@ -527,29 +539,32 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
                   color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.home_rounded,
                   color: Colors.white,
-                  size: 20,
+                  size: isLandscape ? 18 : 20,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
                         Flexible(
-                          child: Text(
-                            _hogar!.nombre,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _hogar!.nombre,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -579,8 +594,10 @@ class _BannerHogarFamiliarState extends State<BannerHogarFamiliar> {
                       '$numMiembros integrante${numMiembros == 1 ? '' : 's'} • Despensa y Carrito sincronizados en vivo',
                       style: TextStyle(
                         color: Colors.teal.shade50,
-                        fontSize: 11.5,
+                        fontSize: isLandscape ? 10.5 : 11.5,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

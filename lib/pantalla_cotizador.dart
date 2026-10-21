@@ -1303,9 +1303,13 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                       onPressed: () => Scaffold.of(ctx).openDrawer(),
                     ),
                   ),
-        title: const Text(
-          'Cotizador Dinámico 💰',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Cotizador Dinámico 💰',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -1327,166 +1331,186 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
       ),
       bottomNavigationBar: seleccionandoReceta || cargando
           ? null
-          : Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: Offset(0, -5),
+          : Builder(
+              builder: (ctx) {
+                final isLandscape = MediaQuery.of(ctx).orientation == Orientation.landscape;
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: isLandscape ? 8 : 16,
                   ),
-                ],
-              ),
-              child: SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (recetaActualId == -1) ...[
-                      Container(
-                        width: double.infinity,
-                        constraints: const BoxConstraints(minHeight: 52),
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            double mejorPrecio = double.infinity;
-                            String mejorSuper = 'Walmart';
-                            for (var s in listaSupermercados) {
-                              double t = calcularTotalDe(s);
-                              if (t > 0 && t < mejorPrecio) {
-                                mejorPrecio = t;
-                                mejorSuper = s;
-                              }
-                            }
-                            if (mejorPrecio == double.infinity) mejorPrecio = 0.0;
-                            final superFinal = superMasBarato.isNotEmpty ? superMasBarato : mejorSuper;
-                            _transferirMejorPrecioAFinanzas(superFinal, mejorPrecio);
-                          },
-                          icon: const Icon(
-                            Icons.account_balance_wallet,
-                            color: Colors.white,
-                          ),
-                          label: Flexible(
-                            child: Text(
-                              superMasBarato.isNotEmpty
-                                  ? 'Transferir mejor precio ($superMasBarato) a Finanzas'
-                                  : 'Transferir mejor precio a Finanzas',
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              softWrap: true,
-                              style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (recetaActualId == -1) ...[
+                          Container(
+                            width: double.infinity,
+                            constraints: BoxConstraints(minHeight: isLandscape ? 40 : 50),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                double mejorPrecio = double.infinity;
+                                String mejorSuper = 'Walmart';
+                                for (var s in listaSupermercados) {
+                                  double t = calcularTotalDe(s);
+                                  if (t > 0 && t < mejorPrecio) {
+                                    mejorPrecio = t;
+                                    mejorSuper = s;
+                                  }
+                                }
+                                if (mejorPrecio == double.infinity) mejorPrecio = 0.0;
+                                final superFinal = superMasBarato.isNotEmpty ? superMasBarato : mejorSuper;
+                                _transferirMejorPrecioAFinanzas(superFinal, mejorPrecio);
+                              },
+                              icon: const Icon(
+                                Icons.account_balance_wallet,
                                 color: Colors.white,
-                                height: 1.2,
+                              ),
+                              label: Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    superMasBarato.isNotEmpty
+                                        ? 'Transferir mejor precio ($superMasBarato) a Finanzas'
+                                        : 'Transferir mejor precio a Finanzas',
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    softWrap: true,
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepOrange,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context);
-                            } else {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PantallaCarrito(),
+                          SizedBox(height: isLandscape ? 6 : 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: isLandscape ? 40 : 48,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                } else {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const PantallaCarrito(),
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.shopping_cart_outlined,
+                                color: Colors.deepOrange,
+                              ),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Volver a la Lista de Compras',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepOrange,
+                                  ),
                                 ),
-                              );
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.shopping_cart_outlined,
-                            color: Colors.deepOrange,
-                          ),
-                          label: const Text(
-                            'Volver a la Lista de Compras',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepOrange,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.deepOrange),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.deepOrange),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        ] else ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: isLandscape ? 42 : 52,
+                            child: ElevatedButton.icon(
+                              onPressed: _agendarConEstePrecio,
+                              icon: const Icon(
+                                Icons.calendar_month,
+                                color: Colors.white,
+                              ),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Agendar con este precio',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ] else ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton.icon(
-                          onPressed: _agendarConEstePrecio,
-                          icon: const Icon(
-                            Icons.calendar_month,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            'Agendar con este precio',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                          SizedBox(height: isLandscape ? 6 : 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: isLandscape ? 42 : 52,
+                            child: OutlinedButton.icon(
+                              onPressed: guardarSeleccionadosEnCarrito,
+                              icon: const Icon(
+                                Icons.add_shopping_cart,
+                                color: Colors.green,
+                              ),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Guardar lo seleccionado en carrito',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.green, width: 2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: OutlinedButton.icon(
-                          onPressed: guardarSeleccionadosEnCarrito,
-                          icon: const Icon(
-                            Icons.add_shopping_cart,
-                            color: Colors.green,
-                          ),
-                          label: const Text(
-                            'Guardar lo seleccionado en carrito',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.green, width: 2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
       body: cargando
           ? const Center(
@@ -1660,26 +1684,34 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                                 color: Colors.green.shade800,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                'Aviso: ¡Ya has cocinado esta receta anteriormente! 👨‍🍳✅',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade900,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Aviso: ¡Ya has cocinado esta receta anteriormente! 👨‍🍳✅',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green.shade900,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ],
-                      Text(
-                        'Total para: $recetaActualTitulo',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Total para: $recetaActualTitulo',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                       if (recetaActualId != -1) ...[
                         const SizedBox(height: 10),
@@ -1738,72 +1770,84 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                         children: listaSupermercados.map((superm) {
                           final bool esElMasBarato = (superm == superMasBarato);
                           final double totalSuper = totales[superm] ?? 0.0;
-                          return Column(
-                            children: [
-                              Icon(
-                                Icons.storefront,
-                                color: esElMasBarato
-                                    ? Colors.green
-                                    : Colors.grey,
-                                size: esElMasBarato ? 35 : 25,
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                superm,
-                                style: TextStyle(
-                                  fontWeight: esElMasBarato
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                          return Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.storefront,
                                   color: esElMasBarato
                                       ? Colors.green
-                                      : Colors.black87,
+                                      : Colors.grey,
+                                  size: esElMasBarato ? 35 : 25,
                                 ),
-                              ),
-                              Text(
-                                '\$${totalSuper.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: esElMasBarato ? 22 : 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: esElMasBarato
-                                      ? Colors.green
-                                      : Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: () => PantallaCotizador.abrirTiendaSupermercado(context, superm),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: esElMasBarato ? Colors.green.shade50 : Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: esElMasBarato ? Colors.green.shade300 : Colors.grey.shade300,
+                                const SizedBox(height: 5),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    superm,
+                                    style: TextStyle(
+                                      fontWeight: esElMasBarato
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: esElMasBarato
+                                          ? Colors.green
+                                          : Colors.black87,
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.open_in_new_rounded,
-                                        size: 11,
-                                        color: esElMasBarato ? Colors.green.shade800 : Colors.black54,
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'Online 🛒',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: esElMasBarato ? Colors.green.shade900 : Colors.black87,
-                                        ),
-                                      ),
-                                    ],
+                                ),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '\$${totalSuper.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: esElMasBarato ? 22 : 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: esElMasBarato
+                                          ? Colors.green
+                                          : Colors.black87,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: () => PantallaCotizador.abrirTiendaSupermercado(context, superm),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: esElMasBarato ? Colors.green.shade50 : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: esElMasBarato ? Colors.green.shade300 : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.open_in_new_rounded,
+                                            size: 11,
+                                            color: esElMasBarato ? Colors.green.shade800 : Colors.black54,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            'Online 🛒',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: esElMasBarato ? Colors.green.shade900 : Colors.black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
                       ),
@@ -1819,45 +1863,57 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.green.shade200),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.delivery_dining_rounded, color: Colors.green.shade800, size: 24),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '¿Pedir a domicilio? Abre tu súper en línea 🌐',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                      Row(
+                        children: [
+                          Icon(Icons.delivery_dining_rounded, color: Colors.green.shade800, size: 24),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '¿Pedir a domicilio? Abre tu súper en línea 🌐',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                                  ),
+                                ),
+                                Text(
+                                  'Abre la app o tienda oficial para surtir tu despensa:',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            Text(
-                              'Abre la tienda oficial del súper más barato para surtir tu despensa:',
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(height: 8),
                       Wrap(
-                        spacing: 6,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           ActionChip(
                             avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.blue),
                             label: const Text('Walmart', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                            padding: EdgeInsets.zero,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'Walmart'),
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.red),
                             label: const Text('Soriana', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                            padding: EdgeInsets.zero,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'Soriana'),
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.orange),
                             label: const Text('La Comer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                            padding: EdgeInsets.zero,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'La Comer'),
                           ),
                         ],

@@ -553,9 +553,11 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
       barraColor = Colors.red.shade700;
     }
 
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.fromLTRB(12, isLandscape ? 4 : 10, 12, isLandscape ? 3 : 6),
+      padding: EdgeInsets.all(isLandscape ? 8 : 14),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -577,34 +579,42 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: (excedido ? Colors.red : Colors.orange)
-                          .withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(isLandscape ? 4 : 6),
+                      decoration: BoxDecoration(
+                        color: (excedido ? Colors.red : Colors.orange)
+                            .withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        excedido
+                            ? Icons.warning_amber_rounded
+                            : Icons.account_balance_wallet_outlined,
+                        color:
+                            excedido ? Colors.red.shade700 : Colors.deepOrange,
+                        size: isLandscape ? 16 : 18,
+                      ),
                     ),
-                    child: Icon(
-                      excedido
-                          ? Icons.warning_amber_rounded
-                          : Icons.account_balance_wallet_outlined,
-                      color:
-                          excedido ? Colors.red.shade700 : Colors.deepOrange,
-                      size: 18,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Presupuesto Semanal',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isLandscape ? 13 : 14,
+                            color: excedido ? Colors.red.shade900 : Colors.black87,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Presupuesto Semanal',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: excedido ? Colors.red.shade900 : Colors.black87,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               InkWell(
                 onTap: _abrirAjustePresupuesto,
@@ -617,12 +627,15 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '\$${presupuesto.toStringAsFixed(0)} MXN',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Colors.deepOrange,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '\$${presupuesto.toStringAsFixed(0)} MXN',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: isLandscape ? 13 : 14,
+                            color: Colors.deepOrange,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -637,96 +650,106 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isLandscape ? 6 : 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: porcentaje,
-              minHeight: 8,
+              minHeight: isLandscape ? 6 : 8,
               backgroundColor: Colors.grey.shade200,
               valueColor: AlwaysStoppedAnimation<Color>(barraColor),
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isLandscape ? 6 : 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              InkWell(
-                onTap: mostrarModalCotizaciones,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _mejorCotizacion != null && _mejorCotizacion!.total > 0
-                                ? 'Estimado: \$${estimado.toStringAsFixed(2)} (${_mejorCotizacion!.nombreSupermercado})'
-                                : (items.isEmpty
-                                    ? 'Lista vacía (\$0.00)'
-                                    : 'Estimado: Calculando...'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade800,
+              Expanded(
+                child: InkWell(
+                  onTap: mostrarModalCotizaciones,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _mejorCotizacion != null && _mejorCotizacion!.total > 0
+                                    ? 'Estimado: \$${estimado.toStringAsFixed(2)} (${_mejorCotizacion!.nombreSupermercado})'
+                                    : (items.isEmpty
+                                        ? 'Lista vacía (\$0.00)'
+                                        : 'Estimado: Calculando...'),
+                                style: TextStyle(
+                                  fontSize: isLandscape ? 11 : 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.touch_app_outlined,
-                            size: 13,
-                            color: Colors.deepOrange,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$pendientes pendientes · $comprados en carrito',
-                        style:
-                            TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ],
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.touch_app_outlined,
+                              size: 13,
+                              color: Colors.deepOrange,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$pendientes pendientes · $comprados en carrito',
+                          style:
+                              TextStyle(fontSize: isLandscape ? 10 : 11, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: excedido ? Colors.red.shade50 : Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color:
-                        excedido ? Colors.red.shade300 : Colors.green.shade200,
+              const SizedBox(width: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isLandscape ? 8 : 10,
+                    vertical: isLandscape ? 3 : 5,
                   ),
-                ),
-                child: Text(
-                  excedido
-                      ? 'Excedido: +\$${(-restante).toStringAsFixed(2)}'
-                      : 'Disponible: \$${restante.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: excedido
-                        ? Colors.red.shade900
-                        : Colors.green.shade800,
+                  decoration: BoxDecoration(
+                    color: excedido ? Colors.red.shade50 : Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color:
+                          excedido ? Colors.red.shade300 : Colors.green.shade200,
+                    ),
+                  ),
+                  child: Text(
+                    excedido
+                        ? 'Excedido: +\$${(-restante).toStringAsFixed(2)}'
+                        : 'Disponible: \$${restante.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: isLandscape ? 10 : 11,
+                      fontWeight: FontWeight.bold,
+                      color: excedido
+                          ? Colors.red.shade900
+                          : Colors.green.shade800,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isLandscape ? 6 : 10),
           InkWell(
             onTap: mostrarModalCotizaciones,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 10),
+              padding: EdgeInsets.symmetric(vertical: isLandscape ? 5 : 7, horizontal: 10),
               decoration: BoxDecoration(
                 color: Colors.deepOrange.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
@@ -742,10 +765,12 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     child: Text(
                       'Comparar precios en Walmart, Soriana y La Comer',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: isLandscape ? 11 : 11.5,
                         fontWeight: FontWeight.w600,
                         color: Colors.deepOrange.shade900,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Icon(Icons.chevron_right, size: 16, color: Colors.deepOrange),
@@ -756,9 +781,9 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
 
           // 🛒 Barra de Progreso de Artículos en el Carrito ("¡Faltan X cosas!")
           if (total > 0) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: isLandscape ? 6 : 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: isLandscape ? 6 : 10),
               decoration: BoxDecoration(
                 color: progresoArticulos == 1.0
                     ? Colors.green.withValues(alpha: 0.12)
@@ -777,54 +802,64 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            progresoArticulos == 1.0
-                                ? Icons.check_circle_rounded
-                                : Icons.shopping_basket_rounded,
-                            size: 17,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              progresoArticulos == 1.0
+                                  ? Icons.check_circle_rounded
+                                  : Icons.shopping_basket_rounded,
+                              size: isLandscape ? 15 : 17,
+                              color: progresoArticulos == 1.0
+                                  ? Colors.green.shade800
+                                  : Colors.amber.shade900,
+                            ),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                progresoArticulos == 1.0
+                                    ? '🎉 ¡Carrito 100% Completo!'
+                                    : '🛒 $comprados de $total en el carrito (${(progresoArticulos * 100).toInt()}%)',
+                                style: TextStyle(
+                                  fontSize: isLandscape ? 11.5 : 12.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: progresoArticulos == 1.0
+                                      ? Colors.green.shade900
+                                      : Colors.brown.shade900,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          progresoArticulos == 1.0
+                              ? '¡Listo para pagar!'
+                              : (pendientes == 1
+                                  ? '¡Falta solo 1!'
+                                  : '¡Faltan solo $pendientes!'),
+                          style: TextStyle(
+                            fontSize: isLandscape ? 11 : 12,
+                            fontWeight: FontWeight.bold,
                             color: progresoArticulos == 1.0
                                 ? Colors.green.shade800
-                                : Colors.amber.shade900,
+                                : Colors.deepOrange.shade800,
                           ),
-                          const SizedBox(width: 7),
-                          Text(
-                            progresoArticulos == 1.0
-                                ? '🎉 ¡Carrito 100% Completo!'
-                                : '🛒 $comprados de $total en el carrito (${(progresoArticulos * 100).toInt()}%)',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                              color: progresoArticulos == 1.0
-                                  ? Colors.green.shade900
-                                  : Colors.brown.shade900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        progresoArticulos == 1.0
-                            ? '¡Listo para pagar!'
-                            : (pendientes == 1
-                                ? '¡Falta solo 1!'
-                                : '¡Faltan solo $pendientes!'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: progresoArticulos == 1.0
-                              ? Colors.green.shade800
-                              : Colors.deepOrange.shade800,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isLandscape ? 4 : 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
                       value: progresoArticulos,
-                      minHeight: 7,
+                      minHeight: isLandscape ? 5 : 7,
                       backgroundColor: Colors.grey.withValues(alpha: 0.2),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         progresoArticulos == 1.0
@@ -834,24 +869,27 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     ),
                   ),
                   if (progresoArticulos == 1.0) ...[
-                    const SizedBox(height: 10),
+                    SizedBox(height: isLandscape ? 6 : 10),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade800,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          padding: EdgeInsets.symmetric(vertical: isLandscape ? 6 : 9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         icon: const Icon(Icons.inventory_2_outlined, size: 17),
-                        label: const Text(
-                          'Mover comprados a mi Despensa 🥫✨',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Mover comprados a mi Despensa 🥫✨',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         onPressed: transferirCompradosADespensa,
@@ -2034,9 +2072,13 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Lista de Compras 🛒',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Lista de Compras 🛒',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -2127,23 +2169,52 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             icon: const Icon(Icons.share, color: Colors.white),
             onPressed: () => _mostrarMenuExportarTicket(_ultimosItems),
           ),
-          // 🗑️ Botón para vaciar toda la lista
-          IconButton(
-            tooltip: 'Vaciar toda la lista',
-            icon: const Icon(Icons.delete_sweep, color: Colors.white),
-            onPressed: _confirmarBorrarListaCompleta,
-          ),
-          // Botón para autollenar
-          IconButton(
-            tooltip: 'Autollenar desde Planeador',
-            icon: const Icon(Icons.sync_alt, color: Colors.white),
-            onPressed: _estaCargando ? null : autollenarListaDesdePlaneador,
-          ),
-          // Botón para transferir a despensa
-          IconButton(
-            tooltip: 'Mover comprados a Despensa',
-            icon: const Icon(Icons.inventory_2_outlined, color: Colors.white),
-            onPressed: _estaCargando ? null : transferirCompradosADespensa,
+          // ⋯ Menú de opciones secundarias (Autollenar, Mover a Despensa, Vaciar lista)
+          PopupMenuButton<String>(
+            tooltip: 'Más opciones de lista',
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'autollenar') {
+                if (!_estaCargando) autollenarListaDesdePlaneador();
+              } else if (value == 'transferir') {
+                if (!_estaCargando) transferirCompradosADespensa();
+              } else if (value == 'vaciar') {
+                _confirmarBorrarListaCompleta();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'autollenar',
+                child: Row(
+                  children: [
+                    Icon(Icons.sync_alt, color: Colors.deepOrange, size: 20),
+                    SizedBox(width: 10),
+                    Text('Autollenar desde Planeador'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'transferir',
+                child: Row(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, color: Colors.teal, size: 20),
+                    SizedBox(width: 10),
+                    Text('Mover comprados a Despensa'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'vaciar',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep, color: Colors.red, size: 20),
+                    SizedBox(width: 10),
+                    Text('Vaciar toda la lista', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -2331,7 +2402,10 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.playlist_add_rounded, size: 20),
-                        label: const Text('Multilista / Dictado'),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Multilista / Dictado'),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.deepOrange,
                           side: const BorderSide(color: Colors.deepOrange),
@@ -2345,7 +2419,10 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     Expanded(
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.storefront, size: 20),
-                        label: const Text('Cotizar Súper'),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Cotizar Súper'),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,

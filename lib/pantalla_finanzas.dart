@@ -971,9 +971,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mis Finanzas 📈',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Mis Finanzas 📈',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -1161,24 +1165,33 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cotización $superNombre',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '\$${_costoSemanaActual.toStringAsFixed(2)} MXN',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cotización $superNombre',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '\$${_costoSemanaActual.toStringAsFixed(2)} MXN',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -1187,12 +1200,16 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    '\$${_presupuestoSemanal.toStringAsFixed(2)} MXN',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '\$${_presupuestoSemanal.toStringAsFixed(2)} MXN',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                 ],
@@ -1295,26 +1312,34 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.teal.shade50,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.flag_circle_rounded, color: Colors.teal, size: 22),
                     ),
-                    child: const Icon(Icons.flag_circle_rounded, color: Colors.teal, size: 22),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Club del Súper: Meta 30 Días',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Club del Súper: Meta 30 Días',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               InkWell(
                 onTap: _abrirAjusteMetaDesafio,
@@ -1374,12 +1399,16 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '+\$${desafio.ahorroLogradoMes.toStringAsFixed(0)} MXN',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal.shade900,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '+\$${desafio.ahorroLogradoMes.toStringAsFixed(0)} MXN',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade900,
+                        ),
                       ),
                     ),
                     Text(
@@ -1520,32 +1549,44 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade800,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade800,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
                     ),
-                    child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Monitor de Merma en Despensa',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade800,
-                  borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Monitor de Merma en Despensa',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFE65100)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  '\$${_capitalEnRiesgo.toStringAsFixed(0)} MXN en riesgo',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+              ),
+              const SizedBox(width: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade800,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '\$${_capitalEnRiesgo.toStringAsFixed(0)} MXN en riesgo',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
                 ),
               ),
             ],
@@ -1629,46 +1670,58 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.local_fire_department, color: Colors.deepOrange, size: 22),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Reto Cero Merma 🏆',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.deepOrange.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.deepOrange.shade200),
-                ),
+              Expanded(
                 child: Row(
                   children: [
-                    const Text('🔥 ', style: TextStyle(fontSize: 12)),
-                    Text(
-                      '${racha.diasRacha} Días',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                        color: Colors.deepOrange,
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.local_fire_department, color: Colors.deepOrange, size: 22),
+                    ),
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Reto Cero Merma 🏆',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.deepOrange.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('🔥 ', style: TextStyle(fontSize: 12)),
+                      Text(
+                        '${racha.diasRacha} Días',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                          color: Colors.deepOrange,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1840,42 +1893,54 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.eco_rounded, color: Colors.green, size: 22),
                     ),
-                    child: const Icon(Icons.eco_rounded, color: Colors.green, size: 22),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Eco-Score Culinario 🌱',
-                    style: TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.bold,
-                      color: esOscuro ? Colors.white : Colors.black87,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Eco-Score Culinario 🌱',
+                          style: TextStyle(
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.bold,
+                            color: esOscuro ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade700,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    eco.nivelSostenibilidad,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      eco.nivelSostenibilidad,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ),
@@ -1905,14 +1970,23 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                   ),
                   child: Column(
                     children: [
-                      const Text('🌍 CO₂ Prevenido', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.green)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('🌍 CO₂ Prevenido', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.green)),
+                      ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${eco.co2PrevenidoKg.toStringAsFixed(1)} kg',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${eco.co2PrevenidoKg.toStringAsFixed(1)} kg',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
                       ),
                       const SizedBox(height: 2),
-                      const Text('vs motos/reparto', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('vs motos/reparto', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      ),
                     ],
                   ),
                 ),
@@ -1928,14 +2002,23 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                   ),
                   child: Column(
                     children: [
-                      const Text('💧 Agua Virtual', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.blue)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('💧 Agua Virtual', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.blue)),
+                      ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${eco.aguaVirtualSalvadaLitros} L',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${eco.aguaVirtualSalvadaLitros} L',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+                        ),
                       ),
                       const SizedBox(height: 2),
-                      const Text('huella resguardada', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('huella resguardada', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      ),
                     ],
                   ),
                 ),
@@ -1951,14 +2034,23 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                   ),
                   child: Column(
                     children: [
-                      const Text('🥡 Empaques', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.amber)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('🥡 Empaques', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.amber)),
+                      ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${eco.envasesPlasticosAhorrados} pzas',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${eco.envasesPlasticosAhorrados} pzas',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown),
+                        ),
                       ),
                       const SizedBox(height: 2),
-                      const Text('cero plástico/unicel', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('cero plástico/unicel', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                      ),
                     ],
                   ),
                 ),
@@ -2026,26 +2118,34 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.savings_outlined, color: Colors.green.shade800, size: 20),
                     ),
-                    child: Icon(Icons.savings_outlined, color: Colors.green.shade800, size: 20),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Ahorro vs Restaurantes / Delivery',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Ahorro vs Restaurantes / Delivery',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.share_outlined, size: 20, color: Colors.teal),
@@ -2072,9 +2172,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     children: [
                       const Text('Platillo en Casa', style: TextStyle(fontSize: 11, color: Colors.grey)),
                       const SizedBox(height: 2),
-                      Text(
-                        '\$${costoPlatillo.toStringAsFixed(1)} MXN',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '\$${costoPlatillo.toStringAsFixed(1)} MXN',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+                        ),
                       ),
                     ],
                   ),
@@ -2086,9 +2190,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     children: [
                       const Text('Benchmark Delivery / Fonda', style: TextStyle(fontSize: 11, color: Colors.grey)),
                       const SizedBox(height: 2),
-                      Text(
-                        '\$${ServicioFinanzasDomesticas.benchmarkDeliveryPorPlatillo.toStringAsFixed(0)} MXN',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade700),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '\$${ServicioFinanzasDomesticas.benchmarkDeliveryPorPlatillo.toStringAsFixed(0)} MXN',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red.shade700),
+                        ),
                       ),
                     ],
                   ),
@@ -2113,9 +2221,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     children: [
                       Text('Esta Semana', style: TextStyle(fontSize: 11, color: Colors.green.shade900)),
                       const SizedBox(height: 2),
-                      Text(
-                        '+\$${ahorroSem.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.green.shade900),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '+\$${ahorroSem.toStringAsFixed(0)}',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.green.shade900),
+                        ),
                       ),
                     ],
                   ),
@@ -2134,9 +2246,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     children: [
                       Text('Proy. Mes (4s)', style: TextStyle(fontSize: 11, color: Colors.teal.shade900)),
                       const SizedBox(height: 2),
-                      Text(
-                        '+\$${ahorroMes.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '+\$${ahorroMes.toStringAsFixed(0)}',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
+                        ),
                       ),
                     ],
                   ),
@@ -2155,9 +2271,13 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                     children: [
                       Text('Proy. Año (52s)', style: TextStyle(fontSize: 11, color: Colors.amber.shade900)),
                       const SizedBox(height: 2),
-                      Text(
-                        '+\$${ahorroAnio.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '+\$${ahorroAnio.toStringAsFixed(0)}',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                        ),
                       ),
                     ],
                   ),
@@ -2221,32 +2341,44 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.fitness_center, color: Color(0xFFD32F2F), size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    'Ranking Costo-Proteína',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.fitness_center, color: Color(0xFFD32F2F), size: 22),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Ranking Costo-Proteína',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  ],
                 ),
-                child: const Text(
-                  'MXN / g real',
-                  style: TextStyle(
-                    color: Color(0xFFD32F2F),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+              ),
+              const SizedBox(width: 8),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'MXN / g real',
+                    style: TextStyle(
+                      color: Color(0xFFD32F2F),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ),
@@ -2260,24 +2392,23 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           const SizedBox(height: 12),
 
           // Filtros
-          Row(
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
             children: ['Todos', 'Animal', 'Vegetal'].map((cat) {
               final sel = _filtroProteina == cat;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(
-                  label: Text(cat),
-                  selected: sel,
-                  selectedColor: const Color(0xFFFBECEF),
-                  labelStyle: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: sel ? FontWeight.bold : FontWeight.normal,
-                    color: sel ? const Color(0xFFD32F2F) : Colors.black87,
-                  ),
-                  onSelected: (val) {
-                    if (val) setState(() => _filtroProteina = cat);
-                  },
+              return ChoiceChip(
+                label: Text(cat),
+                selected: sel,
+                selectedColor: const Color(0xFFFBECEF),
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                  color: sel ? const Color(0xFFD32F2F) : Colors.black87,
                 ),
+                onSelected: (val) {
+                  if (val) setState(() => _filtroProteina = cat);
+                },
               );
             }).toList(),
           ),
@@ -2606,12 +2737,15 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                           ),
                         ),
                       ),
-                      Text(
-                        '\$${monto.toStringAsFixed(2)} MXN',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '\$${monto.toStringAsFixed(2)} MXN',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -2698,12 +2832,16 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                           TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '\$${_capitalDespensa.toStringAsFixed(2)} MXN',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '\$${_capitalDespensa.toStringAsFixed(2)} MXN',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
                       ),
                     ),
                   ],
@@ -2719,12 +2857,16 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                           TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '$_totalItemsDespensa insumos',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '$_totalItemsDespensa insumos',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
                   ],
