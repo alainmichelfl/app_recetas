@@ -89,5 +89,33 @@ void main() {
       expect(urls.containsKey('Costco'), isTrue);
       expect(urls['Costco'], contains('costco.com.mx'));
     });
+
+    test('Contiene paquetes de Android válidos para Deep Linking a apps nativas (Opción A)', () {
+      final paquetes = PantallaCotizador.paquetesAndroidSupermercados;
+
+      expect(paquetes['Walmart'], equals('com.walmart.mg'));
+      expect(paquetes['Soriana'], equals('com.soriana.appsoriana'));
+      expect(paquetes['La Comer'], equals('com.LaComerApp'));
+      expect(paquetes['Chedraui'], equals('com.planetmedia.paymentsloyalty.chedraui'));
+      expect(paquetes['Costco'], equals('com.costco.mx'));
+      expect(paquetes['Sam\'s Club'], equals('air.SamsClubMexico'));
+      expect(paquetes['Bodega Aurrera'], equals('com.mx.walmart.bodega'));
+    });
+
+    test('Genera URIs de Intent de Android con fallback automático a la web', () {
+      final uriWalmart = PantallaCotizador.obtenerIntentUriAndroid('Walmart');
+      expect(uriWalmart, isNotNull);
+      expect(uriWalmart, startsWith('intent://super.walmart.com.mx/#Intent;'));
+      expect(uriWalmart, contains('package=com.walmart.mg'));
+      expect(uriWalmart, contains('S.browser_fallback_url=https%3A%2F%2Fsuper.walmart.com.mx%2F'));
+
+      final uriSoriana = PantallaCotizador.obtenerIntentUriAndroid('Soriana');
+      expect(uriSoriana, isNotNull);
+      expect(uriSoriana, contains('package=com.soriana.appsoriana'));
+      expect(uriSoriana, contains('soriana.com'));
+
+      // Supermercado no registrado o sin app retorna null
+      expect(PantallaCotizador.obtenerIntentUriAndroid('Desconocido'), isNull);
+    });
   });
 }

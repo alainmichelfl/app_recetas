@@ -466,11 +466,11 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Comprar Súper en Línea 🌐',
+                          'Comprar Súper (App o Web) 🛒',
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                         ),
                         Text(
-                          'Elige tu supermercado para abrir su portal oficial:',
+                          'Abre su app oficial en tu teléfono o la tienda web:',
                           style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
@@ -484,6 +484,8 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 {'nombre': 'Soriana', 'url': 'soriana.com', 'icono': Icons.store, 'color': Colors.red},
                 {'nombre': 'La Comer', 'url': 'lacomer.com.mx', 'icono': Icons.local_grocery_store, 'color': Colors.orange},
                 {'nombre': 'Chedraui', 'url': 'chedraui.com.mx', 'icono': Icons.shopping_basket, 'color': Colors.teal},
+                {'nombre': 'Costco', 'url': 'costco.com.mx', 'icono': Icons.card_membership, 'color': Colors.indigo},
+                {'nombre': 'Sam\'s Club', 'url': 'sams.com.mx', 'icono': Icons.loyalty, 'color': Colors.cyan},
               ].map((s) {
                 final String nombre = s['nombre'] as String;
                 final String url = s['url'] as String;
@@ -498,9 +500,22 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       backgroundColor: color.withValues(alpha: 0.2),
                       child: Icon(icono, color: color, size: 20),
                     ),
-                    title: Text(nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    title: Row(
+                      children: [
+                        Text(nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('📱 App / 🌐 Web', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                        ),
+                      ],
+                    ),
                     subtitle: Text(url, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                    trailing: const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 18),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
                     onTap: () {
                       Navigator.pop(ctx);
                       PantallaCotizador.abrirTiendaSupermercado(context, nombre);

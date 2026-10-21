@@ -1,87 +1,20 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
-import 'config_api.dart';
+import 'servicio_ia_gateway.dart';
 
 class ServicioIA {
-  static const String _apiKey = ConfigApi.geminiKey;
-
-  // ✅ Modelo activo oficial actualizado a gemini-2.5-flash para máxima estabilidad
-  static const String _urlGemini =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$_apiKey';
-
-  // 🔄 PETICIÓN BLINDADA CON REINTENTO AUTOMÁTICO EN CASO DE ERROR 503 O 429
+  // 🛡️ Prioridad R1: Petición canalizada por ServicioIAGateway
+  // Aplica rate-limiting defensivo, intenta Supabase Edge Function 'gemini-proxy' y fallback local.
   static Future<String?> _hacerPeticion(
     Map<String, dynamic> cuerpo, {
     bool forzarJson = true,
   }) async {
-    final Map<String, dynamic> payload = {
-      ...cuerpo,
-      "generationConfig": {
-        "responseMimeType": forzarJson ? "application/json" : "text/plain",
-      },
-      "safetySettings": [
-        {
-          "category": "HARM_CATEGORY_HARASSMENT",
-          "threshold": "BLOCK_ONLY_HIGH",
-        },
-        {
-          "category": "HARM_CATEGORY_HATE_SPEECH",
-          "threshold": "BLOCK_ONLY_HIGH",
-        },
-        {
-          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          "threshold": "BLOCK_ONLY_HIGH",
-        },
-        {
-          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-          "threshold": "BLOCK_ONLY_HIGH",
-        },
-      ],
-    };
-
-    int intentos = 0;
-    const maxIntentos = 3;
-
-    while (intentos < maxIntentos) {
-      intentos++;
-      try {
-        final respuesta = await http.post(
-          Uri.parse(_urlGemini),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(payload),
-        );
-
-        if (respuesta.statusCode == 200) {
-          final datos = jsonDecode(respuesta.body);
-          final candidate = datos['candidates'][0];
-
-          if (candidate['content'] == null) {
-            debugPrint('⚠️ Gemini bloqueó: ${candidate['finishReason']}');
-            return null;
-          }
-
-          return candidate['content']['parts'][0]['text'];
-        } else if (respuesta.statusCode == 503 || respuesta.statusCode == 429) {
-          debugPrint(
-            '⏳ Google saturado (${respuesta.statusCode}). Reintentando ($intentos/$maxIntentos) en 8 segundos...',
-          );
-          await Future.delayed(const Duration(seconds: 8));
-        } else {
-          debugPrint(
-            '❌ Error de Google (${respuesta.statusCode}):\n${respuesta.body}',
-          );
-          return '❌ Error de Google (${respuesta.statusCode}):\n${respuesta.body}';
-        }
-      } catch (e) {
-        debugPrint('⏳ Error de red ($e). Reintentando en 5 segundos...');
-        await Future.delayed(const Duration(seconds: 5));
-      }
-    }
-
-    return null;
+    return await ServicioIAGateway.ejecutarPeticion(
+      cuerpo: cuerpo,
+      forzarJson: forzarJson,
+    );
   }
 
   // 🧾 ESCÁNER AVANZADO DE TICKETS DE SUPERMERCADO

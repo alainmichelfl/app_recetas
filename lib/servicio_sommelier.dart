@@ -4,6 +4,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config_api.dart';
+import 'servicio_rate_limit_ia.dart';
 
 /// Modelo que encapsula las tres vertientes del maridaje gastronómico:
 /// Vino de autor, Cóctel / Destilado y Mocktail artesanal (sin alcohol).
@@ -425,6 +426,13 @@ class ServicioSommelier {
       return heuristico;
     }
 
+    // 🛡️ Prioridad R1: Rate-Limiting y protección anti-abusos
+    final permiso = await ServicioRateLimitIA.verificarPermiso();
+    if (!permiso.permitido) {
+      debugPrint('🛡️ [R1 Sommelier Rate Limit] Usando maridaje heurístico: ${permiso.motivo}');
+      return heuristico;
+    }
+
     try {
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
@@ -462,6 +470,7 @@ No incluyas markdown ni texto fuera del JSON.
 
       final limpio = rawText.replaceAll('```json', '').replaceAll('```', '').trim();
       final Map<String, dynamic> data = jsonDecode(limpio);
+      await ServicioRateLimitIA.registrarLlamadoExitoso();
       return MaridajeReceta.fromMap(data);
     } catch (e) {
       debugPrint('Aviso: Sommelier IA recurrió al motor heurístico ($e)');
@@ -570,6 +579,17 @@ No incluyas markdown ni texto fuera del JSON.
       );
     }
 
+    // 🛡️ Prioridad R1: Rate-Limiting y protección anti-abusos
+    final permiso = await ServicioRateLimitIA.verificarPermiso();
+    if (!permiso.permitido) {
+      final heuristico = generarMaridajeHeuristico(consulta);
+      return RespuestaSommelierEnVivo(
+        mensaje:
+            '🛡️ ${permiso.motivo} Te comparto una recomendación de nuestra cava basada en nuestra guía maestra:',
+        maridaje: heuristico,
+      );
+    }
+
     try {
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
@@ -619,6 +639,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       final limpio = rawText.replaceAll('```json', '').replaceAll('```', '').trim();
       final Map<String, dynamic> data = jsonDecode(limpio);
       final maridaje = MaridajeReceta.fromMap(data);
+      await ServicioRateLimitIA.registrarLlamadoExitoso();
       return RespuestaSommelierEnVivo(
         mensaje: data['mensaje']?.toString() ??
             '¡Excelente maridaje seleccionado por tu Sommelier!',
@@ -709,6 +730,13 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       return null;
     }
 
+    // 🛡️ Prioridad R1: Rate-Limiting y protección anti-abusos
+    final permiso = await ServicioRateLimitIA.verificarPermiso();
+    if (!permiso.permitido) {
+      debugPrint('🛡️ [R1 Escaneo Botella Rate Limit] ${permiso.motivo}');
+      return null;
+    }
+
     try {
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
@@ -776,6 +804,7 @@ Responde ÚNICAMENTE en JSON válido con este esquema estricto:
 
       final jsonLimpio = rawText.substring(start, end + 1);
       final map = jsonDecode(jsonLimpio) as Map<String, dynamic>;
+      await ServicioRateLimitIA.registrarLlamadoExitoso();
       return ResultadoEscaneoBotella.fromMap(map);
     } catch (e) {
       debugPrint('Error al escanear botella con IA: $e');

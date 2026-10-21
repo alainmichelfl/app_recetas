@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,30 +34,72 @@ class PantallaCotizador extends StatefulWidget {
     'Central de Abasto': 'https://ficeda.com.mx/',
   };
 
+  /// Paquetes oficiales de Android para lanzar directamente la app nativa en el dispositivo
+  static const Map<String, String> paquetesAndroidSupermercados = {
+    'Walmart': 'com.walmart.mg',
+    'Soriana': 'com.soriana.appsoriana',
+    'La Comer': 'com.LaComerApp',
+    'Chedraui': 'com.planetmedia.paymentsloyalty.chedraui',
+    'Costco': 'com.costco.mx',
+    'Sam\'s Club': 'air.SamsClubMexico',
+    'Bodega Aurrera': 'com.mx.walmart.bodega',
+  };
+
+  /// Genera la URI de Intent para Android con fallback automático a la tienda web.
+  /// Si la app nativa del supermercado está instalada en el teléfono del usuario,
+  /// Android abre directamente la app. Si no está instalada, Chrome/Android
+  /// redirige de forma transparente al portal web oficial.
+  static String? obtenerIntentUriAndroid(String supermercado) {
+    final paquete = paquetesAndroidSupermercados[supermercado];
+    final urlWeb = urlsSupermercados[supermercado];
+    if (paquete == null || urlWeb == null) return null;
+    final fallbackUrlEncoded = Uri.encodeComponent(urlWeb);
+    final host = Uri.parse(urlWeb).host;
+    return 'intent://$host/#Intent;scheme=https;package=$paquete;S.browser_fallback_url=$fallbackUrlEncoded;end;';
+  }
+
+  /// Abre la app oficial del supermercado si está instalada (Android Intent / iOS Universal Link)
+  /// o recurre automáticamente al portal web oficial si no se encuentra instalada.
   static Future<void> abrirTiendaSupermercado(BuildContext context, String supermercado) async {
-    final url = urlsSupermercados[supermercado] ?? 'https://super.walmart.com.mx/';
-    final uri = Uri.parse(url);
-    try {
-      final lanzado = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!lanzado && context.mounted) {
-        Clipboard.setData(ClipboardData(text: url));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Portal web copiado: $url 📋'),
-            backgroundColor: Colors.blueGrey,
-          ),
-        );
+    final urlWeb = urlsSupermercados[supermercado] ?? 'https://super.walmart.com.mx/';
+    final paquete = paquetesAndroidSupermercados[supermercado];
+
+    bool abierto = false;
+
+    // 1. En dispositivos Android: intentar abrir la app oficial mediante Intent nativo
+    final esAndroid = defaultTargetPlatform == TargetPlatform.android;
+    if (esAndroid && paquete != null) {
+      final intentStr = obtenerIntentUriAndroid(supermercado);
+      if (intentStr != null) {
+        try {
+          final uriIntent = Uri.parse(intentStr);
+          abierto = await launchUrl(uriIntent, mode: LaunchMode.externalApplication);
+        } catch (_) {
+          abierto = false;
+        }
       }
-    } catch (_) {
-      if (context.mounted) {
-        Clipboard.setData(ClipboardData(text: url));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Portal web copiado: $url 📋'),
-            backgroundColor: Colors.blueGrey,
-          ),
-        );
+    }
+
+    // 2. Si no es Android (iOS, PC, Web) o si el Intent no abrió la app, abrir la URL Web.
+    // En iOS, si la app está instalada, Apple Universal Links abre automáticamente la app nativa.
+    if (!abierto) {
+      try {
+        final uriWeb = Uri.parse(urlWeb);
+        abierto = await launchUrl(uriWeb, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        abierto = false;
       }
+    }
+
+    // 3. Fallback defensivo al portapapeles si no se puede abrir navegador ni app
+    if (!abierto && context.mounted) {
+      Clipboard.setData(ClipboardData(text: urlWeb));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Portal web copiado: $urlWeb 📋'),
+          backgroundColor: Colors.blueGrey,
+        ),
+      );
     }
   }
 
