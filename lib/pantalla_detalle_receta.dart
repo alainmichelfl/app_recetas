@@ -47,6 +47,10 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
   String? _textoCargado;
   String? _recipeUserId;
 
+  // 📜 Controlador de scroll para animar el título en la AppBar colapsada
+  late final ScrollController _scrollController;
+  bool _mostrarTituloAppBar = false;
+
   // ⏱️ Temporizador inteligente interactivo de un toque en pasos
   Timer? _temporizadorPaso;
   int _segundosRestantesPaso = 0;
@@ -73,14 +77,26 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()..addListener(_onScrollDetalle);
     _extraerPorciones();
     _inicializarDatosReceta();
     _verificarPermisosYReceta();
     _cargarEstadoCocinada(mostrarAvisoAlEntrar: true);
   }
 
+  void _onScrollDetalle() {
+    final bool mostrar =
+        _scrollController.hasClients && _scrollController.offset > 120;
+    if (mostrar != _mostrarTituloAppBar) {
+      setState(() {
+        _mostrarTituloAppBar = mostrar;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.dispose();
     _temporizadorPaso?.cancel();
     super.dispose();
   }
@@ -275,8 +291,13 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     required String bloqueInstrucciones,
   }) async {
     final sb = StringBuffer();
-    sb.writeln('🍅🧅 *${widget.titulo}*');
-    sb.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    sb.writeln('╔════════════════════════════════════════════════╗');
+    sb.writeln('║     🍅🧅 JITOMATE Y CEBOLLA • COCINA CASERA    ║');
+    sb.writeln('║            Receta Gourmet Inteligente          ║');
+    sb.writeln('╚════════════════════════════════════════════════╝');
+    sb.writeln('');
+    sb.writeln('📖 *${widget.titulo}*');
+    sb.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     sb.writeln('🍽️ *Porciones:* $porcionesActuales personas');
     if (bloqueNutricional.isNotEmpty) {
       sb.writeln('🔥 *Información:* ${bloqueNutricional.replaceAll('\n', ' • ')}');
@@ -295,6 +316,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
       sb.writeln(bloqueInstrucciones.trim());
       sb.writeln('');
     }
+    sb.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     sb.writeln('✨ _Descubre más recetas gourmet y saludables en:_');
     sb.writeln('👉 https://www.jitomateycebolla.com/');
 
@@ -303,7 +325,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
       await SharePlus.instance.share(
         ShareParams(
           text: texto,
-          subject: 'Receta: ${widget.titulo} | Jitomate y Cebolla',
+          subject: '🍅🧅 Receta: ${widget.titulo} | Jitomate y Cebolla',
         ),
       );
     } catch (e) {
@@ -325,15 +347,17 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     required String bloqueInstrucciones,
   }) {
     final sb = StringBuffer();
-    sb.writeln('========================================');
-    sb.writeln('      JITOMATE Y CEBOLLA • FICHA DE COCINA');
-    sb.writeln('========================================');
+    sb.writeln('╔══════════════════════════════════════════════════════════════╗');
+    sb.writeln('║             🍅🧅 JITOMATE Y CEBOLLA • COCINA                 ║');
+    sb.writeln('║               FICHA OFICIAL DE PREPARACIÓN                   ║');
+    sb.writeln('╚══════════════════════════════════════════════════════════════╝');
+    sb.writeln('');
     sb.writeln('🍳 RECETA: ${widget.titulo.toUpperCase()}');
     sb.writeln('👥 PORCIONES: $porcionesActuales personas');
     if (bloqueNutricional.isNotEmpty) {
       sb.writeln('🔥 INFO NUTRICIONAL: ${bloqueNutricional.replaceAll('\n', ' • ')}');
     }
-    sb.writeln('----------------------------------------');
+    sb.writeln('----------------------------------------------------------------');
     sb.writeln('🛒 INGREDIENTES:');
     for (var ing in listaIngredientes) {
       final clean = ing.replaceFirst(RegExp(r'^[\-\*]\s*'), '').trim();
@@ -341,15 +365,15 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
         sb.writeln('  [ ] $clean');
       }
     }
-    sb.writeln('----------------------------------------');
+    sb.writeln('----------------------------------------------------------------');
     sb.writeln('👨‍🍳 PREPARACIÓN:');
     final pasos = _extraerPasosIndividuales(bloqueInstrucciones);
     for (int i = 0; i < pasos.length; i++) {
       sb.writeln('  ${i + 1}. ${pasos[i]}');
     }
-    sb.writeln('----------------------------------------');
+    sb.writeln('----------------------------------------------------------------');
     sb.writeln('🌐 https://www.jitomateycebolla.com/');
-    sb.writeln('========================================');
+    sb.writeln('════════════════════════════════════════════════════════════════');
 
     final textoFicha = sb.toString();
 
@@ -385,12 +409,80 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.print_outlined, color: Colors.deepOrange, size: 26),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Ficha de Cocina & Modo Imprimir 🖨️',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepOrange.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/icon_3a_ruby_glow.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.deepOrange,
+                            child: const Icon(
+                              Icons.restaurant_menu,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'JITOMATE Y CEBOLLA',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                  letterSpacing: 1.0,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepOrange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'OFICIAL',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Ficha de Cocina & Modo Imprimir 🖨️',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     IconButton(
@@ -458,7 +550,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                           await SharePlus.instance.share(
                             ShareParams(
                               text: textoFicha,
-                              subject: 'Ficha de Cocina: ${widget.titulo}',
+                              subject: '🍅🧅 Ficha de Cocina: ${widget.titulo} | Jitomate y Cebolla',
                             ),
                           );
                         },
@@ -968,6 +1060,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           // 🖼️ CABECERA TIPO REVISTA
           SliverAppBar(
@@ -975,12 +1068,12 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
             pinned: true,
             backgroundColor: const Color(0xFF1E2022),
             foregroundColor: Colors.white,
-            leadingWidth: 64,
+            leadingWidth: 50,
             leading: Center(
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(20),
                   onTap: () {
                     if (Navigator.of(context).canPop()) {
                       Navigator.of(context).pop();
@@ -989,8 +1082,8 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     }
                   },
                   child: Container(
-                    width: 42,
-                    height: 42,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.65),
                       shape: BoxShape.circle,
@@ -1006,16 +1099,34 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     child: const Icon(
                       Icons.arrow_back,
                       color: Colors.white,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
                 ),
               ),
             ),
+            title: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _mostrarTituloAppBar ? 1.0 : 0.0,
+              child: Text(
+                widget.titulo,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  letterSpacing: -0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             actions: [
               IconButton(
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 icon: Container(
-                  padding: const EdgeInsets.all(7),
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.65),
                     shape: BoxShape.circle,
@@ -1024,7 +1135,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                   child: const Icon(
                     Icons.share_rounded,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
                 tooltip: 'Compartir Receta Gourmet 📲',
@@ -1035,8 +1146,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 ),
               ),
               IconButton(
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 icon: Container(
-                  padding: const EdgeInsets.all(7),
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.65),
                     shape: BoxShape.circle,
@@ -1045,7 +1159,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                   child: const Icon(
                     Icons.print_outlined,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
                 tooltip: 'Ficha de Cocina & Modo Imprimir 🖨️',
@@ -1056,8 +1170,11 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 ),
               ),
               IconButton(
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 icon: Container(
-                  padding: const EdgeInsets.all(7),
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.65),
                     shape: BoxShape.circle,
@@ -1070,7 +1187,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     color: _registroCocina != null
                         ? Colors.lightGreenAccent
                         : Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
                 tooltip: _registroCocina != null
@@ -1080,43 +1197,30 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               ),
               if (_puedeEliminar)
                 IconButton(
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
                   icon: Container(
-                    padding: const EdgeInsets.all(7),
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.65),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white30, width: 1.0),
                     ),
-                    child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                   tooltip: ServicioAdmin.esAdmin()
                       ? 'Eliminar receta (Administrador)'
                       : 'Eliminar mi receta',
                   onPressed: _confirmarEliminarReceta,
                 ),
+              const SizedBox(width: 6),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsetsDirectional.only(
-                start: 72,
-                end: 72,
-                bottom: 16,
-              ),
-              title: Text(
-                widget.titulo,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  shadows: [
-                    Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
-                    Shadow(color: Colors.black, blurRadius: 20),
-                    Shadow(color: Colors.black, blurRadius: 4),
-                  ],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -1161,19 +1265,16 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                       ),
                     ),
                   ),
-                  // Gradiente inferior profundo y amplio para el título
+                  // Gradiente inferior suave para transición armónica hacia la ficha
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
+                        end: Alignment.center,
                         colors: [
-                          Colors.black,
-                          Colors.black87,
-                          Colors.black45,
+                          Colors.black54,
                           Colors.transparent,
                         ],
-                        stops: [0.0, 0.35, 0.65, 1.0],
                       ),
                     ),
                   ),
