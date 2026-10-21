@@ -1468,29 +1468,37 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.deepOrange.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepOrange.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.storefront,
+                                  color: Colors.deepOrange,
+                                  size: 20,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.storefront,
-                                color: Colors.deepOrange,
-                                size: 20,
+                              const SizedBox(width: 8),
+                              const Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Cotización Consolidada',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Cotización Consolidada',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -1570,13 +1578,19 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                                 size: 20,
                               ),
                             ),
-                            title: Row(
+                             title: Row(
                               children: [
-                                Text(
-                                  c.nombreSupermercado,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      c.nombreSupermercado == 'Central de Abasto' ? 'CEDA CDMX' : c.nombreSupermercado,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 if (esMejorOpcion) ...[
@@ -1691,11 +1705,14 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                                     Icons.account_balance_wallet_outlined,
                                     size: 16,
                                   ),
-                                  label: Text(
-                                    'Usar \$${c.total.toStringAsFixed(2)} en Finanzas',
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.bold,
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      'Usar \$${c.total.toStringAsFixed(2)} en Finanzas',
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(
@@ -1731,12 +1748,15 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.tune, color: Colors.deepPurple, size: 18),
-                        label: const Text(
-                          'Abrir en Cotizador Interactivo detallado',
-                          style: TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Abrir en Cotizador Interactivo detallado',
+                            style: TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -2345,7 +2365,10 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                         ),
                       ),
                       icon: const Icon(Icons.fullscreen_exit_rounded),
-                      label: const Text('Salir de Focus'),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('Salir de Focus'),
+                      ),
                       onPressed: () => setState(() => _modoSuperFocus = false),
                     ),
                   ),
@@ -2361,9 +2384,12 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                         ),
                       ),
                       icon: const Icon(Icons.inventory_2_outlined),
-                      label: const Text(
-                        'A Despensa',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'A Despensa',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       onPressed: _estaCargando ? null : transferirCompradosADespensa,
                     ),
