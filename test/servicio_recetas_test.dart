@@ -192,11 +192,31 @@ void main() {
       expect(map.length, greaterThanOrEqualTo(94));
       for (final url in map.values) {
         expect(url.isNotEmpty, isTrue);
-        expect(url, contains('auto=format'));
-        expect(url, contains('w=600'));
+        if (url.contains('unsplash.com')) {
+          expect(url, contains('auto=format'));
+          expect(url, contains('w=600'));
+        }
       }
 
       // Verificación específica de recetas reportadas por el usuario:
+      // ID 104: Molletes tradicionales con pico de gallo fresco (no tostadas de aguacate)
+      final imgMolletes = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 104,
+        titulo: 'Molletes Tradicionales con Pico de Gallo Fresco',
+      );
+      expect(imgMolletes, isNotNull);
+      expect(imgMolletes, isNot(contains('photo-1588137378633-dea1336ce1e2'))); // no aguacate
+      expect(imgMolletes, contains('molletes_pico_de_gallo'));
+
+      // ID 129: Copa de yogur con mandarina, guayaba y canela (no fresas)
+      final imgYogur = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 129,
+        titulo: 'Copa de Yogur con Mandarina, Guayaba y Canela',
+      );
+      expect(imgYogur, isNotNull);
+      expect(imgYogur, isNot(contains('photo-1488477181946-6428a0291777'))); // no fresas
+      expect(imgYogur, contains('copa_yogur_mandarina_guayaba'));
+
       // ID 105: Bowl de avena cremosa con manzana y canela (no pan francés)
       final imgAvena = ServicioRecetas.obtenerImagenOptimizada(idReceta: 105, titulo: 'Bowl de avena cremosa');
       expect(imgAvena, isNotNull);

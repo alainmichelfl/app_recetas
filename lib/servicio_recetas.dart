@@ -338,7 +338,7 @@ class ServicioRecetas {
     101: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80', // Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki
     102: 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80', // Chilaquiles Verdes Ligeros con Pollo Deshebrado
     103: 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80', // Omelette de Espinacas, Champiñones y Queso Panela
-    104: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80', // Molletes Tradicionales con Pico de Gallo Fresco
+    104: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg', // Molletes Tradicionales con Pico de Gallo Fresco
     105: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Bowl de Avena Cremosa con Manzana y Canela
     106: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostadas de Huevo Pochado con Aguacate y Jitomate Cherry
     107: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pechuga de Pollo al Limón con Calabacitas Asadas
@@ -363,7 +363,7 @@ class ServicioRecetas {
     126: 'https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=600&q=80', // Pancakes de Calabaza de Castilla Especiada
     127: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80', // Huevos Revueltos con Hongos y Betabel Salteado
     128: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostada Rústica de Camote con Huevo Poché
-    129: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', // Copa de Yogur con Mandarina, Guayaba y Canela
+    129: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/copa_yogur_mandarina_guayaba.jpg', // Copa de Yogur con Mandarina, Guayaba y Canela
     130: 'https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?auto=format&fit=crop&w=600&q=80', // Crema Aterciopelada de Calabaza de Castilla Rostizada
     131: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén con Glaseado de Mandarina y Camote
     132: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80', // Ensalada Tibia de Lentejas con Betabel y Hongos
@@ -429,7 +429,7 @@ class ServicioRecetas {
       return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('mollete')) {
-      return 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg';
     }
     if (t.contains('enchilada') || t.contains('enfrijolada') || t.contains('entomatada') || t.contains('suizas')) {
       return 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80';
@@ -563,6 +563,9 @@ class ServicioRecetas {
     }
     if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido') || t.contains('jugo')) {
       return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
+    }
+    if ((t.contains('yogur') || t.contains('yogurt') || t.contains('copa')) && (t.contains('mandarina') || t.contains('guayaba'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/copa_yogur_mandarina_guayaba.jpg';
     }
     if (t.contains('yogurt') || t.contains('yogur') || t.contains('parfait') || t.contains('chia') || t.contains('chía')) {
       return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80';
