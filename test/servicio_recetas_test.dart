@@ -234,6 +234,43 @@ void main() {
       expect(imgSopaTortilla, isNot(contains('photo-1547592166'))); // no crema de calabacita
       expect(imgSopaTortilla, contains('sopa_tortilla_tradicional'));
 
+      // Bloque 2: Desayunos y Bowls Críticos
+      // ID 52: Gelatina de yogurt griego con frutos rojos (no yogurt líquido)
+      final imgGelatina = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 52,
+        titulo: 'Gelatina de Yogurt Griego con Frutos Rojos',
+      );
+      expect(imgGelatina, isNotNull);
+      expect(imgGelatina, isNot(contains('photo-1488477181946'))); // no yogurt líquido
+      expect(imgGelatina, contains('gelatina_yogurt_frutos_rojos'));
+
+      // ID 79: Smoothie bowl de frutos rojos (no mango amarillo)
+      final imgSmoothie = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 79,
+        titulo: 'Smoothie Bowl de Frutos Rojos',
+      );
+      expect(imgSmoothie, isNotNull);
+      expect(imgSmoothie, isNot(contains('photo-1494597564530'))); // no mango amarillo
+      expect(imgSmoothie, contains('smoothie_bowl_frutos_rojos'));
+
+      // ID 125: Bowl tibio de avena con manzana y canela (no pan francés con berries)
+      final imgAvenaManzana = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 125,
+        titulo: 'Bowl Tibio de Avena con Manzana y Canela',
+      );
+      expect(imgAvenaManzana, isNotNull);
+      expect(imgAvenaManzana, isNot(contains('photo-1584776296944'))); // no pan francés
+      expect(imgAvenaManzana, contains('bowl_avena_manzana_canela'));
+
+      // ID 128: Tostada rústica de camote con huevo poché (no tostada simple de aguacate)
+      final imgTostadaCamote = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 128,
+        titulo: 'Tostada Rústica de Camote con Huevo Poché',
+      );
+      expect(imgTostadaCamote, isNotNull);
+      expect(imgTostadaCamote, isNot(contains('photo-1525351484163'))); // no aguacate
+      expect(imgTostadaCamote, contains('tostada_camote_huevo_poche'));
+
       // ID 104: Molletes tradicionales con pico de gallo fresco (no tostadas de aguacate)
       final imgMolletes = ServicioRecetas.obtenerImagenOptimizada(
         idReceta: 104,
@@ -283,7 +320,7 @@ void main() {
 
       // 2. Receta nueva de avena sin URL
       final imgAvenaNueva = ServicioRecetas.obtenerImagenOptimizada(
-        titulo: 'Avena con manzana y nueces',
+        titulo: 'Avena caliente con frutos secos',
       );
       expect(imgAvenaNueva, isNotNull);
       expect(imgAvenaNueva, contains('1669559809547-6e4c4fe41371'));
@@ -293,6 +330,27 @@ void main() {
         titulo: 'Filete de salmón a la plancha',
       );
       expect(imgSalmon, contains('photo-1519708227418-c8fd9a32b7a2'));
+
+      // 4. Semántica Bloque 2
+      final imgSemSmoothie = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Bowl de smoothie de frutos rojos y chía',
+      );
+      expect(imgSemSmoothie, contains('smoothie_bowl_frutos_rojos'));
+
+      final imgSemGelatina = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Gelatina cremosa de yogurt griego',
+      );
+      expect(imgSemGelatina, contains('gelatina_yogurt_frutos_rojos'));
+
+      final imgSemCamote = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Tostada de camote con huevo pochado',
+      );
+      expect(imgSemCamote, contains('tostada_camote_huevo_poche'));
+
+      final imgSemAvenaCanela = ServicioRecetas.obtenerImagenOptimizada(
+        titulo: 'Bowl tibio de avena con manzana',
+      );
+      expect(imgSemAvenaCanela, contains('bowl_avena_manzana_canela'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {

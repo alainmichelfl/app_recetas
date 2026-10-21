@@ -286,7 +286,7 @@ class ServicioRecetas {
     49: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80', // Bowl Nocturno de Quinoa y Huevo Cocido
     50: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80', // Hummus Casero con Palitos de Zanahoria
     51: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80', // Rodajas de Manzana con Crema de Cacahuate
-    52: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', // Gelatina de Yogurt Griego con Frutos Rojos
+    52: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gelatina_yogurt_frutos_rojos.jpg', // Gelatina de Yogurt Griego con Frutos Rojos
     53: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=600&q=80', // Mix Energético de Nueces y Chocolate Amargo
     54: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80', // Galletas de Avena y Plátano al Microondas
     55: 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80', // Omelette de Claras con Espinaca
@@ -313,7 +313,7 @@ class ServicioRecetas {
     76: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_huevo_nopal.jpg', // Tacos de Huevo con Nopal
     77: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Avena Caliente con Manzana y Almendras
     78: 'https://plus.unsplash.com/premium_photo-1731950424220-17ce9415dcc7?auto=format&fit=crop&w=600&q=80', // Quesadillas de Huevo con Espinaca
-    79: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Smoothie Bowl de Frutos Rojos
+    79: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_bowl_frutos_rojos.jpg', // Smoothie Bowl de Frutos Rojos
     80: 'https://images.unsplash.com/photo-1768179669433-bd9d52949c20?auto=format&fit=crop&w=600&q=80', // Pechuga en Salsa Verde con Calabacitas
     81: 'https://images.unsplash.com/photo-1622756144420-6877b1b7476e?auto=format&fit=crop&w=600&q=80', // Atún a la Mexicana
     82: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80', // Ensalada de Pasta Fría con Pollo
@@ -359,10 +359,10 @@ class ServicioRecetas {
     122: 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80', // Bocaditos Crujientes de Calabaza y Zanahoria
     123: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pollo al Limón Mediterráneo con Salteado Rústico de Calabacita y Pimiento
     124: 'https://images.unsplash.com/photo-1784571246476-ae530d147e2e?auto=format&fit=crop&w=600&q=80', // Salmón Crujiente al Romero con Puré de Camote y Espárragos
-    125: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Bowl Tibio de Avena con Manzana y Canela
+    125: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bowl_avena_manzana_canela.jpg', // Bowl Tibio de Avena con Manzana y Canela
     126: 'https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=600&q=80', // Pancakes de Calabaza de Castilla Especiada
     127: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80', // Huevos Revueltos con Hongos y Betabel Salteado
-    128: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostada Rústica de Camote con Huevo Poché
+    128: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostada_camote_huevo_poche.jpg', // Tostada Rústica de Camote con Huevo Poché
     129: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/copa_yogur_mandarina_guayaba.jpg', // Copa de Yogur con Mandarina, Guayaba y Canela
     130: 'https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?auto=format&fit=crop&w=600&q=80', // Crema Aterciopelada de Calabaza de Castilla Rostizada
     131: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén con Glaseado de Mandarina y Camote
@@ -392,6 +392,9 @@ class ServicioRecetas {
     final t = titulo.toLowerCase().trim();
 
     // 1. Avena, porridge y overnight oats
+    if ((t.contains('avena') || t.contains('porridge') || t.contains('oatmeal')) && (t.contains('manzana') || t.contains('canela'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bowl_avena_manzana_canela.jpg';
+    }
     if (t.contains('avena') || t.contains('oatmeal') || t.contains('overnight') || t.contains('porridge')) {
       return 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80';
     }
@@ -411,6 +414,9 @@ class ServicioRecetas {
     }
 
     // 3. Huevos y desayunos
+    if (t.contains('camote') && (t.contains('huevo') || t.contains('poch') || t.contains('tostada'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostada_camote_huevo_poche.jpg';
+    }
     if (t.contains('pochado') || t.contains('poche') || (t.contains('huevo') && t.contains('aguacate')) || t.contains('avocado toast')) {
       return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
     }
@@ -542,6 +548,9 @@ class ServicioRecetas {
     if (t.contains('ensalada') || t.contains('salad') || t.contains('caprese')) {
       return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
     }
+    if ((t.contains('smoothie') || t.contains('bowl')) && (t.contains('frutos rojos') || t.contains('fruto rojo') || t.contains('berries') || t.contains('mora') || t.contains('acai') || t.contains('açai'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_bowl_frutos_rojos.jpg';
+    }
     if (t.contains('bowl') || t.contains('quinoa') || t.contains('poke') || t.contains('zoodle')) {
       return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
     }
@@ -573,8 +582,14 @@ class ServicioRecetas {
     if (t.contains('helado') || t.contains('nieve') || t.contains('ice cream') || t.contains('gelato')) {
       return 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=600&q=80';
     }
+    if ((t.contains('smoothie') || t.contains('bowl')) && (t.contains('frutos rojos') || t.contains('fruto rojo') || t.contains('berries') || t.contains('mora'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_bowl_frutos_rojos.jpg';
+    }
     if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido') || t.contains('jugo')) {
       return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('gelatina') && (t.contains('yogurt') || t.contains('yogur') || t.contains('griego') || t.contains('fruto'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gelatina_yogurt_frutos_rojos.jpg';
     }
     if ((t.contains('yogur') || t.contains('yogurt') || t.contains('copa')) && (t.contains('mandarina') || t.contains('guayaba'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/copa_yogur_mandarina_guayaba.jpg';
