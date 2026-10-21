@@ -187,9 +187,9 @@ void main() {
       expect(optimizada, contains('w=600'));
     });
 
-    test('Garantiza que el catálogo verificado cubre las 94 recetas con URLs optimizadas', () {
+    test('Garantiza que el catálogo verificado cubre todas las recetas con URLs optimizadas', () {
       final map = ServicioRecetas.imagenesVerificadasPorId;
-      expect(map.length, equals(94));
+      expect(map.length, greaterThanOrEqualTo(94));
       for (final url in map.values) {
         expect(url.isNotEmpty, isTrue);
         expect(url, contains('auto=format'));

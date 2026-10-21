@@ -12,6 +12,7 @@ import 'servicio_copiloto_cocina.dart';
 import 'servicio_finanzas_domesticas.dart';
 import 'servicio_sommelier.dart';
 import 'servicio_cocina_express.dart';
+import 'widget_shimmer_esqueleto.dart';
 
 class PantallaDetalleReceta extends StatefulWidget {
   final int idReceta;
@@ -543,18 +544,8 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                           fit: BoxFit.cover,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return Container(
-                              color: const Color(0xFF1E2022),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  color: const Color(0xFFD32F2F),
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
+                            return const WidgetShimmerEsqueleto(
+                              borderRadius: 0,
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {

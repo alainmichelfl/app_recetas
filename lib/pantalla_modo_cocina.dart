@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'servicio_despensa.dart';
 import 'servicio_historial_cocina.dart';
@@ -54,11 +55,19 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
   // 💡 Estructura inteligente para manejar diferentes tipos de tarjetas
   List<Map<String, dynamic>> paginasCocina = [];
   int _pasoActual = 0;
+  bool _pantallaSiempreEncendida = true;
 
   @override
   void initState() {
     super.initState();
     _modoActual = widget.modoInicial;
+
+    // Activar WakeLock para mantener pantalla encendida mientras cocinas
+    try {
+      WakelockPlus.enable();
+    } catch (e) {
+      debugPrint('Aviso al activar WakeLock: $e');
+    }
 
     // Cachear la versión inicial si se nos pasó
     final textoBase = widget.textoInstrucciones ?? widget.recetaInstrucciones;
@@ -583,6 +592,31 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: Icon(
+              _pantallaSiempreEncendida ? Icons.wb_sunny : Icons.wb_sunny_outlined,
+              color: _pantallaSiempreEncendida ? Colors.amberAccent : Colors.white60,
+            ),
+            tooltip: _pantallaSiempreEncendida
+                ? 'Pantalla siempre activa (Encendida) ☀️'
+                : 'Pantalla normal (Ahorro de batería)',
+            onPressed: () {
+              setState(() {
+                _pantallaSiempreEncendida = !_pantallaSiempreEncendida;
+              });
+              try {
+                WakelockPlus.toggle(enable: _pantallaSiempreEncendida);
+              } catch (_) {}
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_pantallaSiempreEncendida
+                      ? 'Pantalla activa: no se apagará mientras cocinas ☀️🍳'
+                      : 'Modo ahorro de batería activado'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(4),
@@ -1454,6 +1488,9 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
 
   @override
   void dispose() {
+    try {
+      WakelockPlus.disable();
+    } catch (_) {}
     _temporizadorCocina?.cancel();
     _temporizadorLimpiezaVoz?.cancel();
     _servicioVoz.dispose();

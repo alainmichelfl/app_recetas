@@ -301,8 +301,8 @@ class ServicioRecetas {
     72: 'https://images.unsplash.com/photo-1789546554683-2edf71bcf2e7?auto=format&fit=crop&w=600&q=80', // Mix Saludable de Semillas y Cacao
     73: 'https://images.unsplash.com/photo-1592394533824-9440e5d68530?auto=format&fit=crop&w=600&q=80', // Bastones de Apio con Queso Crema
     74: 'https://images.unsplash.com/photo-1522065235999-38c8248e5898?auto=format&fit=crop&w=600&q=80', // Smoothie de Cacao y Proteína
-    75: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?auto=format&fit=crop&w=600&q=80', // Toast de Crema de Cacahuate y Plátano
-    76: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80', // Tacos de Huevo con Nopal
+    75: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80', // Toast de Crema de Cacahuate y Plátano
+    76: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80', // Tacos de Huevo con Nopal
     77: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Avena Caliente con Manzana y Almendras
     78: 'https://plus.unsplash.com/premium_photo-1731950424220-17ce9415dcc7?auto=format&fit=crop&w=600&q=80', // Quesadillas de Huevo con Espinaca
     79: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Smoothie Bowl de Frutos Rojos
@@ -322,7 +322,7 @@ class ServicioRecetas {
     93: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=600&q=80', // Almendras Tostadas con Sal de Mar
     94: 'https://images.unsplash.com/photo-1788786877538-2289d3e4cb02?auto=format&fit=crop&w=600&q=80', // Gelatina Light de Limón con Yogurt
     95: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=600&q=80', // Tazón Libre Especial de Quinoa y Vegetales
-    96: 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80', // Bocaditos Energéticos de Avena, Cacahuate y Chocolate Negro
+    96: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80', // Bocaditos Energéticos de Avena, Cacahuate y Chocolate Negro (Humanos)
     97: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=600&q=80', // Pechuga a la Plancha con Salsa Rústica y Quinoa
     98: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén en Salsa Rústica de Jitomate y Cebolla con Arroz
     99: 'https://images.unsplash.com/photo-1560717845-968823efbee1?auto=format&fit=crop&w=600&q=80', // Salmón Sellado con Espárragos Salteados y Aguacate
@@ -351,6 +351,26 @@ class ServicioRecetas {
     122: 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80', // Bocaditos Crujientes de Calabaza y Zanahoria
     123: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pollo al Limón Mediterráneo con Salteado Rústico de Calabacita y Pimiento
     124: 'https://images.unsplash.com/photo-1784571246476-ae530d147e2e?auto=format&fit=crop&w=600&q=80', // Salmón Crujiente al Romero con Puré de Camote y Espárragos
+    125: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Bowl Tibio de Avena con Manzana y Canela
+    126: 'https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=600&q=80', // Pancakes de Calabaza de Castilla Especiada
+    127: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80', // Huevos Revueltos con Hongos y Betabel Salteado
+    128: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostada Rústica de Camote con Huevo Poché
+    129: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', // Copa de Yogur con Mandarina, Guayaba y Canela
+    130: 'https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?auto=format&fit=crop&w=600&q=80', // Crema Aterciopelada de Calabaza de Castilla Rostizada
+    131: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén con Glaseado de Mandarina y Camote
+    132: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80', // Ensalada Tibia de Lentejas con Betabel y Hongos
+    133: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Guisado Casero de Pollo con Camote Morado y Tejocote
+    134: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', // Fajitas Express de Pechuga con Hongos y Manzana
+    135: 'https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=600&q=80', // Sopa Ligera de Hongos Silvestres y Epazote
+    136: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80', // Ensalada Nocturna de Manzana, Betabel y Panela
+    137: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=600&q=80', // Camote Horneado Relleno de Pollo Deshebrado
+    138: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80', // Crema Ligera de Calabaza con Hongos Salteados
+    139: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80', // Salteado Oriental de Calabaza de Castilla y Pollo
+    140: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?auto=format&fit=crop&w=600&q=80', // Compota Tibia de Manzana y Guayaba con Canela
+    141: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80', // Chips de Camote Morado y Betabel al Horno
+    142: 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80', // Pepitas de Calabaza Tostadas al Comal con Canela
+    143: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=600&q=80', // Gajos de Manzana Dorada con Requesón y Nuez
+    144: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80', // Gajos de Mandarina con Salpicado de Canela y Pepitas
   };
 
   /// Lista negra de URLs erróneas conocidas (tocadiscos de vinilo, placeholders o fotos discordantes)
@@ -437,6 +457,15 @@ class ServicioRecetas {
     if (t.contains('rollito') || t.contains('pavo')) {
       return 'https://images.unsplash.com/photo-1514944298352-7b0b30efcf72?auto=format&fit=crop&w=600&q=80';
     }
+    if (t.contains('stir fry') || t.contains('salteado oriental') || t.contains('wok')) {
+      return 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('camote relleno') || t.contains('camote horneado')) {
+      return 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('guisado') || t.contains('estofado')) {
+      return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80';
+    }
     if (t.contains('pollo') || t.contains('pechuga') || t.contains('alitas')) {
       return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
     }
@@ -498,6 +527,23 @@ class ServicioRecetas {
     }
 
     // 11. Snacks, postres y dulces
+    if (t.contains('pepita') || t.contains('semilla') || t.contains('semillas')) {
+      return 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('chip') || t.contains('chips') || (t.contains('camote') && t.contains('horno'))) {
+      return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('mandarina') || t.contains('naranja') || t.contains('citrico') || t.contains('cítrico')) {
+      return 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('compota') || t.contains('guayaba')) {
+      return 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('bocadito') || t.contains('energy ball') || t.contains('trufa')) {
+      if (!t.contains('perro') && !t.contains('canin') && !t.contains('dog')) {
+        return 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80';
+      }
+    }
     if (t.contains('galleta') || t.contains('cookie') || t.contains('cookies') || t.contains('brownie')) {
       return 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=600&q=80';
     }
@@ -534,6 +580,52 @@ class ServicioRecetas {
       default:
         return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80';
     }
+  }
+
+  /// Devuelve 4 opciones alternativas verificadas de alta fidelidad gastronómica
+  /// para permitir al administrador seleccionar la fotografía ideal antes de guardar en BD.
+  static List<String> obtenerOpcionesAlternativas(String titulo, [String? tipoComida]) {
+    final t = titulo.toLowerCase().trim();
+    final tipo = (tipoComida ?? '').toLowerCase().trim();
+
+    final List<String> opciones = [];
+    final canonica = resolverImagenPorSemantica(titulo, tipoComida);
+    opciones.add(canonica);
+
+    if (t.contains('avena') || t.contains('desayuno') || tipo == 'desayuno') {
+      opciones.addAll([
+        'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80',
+      ]);
+    } else if (t.contains('sopa') || t.contains('crema') || t.contains('caldo')) {
+      opciones.addAll([
+        'https://images.unsplash.com/photo-1578020190125-f4f7c18bc9cb?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=600&q=80',
+      ]);
+    } else if (t.contains('snack') || tipo == 'snack') {
+      opciones.addAll([
+        'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80',
+      ]);
+    } else {
+      // Comida / Cena / Guisados
+      opciones.addAll([
+        'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80',
+      ]);
+    }
+
+    final sinDuplicados = opciones.toSet().toList();
+    return sinDuplicados.take(4).toList();
   }
 
   /// Resuelve la URL optimizada y verificada para cualquier receta de la aplicación

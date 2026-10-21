@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -1051,6 +1052,63 @@ class MenuLateral extends StatelessWidget {
                   );
                 }
               },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Jitomate y Cebolla v1.0.4',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  if (kIsWeb)
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.sync, color: Colors.white, size: 20),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text('¡Catálogo e interfaz sincronizados con la nube! 🚀✨'),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.teal,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.teal.shade200, width: 0.8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.refresh_rounded, size: 12, color: Colors.teal),
+                            SizedBox(width: 4),
+                            Text(
+                              'Buscar mejoras',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: Colors.teal,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
           ],

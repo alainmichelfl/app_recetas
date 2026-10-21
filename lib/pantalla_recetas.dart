@@ -20,6 +20,7 @@ import 'dialogo_busqueda_spotlight.dart';
 import 'dialogo_onboarding_bienvenida.dart';
 import 'servicio_recordatorios.dart';
 import 'servicio_perfil_usuario.dart';
+import 'widget_shimmer_esqueleto.dart';
 
 class PantallaRecetas extends StatefulWidget {
   final FiltroAudienciaReceta? filtroInicial;
@@ -74,11 +75,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     cargarRecetas();
     _cargarPreferenciaBannerInicio();
     _searchController.addListener(_filtrarRecetas);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _verificarYMostrarAgradecimiento();
-      DialogoOnboardingBienvenida.verificarYMostrar(context, alFinalizar: () {
-        DialogoManifiestoBienvenida.verificarYMostrar(context);
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _verificarYMostrarAgradecimiento();
+      if (mounted) {
+        DialogoOnboardingBienvenida.verificarYMostrar(context, alFinalizar: () {
+          DialogoManifiestoBienvenida.verificarYMostrar(context);
+        });
+      }
     });
   }
 
@@ -267,12 +270,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
 
     if (debeMostrar && mounted) {
       await prefs.setBool(key, true);
-      _mostrarDialogoAgradecimiento();
+      await _mostrarDialogoAgradecimiento();
     }
   }
 
-  void _mostrarDialogoAgradecimiento() {
-    showDialog(
+  Future<void> _mostrarDialogoAgradecimiento() async {
+    await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -2510,6 +2513,81 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   // 📭 ESTADO VACÍO CUANDO NO HAY RECETAS QUE COINCIDAN
   // ==========================================================
   Widget _construirEstadoVacioRecetas() {
+    final String terminoBusqueda = _searchController.text.trim();
+    final bool esBusqueda = terminoBusqueda.isNotEmpty;
+
+    if (esBusqueda) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  size: 54,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No encontramos «$terminoBusqueda» en el catálogo',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E2022),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '¿Quieres que el Chef IA invente una receta de «$terminoBusqueda» con lo que tienes en tu cocina?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13.5, color: Colors.grey.shade700, height: 1.3),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (ctx) => PantallaChef(
+                        ingredientesIniciales: 'Quiero preparar $terminoBusqueda',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.psychology_alt_rounded, size: 20),
+                label: Text('Crear «$terminoBusqueda» con Chef IA 🤖✨'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD32F2F),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: () {
+                  _searchController.clear();
+                  _filtrarRecetas();
+                },
+                icon: const Icon(Icons.close_rounded, size: 16, color: Colors.grey),
+                label: const Text('Limpiar búsqueda', style: TextStyle(color: Colors.grey)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -2529,7 +2607,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             Text(
               _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? '¡Muy pronto nuevas recetas recién salidas del sartén!'
-                  : 'No se encontraron recetas',
+                  : 'No se encontraron recetas con los filtros aplicados',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -2564,6 +2642,27 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _filtroAudiencia = FiltroAudienciaReceta.todas;
+                    categoriaSeleccionada = 'Todos';
+                    _filtroExpress = FiltroExpress.todos;
+                    _ingredientesSeleccionados.clear();
+                    _searchController.clear();
+                    _filtrarRecetas();
+                  });
+                },
+                icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                label: const Text('Restablecer todos los filtros'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD32F2F),
+                  side: const BorderSide(color: Color(0xFFD32F2F)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
@@ -2854,20 +2953,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
-                    return Container(
+                    return const WidgetShimmerEsqueleto(
                       width: 60,
                       height: 60,
-                      color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFD32F2F),
-                          ),
-                        ),
-                      ),
+                      borderRadius: 10,
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {

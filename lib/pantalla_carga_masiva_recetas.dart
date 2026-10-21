@@ -67,15 +67,14 @@ class _PantallaCargaMasivaRecetasState
     String tipoComida, [
     String? urlSugerida,
   ]) {
-    // Si la URL sugerida es un archivo local del dispositivo o cámara, preservarla
-    if (urlSugerida != null &&
-        (urlSugerida.startsWith('file:') ||
-            urlSugerida.startsWith('/data/user/') ||
-            urlSugerida.startsWith('content:') ||
-            urlSugerida.startsWith('data:image'))) {
-      return urlSugerida;
+    // Si la URL sugerida es válida y no está en la lista negra, respetarla prioritariamente
+    if (urlSugerida != null && urlSugerida.trim().isNotEmpty) {
+      final trimmed = urlSugerida.trim();
+      if (!ServicioRecetas.urlsNegras.any((negra) => trimmed.contains(negra))) {
+        return trimmed;
+      }
     }
-    // Siempre asignar la fotografía gastronómica oficial curada por semántica
+    // Asignar fotografía gastronómica curada por semántica
     return ServicioRecetas.resolverImagenPorSemantica(titulo, tipoComida);
   }
 
@@ -426,7 +425,7 @@ class _PantallaCargaMasivaRecetasState
                       padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
                       children: [
                         // Imagen de alta resolución
-                        if (img.isNotEmpty)
+                        if (img.isNotEmpty) ...[
                           ClipRRect(
                             borderRadius: BorderRadius.circular(16),
                             child: Image.network(
@@ -450,6 +449,25 @@ class _PantallaCargaMasivaRecetasState
                               ),
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _mostrarSelectorFotosAlternativas(r);
+                              },
+                              icon: const Icon(Icons.camera_alt_outlined, size: 16, color: Color(0xFFD32F2F)),
+                              label: const Text(
+                                'Cambiar foto de este platillo 📸',
+                                style: TextStyle(
+                                  color: Color(0xFFD32F2F),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 14),
                         // Badges tipo de comida y calorías
                         Row(
@@ -686,6 +704,151 @@ class _PantallaCargaMasivaRecetasState
           },
         );
       },
+    );
+  }
+
+  /// Despliega selector visual interactivo con 4 fotografías culinarias alternativas
+  /// verificadas y opción de URL personalizada antes de guardar en Supabase.
+  void _mostrarSelectorFotosAlternativas(Map<String, dynamic> r) {
+    final String titulo = r['titulo']?.toString() ?? 'Receta';
+    final String tipo = r['tipo_comida']?.toString() ?? 'Comida';
+    final String urlActual = r['imagen_url']?.toString() ?? '';
+    final List<String> opciones = ServicioRecetas.obtenerOpcionesAlternativas(titulo, tipo);
+    final ctrlUrl = TextEditingController(text: urlActual);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.photo_camera_back_rounded, color: Color(0xFFD32F2F)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Cambiar Foto: $titulo',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Toca cualquiera de las opciones verificadas o ingresa una URL personalizada:',
+                style: TextStyle(color: Colors.black54, fontSize: 13),
+              ),
+              const SizedBox(height: 14),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.45,
+                ),
+                itemCount: opciones.length,
+                itemBuilder: (context, idx) {
+                  final optUrl = opciones[idx];
+                  final bool seleccionada = (r['imagen_url'] ?? '') == optUrl;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        r['imagen_url'] = optUrl;
+                      });
+                      setModalState(() {});
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('¡Fotografía actualizada para esta receta! 📸✨'),
+                          backgroundColor: Colors.teal,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: seleccionada ? const Color(0xFFD32F2F) : Colors.grey.shade300,
+                          width: seleccionada ? 3 : 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(optUrl, fit: BoxFit.cover),
+                            if (seleccionada)
+                              Container(
+                                color: Colors.black38,
+                                child: const Center(
+                                  child: Icon(Icons.check_circle, color: Colors.white, size: 28),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: ctrlUrl,
+                decoration: InputDecoration(
+                  labelText: 'O ingresa una URL personalizada de imagen',
+                  prefixIcon: const Icon(Icons.link),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.check_circle, color: Color(0xFFD32F2F)),
+                    onPressed: () {
+                      final custom = ctrlUrl.text.trim();
+                      if (custom.isNotEmpty) {
+                        setState(() {
+                          r['imagen_url'] = custom;
+                        });
+                        Navigator.pop(ctx);
+                      }
+                    },
+                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1202,22 +1365,45 @@ class _PantallaCargaMasivaRecetasState
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    r['imagen_url'] ?? '',
-                                    width: 65,
-                                    height: 65,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      width: 65,
-                                      height: 65,
-                                      color: Colors.orange.shade100,
-                                      child: Icon(
-                                        Icons.restaurant_rounded,
-                                        color: Colors.orange.shade800,
+                                GestureDetector(
+                                  onTap: () => _mostrarSelectorFotosAlternativas(r),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          r['imagen_url'] ?? '',
+                                          width: 65,
+                                          height: 65,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            width: 65,
+                                            height: 65,
+                                            color: Colors.orange.shade100,
+                                            child: Icon(
+                                              Icons.restaurant_rounded,
+                                              color: Colors.orange.shade800,
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                      Positioned(
+                                        bottom: 2,
+                                        right: 2,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(3),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.65),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 11,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(width: 12),
