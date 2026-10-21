@@ -665,49 +665,32 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: InkWell(
-                  onTap: mostrarModalCotizaciones,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _mejorCotizacion != null && _mejorCotizacion!.total > 0
-                                    ? 'Estimado: \$${estimado.toStringAsFixed(2)} (${_mejorCotizacion!.nombreSupermercado})'
-                                    : (items.isEmpty
-                                        ? 'Lista vacía (\$0.00)'
-                                        : 'Estimado: Calculando...'),
-                                style: TextStyle(
-                                  fontSize: isLandscape ? 11 : 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade800,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.touch_app_outlined,
-                              size: 13,
-                              color: Colors.deepOrange,
-                            ),
-                          ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _mejorCotizacion != null && _mejorCotizacion!.total > 0
+                            ? 'Estimado: \$${estimado.toStringAsFixed(2)} (${_mejorCotizacion!.nombreSupermercado})'
+                            : (items.isEmpty
+                                ? 'Lista vacía (\$0.00)'
+                                : 'Estimado: Calculando...'),
+                        style: TextStyle(
+                          fontSize: isLandscape ? 11 : 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$pendientes pendientes · $comprados en carrito',
-                          style:
-                              TextStyle(fontSize: isLandscape ? 10 : 11, color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$pendientes pendientes · $comprados en carrito',
+                        style:
+                            TextStyle(fontSize: isLandscape ? 10 : 11, color: Colors.grey.shade600),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -742,41 +725,6 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 ),
               ),
             ],
-          ),
-          SizedBox(height: isLandscape ? 6 : 10),
-          InkWell(
-            onTap: mostrarModalCotizaciones,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: isLandscape ? 5 : 7, horizontal: 10),
-              decoration: BoxDecoration(
-                color: Colors.deepOrange.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Colors.deepOrange.withValues(alpha: 0.25),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.storefront, size: 16, color: Colors.deepOrange),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Comparar precios en Walmart, Soriana y La Comer',
-                      style: TextStyle(
-                        fontSize: isLandscape ? 11 : 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.deepOrange.shade900,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, size: 16, color: Colors.deepOrange),
-                ],
-              ),
-            ),
           ),
 
           // 🛒 Barra de Progreso de Artículos en el Carrito ("¡Faltan X cosas!")
@@ -2176,12 +2124,6 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                 ),
               );
             },
-          ),
-          // 🛒 Cotizar en Supermercados
-          IconButton(
-            tooltip: 'Cotizar en supermercados',
-            icon: const Icon(Icons.storefront, color: Colors.white),
-            onPressed: _estaCargando ? null : mostrarModalCotizaciones,
           ),
           // 🧾 Exportar Ticket / Compartir Lista Inteligente (Mejora 4)
           IconButton(
