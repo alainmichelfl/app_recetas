@@ -29,7 +29,7 @@ class ServicioIAGateway {
 
   /// URL de fallback local a Google Gemini API
   static String get urlGeminiFallback =>
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${ConfigApi.geminiKey}';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${ConfigApi.geminiKey}';
 
   /// Ejecuta una solicitud de IA pasando por el filtro de seguridad de cuotas (Rate Limit)
   /// y dirigiéndola preferentemente por la Supabase Edge Function 'gemini-proxy'.

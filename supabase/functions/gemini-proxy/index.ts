@@ -94,8 +94,8 @@ serve(async (req) => {
       );
     }
 
-    // 5. Llamada segura en servidor a Google Gemini (Modelo gemini-2.5-flash)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // 5. Llamada segura en servidor a Google Gemini (Modelo gemini-3.8-flash)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
     const respuestaGemini = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
