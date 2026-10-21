@@ -709,10 +709,12 @@ class _PantallaSommelierState extends State<PantallaSommelier>
 
   Future<void> _escanearBotella(ImageSource origen) async {
     final picker = ImagePicker();
+    // Prioridad R2: Compresión y optimización en cliente (ahorro de datos y velocidad 3x)
     final XFile? foto = await picker.pickImage(
       source: origen,
-      imageQuality: 85,
+      imageQuality: 80,
       maxWidth: 1280,
+      maxHeight: 1280,
     );
     if (foto == null) return;
 

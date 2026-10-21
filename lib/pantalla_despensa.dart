@@ -390,9 +390,12 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
 
   Future<void> _escanearTicket(ImageSource origen) async {
     final picker = ImagePicker();
+    // Prioridad R2: Compresión y optimización en cliente (ahorro de datos y velocidad 3x)
     final XFile? foto = await picker.pickImage(
       source: origen,
-      imageQuality: 85,
+      maxWidth: 1280,
+      maxHeight: 1280,
+      imageQuality: 80,
     );
     if (foto == null) return;
 

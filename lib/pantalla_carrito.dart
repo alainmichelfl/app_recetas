@@ -431,10 +431,13 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
         ? (estimado / presupuesto).clamp(0.0, 1.0)
         : 0.0;
     final bool excedido = restante < 0;
+    final int total = items.length;
     final int pendientes =
         items.where((i) => !(i['comprado'] ?? false)).length;
     final int comprados =
         items.where((i) => i['comprado'] ?? false).length;
+    final double progresoArticulos =
+        total > 0 ? (comprados / total) : 0.0;
 
     Color barraColor = Colors.green;
     if (porcentaje > 0.7 && porcentaje <= 0.9) {
@@ -447,10 +450,10 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
       margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: excedido ? Colors.red.shade300 : Colors.grey.shade200,
+          color: excedido ? Colors.red.shade300 : Colors.grey.withValues(alpha: 0.25),
           width: 1.2,
         ),
         boxShadow: [
@@ -643,6 +646,115 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
               ),
             ),
           ),
+
+          // 🛒 Barra de Progreso de Artículos en el Carrito ("¡Faltan X cosas!")
+          if (total > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: progresoArticulos == 1.0
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : Colors.amber.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: progresoArticulos == 1.0
+                      ? Colors.green.shade400
+                      : Colors.amber.shade400,
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            progresoArticulos == 1.0
+                                ? Icons.check_circle_rounded
+                                : Icons.shopping_basket_rounded,
+                            size: 17,
+                            color: progresoArticulos == 1.0
+                                ? Colors.green.shade800
+                                : Colors.amber.shade900,
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            progresoArticulos == 1.0
+                                ? '🎉 ¡Carrito 100% Completo!'
+                                : '🛒 $comprados de $total en el carrito (${(progresoArticulos * 100).toInt()}%)',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: progresoArticulos == 1.0
+                                  ? Colors.green.shade900
+                                  : Colors.brown.shade900,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        progresoArticulos == 1.0
+                            ? '¡Listo para pagar!'
+                            : (pendientes == 1
+                                ? '¡Falta solo 1!'
+                                : '¡Faltan solo $pendientes!'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: progresoArticulos == 1.0
+                              ? Colors.green.shade800
+                              : Colors.deepOrange.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: progresoArticulos,
+                      minHeight: 7,
+                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        progresoArticulos == 1.0
+                            ? Colors.green.shade700
+                            : Colors.deepOrange,
+                      ),
+                    ),
+                  ),
+                  if (progresoArticulos == 1.0) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade800,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.inventory_2_outlined, size: 17),
+                        label: const Text(
+                          'Mover comprados a mi Despensa 🥫✨',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: transferirCompradosADespensa,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -2247,6 +2359,36 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
                       progreso == 1.0 ? Colors.greenAccent : Colors.deepOrangeAccent,
                     ),
                   ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      progreso == 1.0
+                          ? '🎉 ¡Completaste todos tus artículos en tienda!'
+                          : (pendientes == 1
+                              ? '⚡ ¡Falta solo 1 producto!'
+                              : '⚡ ¡Faltan solo $pendientes productos!'),
+                      style: TextStyle(
+                        color: progreso == 1.0 ? Colors.greenAccent : Colors.amberAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (progreso == 1.0)
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.greenAccent.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.inventory_2_outlined, size: 14),
+                        label: const Text('Mover a Despensa', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        onPressed: transferirCompradosADespensa,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 // Chips de filtro para cambiar de vista con el pulgar
