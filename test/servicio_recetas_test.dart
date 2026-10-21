@@ -199,6 +199,41 @@ void main() {
       }
 
       // Verificación específica de recetas reportadas por el usuario:
+      // ID 76: Tacos de huevo con nopal (no tacos al pastor)
+      final imgTacosHuevo = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 76,
+        titulo: 'Tacos de Huevo con Nopal',
+      );
+      expect(imgTacosHuevo, isNotNull);
+      expect(imgTacosHuevo, isNot(contains('photo-1565299585323'))); // no al pastor
+      expect(imgTacosHuevo, contains('tacos_huevo_nopal'));
+
+      // ID 87: Quesadillas de flor de calabaza (no espinaca)
+      final imgQuesadillas = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 87,
+        titulo: 'Quesadillas de Flor de Calabaza',
+      );
+      expect(imgQuesadillas, isNotNull);
+      expect(imgQuesadillas, contains('quesadillas_flor_calabaza'));
+
+      // ID 112: Tacos de lechuga con salpicón de pollo (no quinoa)
+      final imgSalpicon = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 112,
+        titulo: 'Tacos de Lechuga con Salpicón de Pollo',
+      );
+      expect(imgSalpicon, isNotNull);
+      expect(imgSalpicon, isNot(contains('photo-1543339308'))); // no tazón de quinoa
+      expect(imgSalpicon, contains('tacos_lechuga_salpicon_pollo'));
+
+      // ID 116: Sopa de tortilla tradicional saludable (no crema de calabacita)
+      final imgSopaTortilla = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 116,
+        titulo: 'Sopa de Tortilla Tradicional Saludable',
+      );
+      expect(imgSopaTortilla, isNotNull);
+      expect(imgSopaTortilla, isNot(contains('photo-1547592166'))); // no crema de calabacita
+      expect(imgSopaTortilla, contains('sopa_tortilla_tradicional'));
+
       // ID 104: Molletes tradicionales con pico de gallo fresco (no tostadas de aguacate)
       final imgMolletes = ServicioRecetas.obtenerImagenOptimizada(
         idReceta: 104,

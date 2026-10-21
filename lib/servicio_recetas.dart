@@ -310,7 +310,7 @@ class ServicioRecetas {
     73: 'https://images.unsplash.com/photo-1592394533824-9440e5d68530?auto=format&fit=crop&w=600&q=80', // Bastones de Apio con Queso Crema
     74: 'https://images.unsplash.com/photo-1522065235999-38c8248e5898?auto=format&fit=crop&w=600&q=80', // Smoothie de Cacao y Proteína
     75: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80', // Toast de Crema de Cacahuate y Plátano
-    76: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80', // Tacos de Huevo con Nopal
+    76: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_huevo_nopal.jpg', // Tacos de Huevo con Nopal
     77: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Avena Caliente con Manzana y Almendras
     78: 'https://plus.unsplash.com/premium_photo-1731950424220-17ce9415dcc7?auto=format&fit=crop&w=600&q=80', // Quesadillas de Huevo con Espinaca
     79: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Smoothie Bowl de Frutos Rojos
@@ -321,7 +321,7 @@ class ServicioRecetas {
     84: 'https://images.unsplash.com/photo-1535399831218-d5bd36d1a6b3?auto=format&fit=crop&w=600&q=80', // Ceviche de Soya
     85: 'https://plus.unsplash.com/premium_photo-1673590981774-d9f534e0c617?auto=format&fit=crop&w=600&q=80', // Tostadas de Salpicón de Pollo
     86: 'https://plus.unsplash.com/premium_photo-1663842680485-45592e97b54b?auto=format&fit=crop&w=600&q=80', // Sopa de Fideos de Calabacita (Zoodles)
-    87: 'https://plus.unsplash.com/premium_photo-1731950424220-17ce9415dcc7?auto=format&fit=crop&w=600&q=80', // Quesadillas de Flor de Calabaza
+    87: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_flor_calabaza.jpg', // Quesadillas de Flor de Calabaza
     88: 'https://images.unsplash.com/photo-1757715377412-749d66c9c297?auto=format&fit=crop&w=600&q=80', // Rollitos de Pepino con Atún
     89: 'https://images.unsplash.com/photo-1753173301157-8136a70b4178?auto=format&fit=crop&w=600&q=80', // Tazón de Queso Cottage con Fresas
     90: 'https://plus.unsplash.com/premium_photo-1694336203192-c9e7f2891b95?auto=format&fit=crop&w=600&q=80', // Manzana Asada con Canela
@@ -346,11 +346,11 @@ class ServicioRecetas {
     109: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80', // Tinga de Pollo Casera en Tostadas Horneadas
     110: 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80', // Picadillo Tradicional de Res con Verduras Mixtas
     111: 'https://plus.unsplash.com/premium_photo-1699030868880-d8970ccc146e?auto=format&fit=crop&w=600&q=80', // Lentejas Guisadas con Zanahoria y Plátano Macho
-    112: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=600&q=80', // Tacos de Lechuga con Salpicón de Pollo
+    112: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lechuga_salpicon_pollo.jpg', // Tacos de Lechuga con Salpicón de Pollo
     113: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Crema Ligera de Calabacita con Queso Panela
     114: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80', // Quesadillas de Nopal Asado con Queso Oaxaca
     115: 'https://images.unsplash.com/photo-1622756144420-6877b1b7476e?auto=format&fit=crop&w=600&q=80', // Ensalada Fresca de Atún con Jitomate y Aguacate
-    116: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Sopa de Tortilla Tradicional Saludable
+    116: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg', // Sopa de Tortilla Tradicional Saludable
     117: 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80', // Guacamole Rústico con Totopos Horneados
     118: 'https://images.unsplash.com/photo-1788509814866-e1ddecfa6f0a?auto=format&fit=crop&w=600&q=80', // Pepinos Locos Rellenos de Zanahoria y Limón
     119: 'https://images.unsplash.com/photo-1651256785544-fc012585e6a2?auto=format&fit=crop&w=600&q=80', // Pudín de Chía con Leche de Almendras y Frutos Rojos
@@ -427,6 +427,18 @@ class ServicioRecetas {
     }
     if (t.contains('chilaquil')) {
       return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80';
+    }
+    if (t.contains('sopa de tortilla') || t.contains('sopa azteca')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg';
+    }
+    if (t.contains('flor de calabaza')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_flor_calabaza.jpg';
+    }
+    if (t.contains('salpicón') || t.contains('salpicon') || (t.contains('taco') && t.contains('lechuga'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lechuga_salpicon_pollo.jpg';
+    }
+    if ((t.contains('taco') || t.contains('tacos')) && (t.contains('huevo') || t.contains('nopal'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_huevo_nopal.jpg';
     }
     if (t.contains('mollete')) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg';
