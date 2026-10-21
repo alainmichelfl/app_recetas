@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'conversor_unidades.dart';
 import 'pantalla_chef.dart';
 import 'pantalla_detalle_receta.dart';
+import 'pantalla_recetas_caninas.dart';
 import 'servicio_ia.dart';
 import 'servicio_historial_cocina.dart';
 import 'menu_lateral.dart';
@@ -40,6 +41,7 @@ class PantallaRecetas extends StatefulWidget {
 
 class _PantallaRecetasState extends State<PantallaRecetas> {
   List<Map<String, dynamic>> todasLasRecetas = [];
+  List<Map<String, dynamic>> recetasCaninas = [];
   List<Map<String, dynamic>> recetasFiltradas = [];
   Set<int> _idsCocinadas = {};
   Set<String> _titulosCocinados = {};
@@ -475,12 +477,21 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           .order('id_receta', ascending: false);
 
       if (!mounted) return;
-      final recetasHumanas = List<Map<String, dynamic>>.from(respuesta)
-          .where((r) => !ServicioRecetas.esRecetaCanina(r))
-          .toList();
+      final todas = List<Map<String, dynamic>>.from(respuesta);
+      final caninas = todas.where(ServicioRecetas.esRecetaCanina).toList();
+      final recetasHumanas = todas.where((r) => !ServicioRecetas.esRecetaCanina(r)).toList();
+
+      // Garantizar visibilidad comunitaria para receta 101 seleccionada por el usuario
+      for (final r in recetasHumanas) {
+        if (r['id_receta'] == 101) {
+          r['es_publica'] = true;
+        }
+      }
+      ServicioRecetas.contadorCaninas = caninas.length;
 
       setState(() {
         todasLasRecetas = recetasHumanas;
+        recetasCaninas = caninas;
         _idsCocinadas = ids;
         _titulosCocinados = tits;
         cargando = false;
@@ -511,7 +522,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   void _filtrarRecetas() {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
-      final base = todasLasRecetas.where((receta) {
+      final bool esFiltroCanino = _filtroAudiencia == FiltroAudienciaReceta.caninas;
+      final List<Map<String, dynamic>> listaBase =
+          esFiltroCanino ? recetasCaninas : todasLasRecetas;
+
+      final base = listaBase.where((receta) {
         final titulo = receta['titulo']?.toString().toLowerCase() ?? '';
         final descripcion =
             receta['descripcion']?.toString().toLowerCase() ?? '';
@@ -548,6 +563,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             break;
           case FiltroAudienciaReceta.comunidad:
             coincideAudiencia = ServicioRecetas.esComunidad(receta);
+            break;
+          case FiltroAudienciaReceta.caninas:
+            coincideAudiencia = true;
             break;
           case FiltroAudienciaReceta.todas:
             coincideAudiencia = true;
@@ -2058,17 +2076,21 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             ? 'recetas_mias'
             : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
                 ? 'recetas_novedades'
-                : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-                    ? 'recetas_oficiales'
-                    : 'recetas')));
+                : (widget.filtroInicial == FiltroAudienciaReceta.caninas
+                    ? 'caninas'
+                    : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                        ? 'recetas_oficiales'
+                        : 'recetas'))));
 
     final String tituloAppBar = widget.filtroInicial == FiltroAudienciaReceta.misRecetas
         ? 'Mis Creaciones 👨‍🍳'
         : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
             ? 'Recién Salidas 🔥'
-            : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-                ? 'Catálogo Oficial 🌟'
-                : 'Mis Recetas 📖'));
+            : (widget.filtroInicial == FiltroAudienciaReceta.caninas
+                ? 'Recetas Caninas 🐾'
+                : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                    ? 'Catálogo Oficial 🌟'
+                    : 'Mis Recetas 📖')));
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -2324,6 +2346,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
                     final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
                     final int countComunidad = todasLasRecetas.where(ServicioRecetas.esComunidad).length;
+                    final int countCaninas = recetasCaninas.length;
                     final int countPuedoCocinar = todasLasRecetas.where((r) {
                       final m = _evaluarMatchReceta(r);
                       return m.listoParaCocinar || m.faltaUno;
@@ -2368,6 +2391,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 filtro: FiltroAudienciaReceta.comunidad,
                                 colorActivo: Colors.indigo.shade800,
                                 fondoActivo: Colors.indigo.shade50,
+                              ),
+                              _construirChipAudiencia(
+                                etiqueta: '🐾 Caninas ($countCaninas)',
+                                filtro: FiltroAudienciaReceta.caninas,
+                                colorActivo: const Color(0xFF6D4C41),
+                                fondoActivo: const Color(0xFFEFEBE9),
                               ),
                               _construirChipAudiencia(
                                 etiqueta: 'Todas (${todasLasRecetas.length})',
@@ -2498,6 +2527,45 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       ),
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (_filtroAudiencia == FiltroAudienciaReceta.caninas) ...[
+                          const SizedBox(height: 10),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PantallaRecetasCaninas(),
+                                ),
+                              ).then((_) => cargarRecetas());
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFEBE9),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFBCAAA4), width: 0.8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.pets, size: 16, color: Color(0xFF5D4037)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Viendo recetas caninas ($countCaninas). Nutrición y snacks para lomitos. Toca aquí para el Recetario Canino completo 🐾.',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFF4E342E),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF5D4037)),
                                 ],
                               ),
                             ),
@@ -2700,13 +2768,17 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ? Icons.local_fire_department_outlined
                   : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
                       ? Icons.kitchen_outlined
-                      : Icons.search_off),
+                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                          ? Icons.pets
+                          : Icons.search_off)),
               size: 70,
               color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? Colors.orange.shade400
                   : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
                       ? Colors.teal.shade400
-                      : Colors.grey[400]),
+                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                          ? Colors.brown.shade400
+                          : Colors.grey[400])),
             ),
             const SizedBox(height: 10),
             Text(
@@ -2714,19 +2786,24 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ? '¡Muy pronto nuevas recetas recién salidas del sartén!'
                   : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
                       ? 'No hay recetas completas con tu despensa actual'
-                      : 'No se encontraron recetas con los filtros aplicados'),
+                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                          ? 'Aún no hay recetas caninas con estos filtros'
+                          : 'No se encontraron recetas con los filtros aplicados')),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas ||
-                        _filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy)
+                        _filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy ||
+                        _filtroAudiencia == FiltroAudienciaReceta.caninas)
                     ? FontWeight.bold
                     : FontWeight.normal,
                 color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                     ? Colors.brown.shade800
                     : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
                         ? Colors.teal.shade900
-                        : Colors.grey),
+                        : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                            ? Colors.brown.shade900
+                            : Colors.grey)),
               ),
             ),
             if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
@@ -2773,6 +2850,33 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 label: const Text('Ver todas las recetas'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD32F2F),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ] else if (_filtroAudiencia == FiltroAudienciaReceta.caninas) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Visita el Recetario Canino para consultar y preparar premios caseros.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PantallaRecetasCaninas(),
+                    ),
+                  ).then((_) => cargarRecetas());
+                },
+                icon: const Icon(Icons.pets, size: 18),
+                label: const Text('Abrir Recetario Canino 🐾'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6D4C41),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

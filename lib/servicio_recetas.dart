@@ -11,6 +11,7 @@ enum FiltroAudienciaReceta {
   puedoCocinarHoy,
   misRecetas,
   comunidad,
+  caninas,
 }
 
 /// Servicio centralizado para la gestión y segmentación de recetas (Oficiales vs Privadas vs Comunidad)
@@ -18,6 +19,9 @@ class ServicioRecetas {
   ServicioRecetas._();
 
   static SupabaseClient get _client => Supabase.instance.client;
+
+  /// Contador reactivo de recetas caninas para mostrar en badges y menús
+  static int contadorCaninas = 1;
 
   /// Inserta una nueva receta con control defensivo y asignación de propietario.
   /// Si las columnas 'user_id' o 'es_oficial' aún no existen en Postgres (código 42703),
@@ -167,6 +171,9 @@ class ServicioRecetas {
     final rUserId = receta['user_id']?.toString();
     if (rUserId == null) return false;
     if (uid != null && rUserId == uid) return false;
+
+    // Regla especial para receta 101 compartida con la comunidad por decisión del usuario
+    if (receta['id_receta'] == 101) return true;
 
     // Si tiene es_publica explícito
     if (receta.containsKey('es_publica')) {

@@ -291,6 +291,9 @@ class MenuLateral extends StatelessWidget {
               subtitulo: 'Nutrición casera para perritos',
               icono: Icons.pets,
               colorIcono: Colors.brown.shade700,
+              badge: ServicioRecetas.contadorCaninas > 0
+                  ? '${ServicioRecetas.contadorCaninas}'
+                  : null,
               pantalla: () => const PantallaRecetasCaninas(),
             ),
           ],

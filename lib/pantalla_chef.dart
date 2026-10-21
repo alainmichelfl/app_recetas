@@ -630,7 +630,7 @@ class _PantallaChefState extends State<PantallaChef> {
             ? 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500'
             : 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
         esOficial: esPerruna ? false : ServicioAdmin.esAdmin(),
-        esPublica: esPerruna ? true : ServicioAdmin.esAdmin(),
+        esPublica: true,
       );
 
       final int idRecetaNueva = resReceta['id_receta'];

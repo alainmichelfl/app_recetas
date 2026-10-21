@@ -50,6 +50,7 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
       setState(() {
         recetasCaninas = lista;
         recetasFiltradas = recetasCaninas;
+        ServicioRecetas.contadorCaninas = lista.length;
         cargando = false;
       });
       _filtrar();
@@ -323,13 +324,20 @@ class _PantallaRecetasCaninasState extends State<PantallaRecetasCaninas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.pets, size: 24),
-            SizedBox(width: 8),
-            Text(
-              'Recetario Canino 🐾',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            const Icon(Icons.pets, size: 24),
+            const SizedBox(width: 8),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  cargando
+                      ? 'Recetario Canino 🐾'
+                      : 'Recetario Canino 🐾 (${recetasCaninas.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),
