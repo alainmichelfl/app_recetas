@@ -262,10 +262,7 @@ class _PantallaDetalleState extends State<PantallaDetalle> {
                                   1.0;
                         final cantidadCalculada = cantidadBase * multiplicador;
                         final cantidadMostrar =
-                            cantidadCalculada ==
-                                cantidadCalculada.roundToDouble()
-                            ? cantidadCalculada.toInt().toString()
-                            : cantidadCalculada.toStringAsFixed(1);
+                            ConversorUnidades.formatearCantidad(cantidadCalculada);
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(

@@ -809,10 +809,10 @@ class ConversorUnidades {
       l = l.substring(1).trim();
     }
 
-    // Extraer número o fracción (ej: "1/2", "0.5", "500", "2")
+    // Extraer número o fracción (ej: "1/2", "0.5", ".0035", "500", "2")
     double cantidad = 1.0;
     final matchFraccion = RegExp(r'^(\d+)/(\d+)').firstMatch(l);
-    final matchDecimal = RegExp(r'^(\d+(?:[\.,]\d+)?)').firstMatch(l);
+    final matchDecimal = RegExp(r'^((?:\d+(?:[\.,]\d+)?|[\.,]\d+))').firstMatch(l);
 
     if (matchFraccion != null) {
       final num = double.tryParse(matchFraccion.group(1)!) ?? 1.0;
@@ -847,6 +847,35 @@ class ConversorUnidades {
     l = l.replaceFirst(RegExp(r'^(de\s+|del\s+)', caseSensitive: false), '').trim();
 
     return normalizarParaSupermercado(l, cantidad, unidad);
+  }
+
+  /// Formatea cantidades numéricas de ingredientes con precisión inteligente y sin ceros redundantes.
+  /// Evita que ingredientes pequeños como especias, sal o aceites (0.0035 kg, 0.003 L, 0.001 kg)
+  /// se trunquen a '0.0' o '0', y preserva números limpios para enteros y fracciones comunes.
+  static String formatearCantidad(double valor) {
+    if (valor <= 0) return '0';
+    // Si es entero (tolerando imprecisiones mínimas IEEE 754)
+    if ((valor - valor.roundToDouble()).abs() < 1e-6) {
+      return valor.round().toString();
+    }
+
+    String s;
+    if (valor < 0.001) {
+      s = valor.toStringAsFixed(4);
+      if ((double.tryParse(s) ?? 0) == 0 && valor > 0) {
+        s = valor.toStringAsFixed(6);
+      }
+    } else if (valor < 0.01) {
+      s = valor.toStringAsFixed(4);
+    } else if (valor < 1.0) {
+      s = valor.toStringAsFixed(3);
+    } else {
+      s = valor.toStringAsFixed(2);
+    }
+
+    // Quitar ceros decimales innecesarios al final (ej: 0.070 -> 0.07, 1.50 -> 1.5, 2.00 -> 2)
+    s = s.replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    return s.isEmpty ? '0' : s;
   }
 
   /// Verifica si un ingrediente es agua para cocinar (la cual no se agrega a la lista de compras)

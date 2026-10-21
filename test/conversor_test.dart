@@ -141,4 +141,43 @@ void main() {
       expect(ConversorUnidades.pasoKgFrutaVerdura('plátano'), 0.15);
     });
   });
+
+  group('Escalado y Formato Inteligente de Ingredientes (Receta 142 y Decimales Pequeños)', () {
+    test('Cantidades de Receta 142 escalan a 2 porciones sin truncar a 0 ni redondear a 0.1', () {
+      // Pepitas: 0.035 * 2 = 0.07 (no debe redondear a 0.1)
+      expect(ConversorUnidades.formatearCantidad(0.035 * 2), '0.07');
+      // Canela: 0.003 * 2 = 0.006 (no debe quedar en 0 ni 0.0)
+      expect(ConversorUnidades.formatearCantidad(0.003 * 2), '0.006');
+      // Aceite: 0.003 * 2 = 0.006 (no debe quedar en 0 ni 0.0)
+      expect(ConversorUnidades.formatearCantidad(0.003 * 2), '0.006');
+      // Sal: 0.001 * 2 = 0.002 (no debe quedar en 0 ni 0.0)
+      expect(ConversorUnidades.formatearCantidad(0.001 * 2), '0.002');
+    });
+
+    test('Cantidades de Receta 142 escalan a 3 porciones con precisión exacta', () {
+      expect(ConversorUnidades.formatearCantidad(0.035 * 3), '0.105');
+      expect(ConversorUnidades.formatearCantidad(0.003 * 3), '0.009');
+      expect(ConversorUnidades.formatearCantidad(0.001 * 3), '0.003');
+    });
+
+    test('Decimales sin cero inicial (.0035) se formatean correctamente al multiplicar', () {
+      expect(ConversorUnidades.formatearCantidad(0.0035 * 2), '0.007');
+    });
+
+    test('Enteros y fracciones comunes se mantienen limpios', () {
+      expect(ConversorUnidades.formatearCantidad(1.0 * 2), '2');
+      expect(ConversorUnidades.formatearCantidad(1.5 * 2), '3');
+      expect(ConversorUnidades.formatearCantidad(0.5 * 3), '1.5');
+      expect(ConversorUnidades.formatearCantidad(0.25 * 3), '0.75');
+      expect(ConversorUnidades.formatearCantidad(0.0), '0');
+    });
+
+    test('parsearLineaIngrediente reconoce números con o sin cero inicial', () {
+      final conCero = ConversorUnidades.parsearLineaIngrediente('- 0.003 kg canela en polvo');
+      expect(conCero.nombre.toLowerCase().contains('canela'), true);
+
+      final sinCero = ConversorUnidades.parsearLineaIngrediente('- .0035 kg de pepitas');
+      expect(sinCero.nombre.toLowerCase().contains('pepitas'), true);
+    });
+  });
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'conversor_unidades.dart';
 import 'pantalla_modo_cocina.dart';
 import 'pantalla_cotizador.dart';
 import 'perfiles_nutricionales.dart';
@@ -880,7 +881,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
         : '';
 
     final regexLinea = RegExp(
-      r'^(\s*-\s*)(\d+(?:[\.,]\d+)?(?:/\d+)?)(.*)',
+      r'^(\s*[-\*•]\s*)((?:\d+(?:[\.,]\d+)?|[\.,]\d+)(?:/\d+)?)(.*)',
       multiLine: true,
     );
 
@@ -904,9 +905,7 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
 
       if (valor > 0) {
         double calculado = valor * multiplicador;
-        String nuevoNum = calculado == calculado.roundToDouble()
-            ? calculado.toInt().toString()
-            : calculado.toStringAsFixed(1);
+        String nuevoNum = ConversorUnidades.formatearCantidad(calculado);
         return '$prefijo$nuevoNum$sufijo';
       }
 
@@ -1692,112 +1691,126 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                   }
                 }(),
 
-                  // 🧑‍🍳 CONTROLADOR DE PORCIONES
+                  // 🧑‍🍳 CONTROLADOR DE PORCIONES UNIFICADO (Sin duplicidad)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
-                      vertical: 12,
+                      vertical: 14,
                     ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 10,
-                          spreadRadius: 2,
+                          offset: const Offset(0, 3),
                         ),
                       ],
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.15),
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: naranjaZanahoria.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                Icons.restaurant_menu_rounded,
+                                color: naranjaZanahoria,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.restaurant_menu,
-                                  color: naranjaZanahoria,
-                                ),
-                                const SizedBox(width: 10),
                                 const Text(
-                                  'Porciones',
+                                  'Porciones a Cocinar',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.remove_circle_outline,
-                                    color: rojoJitomate,
-                                    size: 30,
+                                const SizedBox(height: 2),
+                                Text(
+                                  '$porcionesActuales ${porcionesActuales == 1 ? "porción (1 persona)" : "porciones ($porcionesActuales personas)"}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  onPressed: () => cambiarPorciones(-1),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: rojoJitomate.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '$porcionesActuales',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: rojoJitomate,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.add_circle_outline,
-                                    color: rojoJitomate,
-                                    size: 30,
-                                  ),
-                                  onPressed: () => cambiarPorciones(1),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
                           child: Row(
-                            children: [1, 2, 4, 6, 8].map((p) {
-                              final bool seleccionado = porcionesActuales == p;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: ChoiceChip(
-                                  label: Text('$p ${p == 1 ? "persona" : "personas"}'),
-                                  selected: seleccionado,
-                                  selectedColor: rojoJitomate.withValues(alpha: 0.15),
-                                  labelStyle: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
-                                    color: seleccionado ? rojoJitomate : null,
-                                  ),
-                                  onSelected: (_) => fijarPorciones(p),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.remove_rounded,
+                                  color: porcionesActuales > 1
+                                      ? rojoJitomate
+                                      : Colors.grey.shade400,
+                                  size: 22,
                                 ),
-                              );
-                            }).toList(),
+                                onPressed: porcionesActuales > 1
+                                    ? () => cambiarPorciones(-1)
+                                    : null,
+                                tooltip: 'Menos porciones',
+                                splashRadius: 20,
+                                constraints: const BoxConstraints(
+                                  minWidth: 42,
+                                  minHeight: 42,
+                                ),
+                              ),
+                              Container(
+                                constraints: const BoxConstraints(minWidth: 32),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '$porcionesActuales',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: rojoJitomate,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.add_rounded,
+                                  color: rojoJitomate,
+                                  size: 22,
+                                ),
+                                onPressed: () => cambiarPorciones(1),
+                                tooltip: 'Más porciones',
+                                splashRadius: 20,
+                                constraints: const BoxConstraints(
+                                  minWidth: 42,
+                                  minHeight: 42,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
 
                   // 💰 BOTÓN DE COTIZAR
