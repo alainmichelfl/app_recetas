@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:app_recetas/servicio_cotizador.dart';
+import 'package:app_recetas/pantalla_cotizador.dart';
 
 void main() {
   group('ServicioCotizador - Detección de Supermercados (Crowdsourcing)', () {
@@ -66,6 +67,27 @@ void main() {
       expect(ServicioCotizador.extraerNumeroSeguro('1.5 kg'), 1.5);
       expect(ServicioCotizador.extraerNumeroSeguro('\$89.90'), 89.90);
       expect(ServicioCotizador.extraerNumeroSeguro('sin numeros', valorPorDefecto: 2.0), 2.0);
+    });
+  });
+
+  group('PantallaCotizador - Enlaces a Portales Oficiales de Compra en Línea (Base P7)', () {
+    test('Contiene URLs oficiales válidas para compras de despensa en línea', () {
+      final urls = PantallaCotizador.urlsSupermercados;
+
+      expect(urls.containsKey('Walmart'), isTrue);
+      expect(urls['Walmart'], contains('super.walmart.com.mx'));
+
+      expect(urls.containsKey('Soriana'), isTrue);
+      expect(urls['Soriana'], contains('soriana.com'));
+
+      expect(urls.containsKey('La Comer'), isTrue);
+      expect(urls['La Comer'], contains('lacomer.com.mx'));
+
+      expect(urls.containsKey('Chedraui'), isTrue);
+      expect(urls['Chedraui'], contains('chedraui.com.mx'));
+
+      expect(urls.containsKey('Costco'), isTrue);
+      expect(urls['Costco'], contains('costco.com.mx'));
     });
   });
 }

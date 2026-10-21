@@ -90,4 +90,41 @@ void main() {
       expect(guia.reglasConservacion.isNotEmpty, isTrue);
     });
   });
+
+  group('ServicioBatchCooking - Compra al Mayoreo & Club (P27)', () {
+    test('Genera lista de compras consolidada en presentaciones de Club / Mayoreo', () {
+      final guia = ServicioBatchCooking.generarGuiaDesdePlan([]);
+      final itemsMayoreo = ServicioBatchCooking.generarListaMayoreo(guia);
+
+      expect(itemsMayoreo.isNotEmpty, isTrue);
+      expect(itemsMayoreo.length, greaterThanOrEqualTo(5));
+
+      // Verifica categorías e insumos clave
+      expect(itemsMayoreo.any((it) => it.nombreIngrediente.contains('Pechuga de Pollo')), isTrue);
+      expect(itemsMayoreo.any((it) => it.nombreIngrediente.contains('Carne Molida')), isTrue);
+      expect(itemsMayoreo.any((it) => it.nombreIngrediente.contains('Huevo')), isTrue);
+      expect(itemsMayoreo.any((it) => it.nombreIngrediente.contains('Arroz')), isTrue);
+      expect(itemsMayoreo.any((it) => it.nombreIngrediente.contains('Jitomate')), isTrue);
+
+      // Verifica que cada ítem tenga presentación de mayoreo, tienda recomendada y tip
+      for (var it in itemsMayoreo) {
+        expect(it.presentacionMayoreo, isNotEmpty);
+        expect(it.tiendaRecomendada, isNotEmpty);
+        expect(it.ahorroPorcentual, greaterThan(15.0));
+        expect(it.tipConservacion, isNotEmpty);
+      }
+    });
+
+    test('Formatea lista de mayoreo para compartir por WhatsApp con emojis y secciones', () {
+      final guia = ServicioBatchCooking.generarGuiaDesdePlan([]);
+      final itemsMayoreo = ServicioBatchCooking.generarListaMayoreo(guia);
+      final texto = ServicioBatchCooking.formatearListaMayoreoParaCompartir(itemsMayoreo);
+
+      expect(texto, contains('LISTA DE COMPRA AL MAYOREO & CLUB'));
+      expect(texto, contains('Jitomate y Cebolla'));
+      expect(texto, contains('Ahorro estimado'));
+      expect(texto, contains('Mayoreo:'));
+      expect(texto, contains('Tip:'));
+    });
+  });
 }

@@ -205,5 +205,87 @@ void main() {
       expect(desafio.metafora, isNotEmpty);
     });
   });
+
+  group('ServicioFinanzasDomesticas - Eco-Score Culinario & Huella Positiva (P28)', () {
+    test('Calcula CO2, agua virtual y envases plásticos prevenidos con precisión', () {
+      final eco = ServicioFinanzasDomesticas.calcularImpactoEcologico(
+        comidasCaseras: 20,
+        insumosRescatados: 5,
+      );
+
+      // 20 comidas * 0.82 + 5 * 0.45 = 16.4 + 2.25 = 18.65 kg CO2
+      expect(eco.co2PrevenidoKg, closeTo(18.65, 0.1));
+      // 20 comidas * 45 + 5 * 150 = 900 + 750 = 1650 L agua
+      expect(eco.aguaVirtualSalvadaLitros, equals(1650));
+      // 20 comidas * 2 envases = 40 envases
+      expect(eco.envasesPlasticosAhorrados, equals(40));
+      expect(eco.nivelSostenibilidad, anyOf(contains('Guardián'), contains('Sustentable')));
+      expect(eco.metaforaImpacto, isNotEmpty);
+      expect(eco.equivalenciaArboles, isNotEmpty);
+    });
+  });
+
+  group('ServicioFinanzasDomesticas - Balance Mensual y Exportación PDF/HTML (P10)', () {
+    test('Genera documento HTML ejecutivo con estilos responsive y botón de impresión PDF', () {
+      final eco = ServicioFinanzasDomesticas.calcularImpactoEcologico(
+        comidasCaseras: 14,
+        insumosRescatados: 2,
+      );
+
+      final reporte = ReporteFinancieroHogar(
+        presupuestoSemanal: 1500.0,
+        costoSuperSemanal: 1100.0,
+        costoPorPlatillo: 78.5,
+        comidasPlaneadas: 14,
+        ahorroSemanalVsDelivery: 860.0,
+        proyeccionAhorroMensual: 3723.8,
+        proyeccionAhorroAnual: 44720.0,
+        capitalDespensa: 950.0,
+        capitalEnRiesgoDesperdicio: 120.0,
+        insumosEnRiesgo: [],
+        impactoEcologico: eco,
+      );
+
+      final html = reporte.generarHtmlBalanceMensual();
+
+      expect(html, contains('<!DOCTYPE html>'));
+      expect(html, contains('Jitomate y Cebolla'));
+      expect(html, contains('Balance Ejecutivo Mensual'));
+      expect(html, contains('window.print()'));
+      expect(html, contains('@media print'));
+      expect(html, contains('\$3723.80 MXN'));
+      expect(html, anyOf(contains('Huella Positiva &amp; Eco-Score'), contains('Huella Positiva & Eco-Score')));
+      expect(html, contains('CO₂ prevenidos'));
+      expect(html, contains('agua virtual resguardada'));
+    });
+
+    test('formatearParaCompartir incluye sección de Eco-Score cuando está presente', () {
+      final eco = ServicioFinanzasDomesticas.calcularImpactoEcologico(
+        comidasCaseras: 10,
+        insumosRescatados: 1,
+      );
+
+      final reporte = ReporteFinancieroHogar(
+        presupuestoSemanal: 1500.0,
+        costoSuperSemanal: 1000.0,
+        costoPorPlatillo: 71.4,
+        comidasPlaneadas: 14,
+        ahorroSemanalVsDelivery: 960.0,
+        proyeccionAhorroMensual: 4156.8,
+        proyeccionAhorroAnual: 49920.0,
+        capitalDespensa: 600.0,
+        capitalEnRiesgoDesperdicio: 0.0,
+        insumosEnRiesgo: [],
+        impactoEcologico: eco,
+      );
+
+      final texto = reporte.formatearParaCompartir();
+
+      expect(texto, contains('ESTADO DE CUENTA CULINARIO'));
+      expect(texto, contains('Eco-Score & Huella Positiva'));
+      expect(texto, contains('CO₂ Prevenido:'));
+      expect(texto, contains('Agua Virtual Salvada:'));
+    });
+  });
 }
 

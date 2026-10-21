@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'servicio_batch_cooking.dart';
+import 'servicio_carrito_offline.dart';
 
 /// Modal interactivo para ejecutar la sesión de Batch Cooking dominical
 class DialogoBatchCooking extends StatefulWidget {
@@ -130,6 +133,230 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
   Future<void> _compartirPorWhatsApp() async {
     final texto = _guia.formatearParaCompartir();
     await SharePlus.instance.share(ShareParams(text: texto));
+  }
+
+  void _mostrarModalCompraMayoreo() {
+    final items = ServicioBatchCooking.generarListaMayoreo(_guia);
+    final textoParaCompartir = ServicioBatchCooking.formatearListaMayoreoParaCompartir(items);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollCtrl) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 44,
+                height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.inventory_2_outlined, color: Colors.indigo, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Compra al Mayoreo & Club 🥫',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
+                          ),
+                          Text(
+                            'Costco, Sam\'s Club & Central • Ahorro estimado ~32%',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 16),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final it = items[index];
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF242628)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.indigo.withValues(alpha: 0.18)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  it.nombreIngrediente,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Ahorro ~${it.ahorroPorcentual.toInt()}%',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green.shade900),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.storefront, size: 14, color: Colors.indigo),
+                              const SizedBox(width: 4),
+                              Text(it.tiendaRecomendada, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.indigo)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text('🛒 Menudeo: ${it.presentacionMenudeo}', style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700)),
+                          Text('📦 Mayoreo: ${it.presentacionMayoreo}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.tips_and_updates_outlined, size: 14, color: Colors.amber.shade900),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    it.tipConservacion,
+                                    style: TextStyle(fontSize: 11, color: Colors.brown.shade900),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -3))],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF25D366),
+                            side: const BorderSide(color: Color(0xFF25D366)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.share, size: 17),
+                          label: const Text('WhatsApp 📱', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await SharePlus.instance.share(ShareParams(text: textoParaCompartir));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          icon: const Icon(Icons.add_shopping_cart, size: 17),
+                          label: const Text('Al Carrito 🛒', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            try {
+                              final user = Supabase.instance.client.auth.currentUser;
+                              for (var it in items) {
+                                await Supabase.instance.client.from('lista_compras').insert({
+                                  'nombre': '${it.presentacionMayoreo} (${it.nombreIngrediente})',
+                                  'cantidad': 1,
+                                  'comprado': false,
+                                  'user_id': user?.id,
+                                });
+                              }
+                              await ServicioCarritoOffline.invalidarCache();
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('¡Productos de mayoreo agregados a tu Lista de Compras! 🛒✨'),
+                                  backgroundColor: Colors.indigo,
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+                              Clipboard.setData(ClipboardData(text: textoParaCompartir));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Lista de mayoreo copiada al portapapeles 📋'),
+                                  backgroundColor: Colors.blueGrey,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -333,6 +560,20 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                     runSpacing: 10,
                     alignment: WrapAlignment.center,
                     children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                        label: const Text(
+                          'Mayoreo & Club (Costco / Central) 🥫',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: _mostrarModalCompraMayoreo,
+                      ),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF25D366), // WhatsApp Green

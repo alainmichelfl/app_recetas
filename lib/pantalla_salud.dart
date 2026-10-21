@@ -7,6 +7,7 @@ import 'pantalla_preferencias.dart';
 import 'perfiles_nutricionales.dart';
 import 'servicio_bienestar.dart';
 import 'servicio_preferencias.dart';
+import 'servicio_finanzas_domesticas.dart';
 import 'menu_lateral.dart';
 
 class PantallaSalud extends StatefulWidget {
@@ -56,6 +57,9 @@ class _PantallaSaludState extends State<PantallaSalud> {
   bool _tdeeEsHombre = true;
   String _tdeeActividad = 'Moderado';
   String _tdeeObjetivo = 'Mantenimiento';
+
+  // 🌱 P28: Eco-Score Culinario & Huella Positiva
+  ImpactoEcologico? _impactoEcologico;
 
   final Map<String, Map<String, int>> perfilesNutricionales = {
     'Déficit (Baja)': {
@@ -1185,12 +1189,19 @@ class _PantallaSaludState extends State<PantallaSalud> {
         }
       }
 
+      final int totalComidasSemana = listaTemporal.isNotEmpty ? listaTemporal.length * 7 : 14;
+      final eco = ServicioFinanzasDomesticas.calcularImpactoEcologico(
+        comidasCaseras: totalComidasSemana,
+        insumosRescatados: 3,
+      );
+
       setState(() {
         caloriasTotales = cal;
         proteinasTotales = prot;
         carbsTotales = carb;
         grasasTotales = gras;
         comidasDeHoy = listaTemporal;
+        _impactoEcologico = eco;
         cargando = false;
       });
     } catch (e) {
@@ -1558,6 +1569,11 @@ class _PantallaSaludState extends State<PantallaSalud> {
                     // --- REGISTRO DE HIDRATACIÓN DIARIA ---
                     _construirTarjetaHidratacion(),
 
+                    const SizedBox(height: 16),
+
+                    // --- ECO-SCORE & HUELLA POSITIVA (P28) ---
+                    _construirTarjetaEcoScoreSalud(),
+
                     const SizedBox(height: 24),
 
                     // --- DESGLOSE DEL MENÚ DE HOY ---
@@ -1889,6 +1905,140 @@ class _PantallaSaludState extends State<PantallaSalud> {
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                   onPressed: () => _ajustarVasosAgua(2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🌱 WIDGET P28: ECO-SCORE CULINARIO & HUELLA POSITIVA EN SALUD
+  Widget _construirTarjetaEcoScoreSalud() {
+    final eco = _impactoEcologico;
+    if (eco == null) return const SizedBox.shrink();
+
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: esOscuro ? const Color(0xFF1E2822) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.eco_rounded, color: Colors.green, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Salud & Huella Positiva 🌱',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: esOscuro ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Eco-Score',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Comer saludable en casa nutre tu cuerpo y reduce drásticamente las emisiones de delivery y el uso de plásticos.',
+            style: TextStyle(
+              fontSize: 12.5,
+              color: esOscuro ? Colors.white70 : Colors.black54,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🌍 CO₂ Evitado', style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text('${eco.co2PrevenidoKg.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.green)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('💧 Agua Virtual', style: TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text('${eco.aguaVirtualSalvadaLitros} L', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🥡 Sin Unicel', style: TextStyle(fontSize: 11, color: Colors.brown, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text('${eco.envasesPlasticosAhorrados} pzas', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.brown)),
+                    ],
+                  ),
                 ),
               ),
             ],

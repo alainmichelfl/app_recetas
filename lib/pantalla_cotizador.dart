@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'conversor_unidades.dart';
 import 'pantalla_despensa.dart';
@@ -20,6 +22,43 @@ class PantallaCotizador extends StatefulWidget {
     this.titulo,
     this.multiplicador = 1.0,
   });
+
+  static const Map<String, String> urlsSupermercados = {
+    'Walmart': 'https://super.walmart.com.mx/',
+    'Soriana': 'https://www.soriana.com/',
+    'La Comer': 'https://www.lacomer.com.mx/',
+    'Chedraui': 'https://www.chedraui.com.mx/',
+    'Costco': 'https://www.costco.com.mx/',
+    'Sam\'s Club': 'https://www.sams.com.mx/',
+    'Central de Abasto': 'https://ficeda.com.mx/',
+  };
+
+  static Future<void> abrirTiendaSupermercado(BuildContext context, String supermercado) async {
+    final url = urlsSupermercados[supermercado] ?? 'https://super.walmart.com.mx/';
+    final uri = Uri.parse(url);
+    try {
+      final lanzado = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!lanzado && context.mounted) {
+        Clipboard.setData(ClipboardData(text: url));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Portal web copiado: $url 📋'),
+            backgroundColor: Colors.blueGrey,
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Clipboard.setData(ClipboardData(text: url));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Portal web copiado: $url 📋'),
+            backgroundColor: Colors.blueGrey,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   State<PantallaCotizador> createState() => _PantallaCotizadorState();
@@ -1687,9 +1726,98 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                                       : Colors.black87,
                                 ),
                               ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () => PantallaCotizador.abrirTiendaSupermercado(context, superm),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: esElMasBarato ? Colors.green.shade50 : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: esElMasBarato ? Colors.green.shade300 : Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: 11,
+                                        color: esElMasBarato ? Colors.green.shade800 : Colors.black54,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'Online 🛒',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: esElMasBarato ? Colors.green.shade900 : Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           );
                         }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delivery_dining_rounded, color: Colors.green.shade800, size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '¿Pedir a domicilio? Abre tu súper en línea 🌐',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                            ),
+                            Text(
+                              'Abre la tienda oficial del súper más barato para surtir tu despensa:',
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Wrap(
+                        spacing: 6,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.blue),
+                            label: const Text('Walmart', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'Walmart'),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.red),
+                            label: const Text('Soriana', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'Soriana'),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.shopping_bag_outlined, size: 13, color: Colors.orange),
+                            label: const Text('La Comer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'La Comer'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

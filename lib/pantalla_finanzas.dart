@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'conversor_unidades.dart';
 import 'menu_lateral.dart';
@@ -65,6 +67,9 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
 
   // 🎯 P25: Desafío de Ahorro Familiar a 30 Días ("Club del Súper")
   DesafioAhorroMensual? _desafioAhorro;
+
+  // 🌱 P28: Eco-Score Culinario & Huella Positiva
+  ImpactoEcologico? _impactoEcologico;
 
   @override
   void initState() {
@@ -262,6 +267,14 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       _estadoRacha = await ServicioFinanzasDomesticas.obtenerEstadoRachaZeroWaste();
       _desafioAhorro = await ServicioFinanzasDomesticas.obtenerDesafioAhorroMensual(
         gastoSemanalActual: _costoSemanaActual,
+      );
+
+      // 🌱 P28: Eco-Score Culinario & Huella Positiva
+      final int comidasBase = _desafioAhorro?.comidasCaserasMes ?? 0;
+      final int comidasFinales = comidasBase > 0 ? comidasBase : (_comidasPlaneadas > 0 ? _comidasPlaneadas : 14);
+      _impactoEcologico = ServicioFinanzasDomesticas.calcularImpactoEcologico(
+        comidasCaseras: comidasFinales,
+        insumosRescatados: _estadoRacha?.diasRacha ?? 0,
       );
 
       if (mounted) setState(() => _cargando = false);
@@ -483,6 +496,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
       capitalDespensa: _capitalDespensa,
       capitalEnRiesgoDesperdicio: _capitalEnRiesgo,
       insumosEnRiesgo: _insumosEnRiesgo,
+      impactoEcologico: _impactoEcologico,
     );
 
     final textoFormateado = reporte.formatearParaCompartir();
@@ -497,7 +511,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Estado de Cuenta Culinario',
+                'Balance Financiero & Culinario',
                 style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.bold),
               ),
             ),
@@ -509,7 +523,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Reporte listo para compartir con tu familia o pareja sobre el ahorro generado al cocinar en casa:',
+                'Resumen mensual de ahorro familiar, costo por platillo y huella ecológica positiva:',
                 style: TextStyle(fontSize: 12.5, color: Colors.black54),
               ),
               const SizedBox(height: 12),
@@ -532,6 +546,20 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cerrar'),
+          ),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.picture_as_pdf, size: 16, color: Colors.indigo),
+            label: const Text('Ver / Imprimir PDF 📄', style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold, fontSize: 12.5)),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final html = reporte.generarHtmlBalanceMensual();
+              final uri = Uri.dataFromString(html, mimeType: 'text/html', encoding: utf8);
+              try {
+                await launchUrl(uri);
+              } catch (_) {
+                await SharePlus.instance.share(ShareParams(text: textoFormateado));
+              }
+            },
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -1004,6 +1032,10 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
 
                   // 4. RETO CULINARIO ANTIDESPERDICIO (ZERO-WASTE STREAK P25)
                   _construirRetoZeroWasteStreak(),
+                  const SizedBox(height: 16),
+
+                  // 🌱 ECO-SCORE CULINARIO & HUELLA POSITIVA (P28)
+                  _construirTarjetaEcoScore(),
                   const SizedBox(height: 16),
 
                   // 5. CENTRO DE AHORRO DOMÉSTICO VS DELIVERY (P24)
@@ -1773,6 +1805,190 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               ),
               onPressed: _extenderRachaZeroWaste,
             ),
+        ],
+      ),
+    );
+  }
+
+  // 🌱 WIDGET P28: ECO-SCORE CULINARIO & HUELLA POSITIVA
+  Widget _construirTarjetaEcoScore() {
+    final eco = _impactoEcologico;
+    if (eco == null) return const SizedBox.shrink();
+
+    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: esOscuro ? const Color(0xFF1E2822) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.green.withValues(alpha: 0.3),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.eco_rounded, color: Colors.green, size: 22),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Eco-Score Culinario 🌱',
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.bold,
+                      color: esOscuro ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade700,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    eco.nivelSostenibilidad,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            eco.metaforaImpacto,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: esOscuro ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 3 Indicadores Eco en Tarjetitas
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: esOscuro ? Colors.black26 : Colors.green.shade50.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🌍 CO₂ Prevenido', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.green)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${eco.co2PrevenidoKg.toStringAsFixed(1)} kg',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text('vs motos/reparto', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: esOscuro ? Colors.black26 : Colors.blue.shade50.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('💧 Agua Virtual', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.blue)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${eco.aguaVirtualSalvadaLitros} L',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text('huella resguardada', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: esOscuro ? Colors.black26 : Colors.amber.shade50.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('🥡 Empaques', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.amber)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${eco.envasesPlasticosAhorrados} pzas',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text('cero plástico/unicel', style: TextStyle(fontSize: 9.5, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: esOscuro ? Colors.black12 : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.nature_people_rounded, size: 16, color: Colors.green),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    eco.equivalenciaArboles,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: esOscuro ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

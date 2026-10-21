@@ -112,6 +112,29 @@ class InsumoEnRiesgo {
   });
 }
 
+/// Eco-Score y Huella Positiva generada al cocinar en casa y evitar mermas
+class ImpactoEcologico {
+  final double co2PrevenidoKg;
+  final int aguaVirtualSalvadaLitros;
+  final int envasesPlasticosAhorrados;
+  final int comidasCaseras;
+  final int insumosRescatados;
+  final String nivelSostenibilidad;
+  final String metaforaImpacto;
+  final String equivalenciaArboles;
+
+  const ImpactoEcologico({
+    required this.co2PrevenidoKg,
+    required this.aguaVirtualSalvadaLitros,
+    required this.envasesPlasticosAhorrados,
+    required this.comidasCaseras,
+    required this.insumosRescatados,
+    required this.nivelSostenibilidad,
+    required this.metaforaImpacto,
+    required this.equivalenciaArboles,
+  });
+}
+
 /// Reporte consolidado de finanzas y ahorro doméstico
 class ReporteFinancieroHogar {
   final double presupuestoSemanal;
@@ -124,6 +147,7 @@ class ReporteFinancieroHogar {
   final double capitalDespensa;
   final double capitalEnRiesgoDesperdicio;
   final List<InsumoEnRiesgo> insumosEnRiesgo;
+  final ImpactoEcologico? impactoEcologico;
 
   const ReporteFinancieroHogar({
     required this.presupuestoSemanal,
@@ -136,7 +160,208 @@ class ReporteFinancieroHogar {
     required this.capitalDespensa,
     required this.capitalEnRiesgoDesperdicio,
     required this.insumosEnRiesgo,
+    this.impactoEcologico,
   });
+
+  /// Genera un documento HTML interactivo y listo para imprimir en PDF (Prioridad 10)
+  String generarHtmlBalanceMensual() {
+    final buffer = StringBuffer();
+    final fechaHoy = DateTime.now();
+    final nombreMes = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ][fechaHoy.month - 1];
+
+    buffer.writeln('''<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balance Mensual Culinario & Financiero - Jitomate y Cebolla</title>
+  <style>
+    :root {
+      --primary: #C62828;
+      --primary-dark: #1E2022;
+      --secondary: #2E7D32;
+      --accent: #FFA000;
+      --bg: #F8F9FA;
+      --card-bg: #FFFFFF;
+      --text: #212121;
+      --text-muted: #666666;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #EEEEEE;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header p {
+      margin: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #F4F6F8;
+      border-radius: 12px;
+      padding: 16px;
+      border-left: 4px solid var(--primary);
+    }
+    .kpi-card.green { border-color: var(--secondary); background: #E8F5E9; }
+    .kpi-card.blue { border-color: #1976D2; background: #E3F2FD; }
+    .kpi-card.amber { border-color: var(--accent); background: #FFF8E1; }
+    .kpi-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .eco-box {
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid #A5D6A7;
+    }
+    .eco-box h3 {
+      margin-top: 0;
+      color: #1B5E20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-print {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-print:hover { background: #B71C1C; }
+    .footer {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid #EEEEEE;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; padding: 0; border-radius: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>🍅🧅 Jitomate y Cebolla</h1>
+        <p>Balance Ejecutivo Mensual • <strong>$nombreMes ${fechaHoy.year}</strong></p>
+      </div>
+      <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar en PDF</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="kpi-card green">
+        <div class="kpi-title">Ahorro Mensual vs Delivery</div>
+        <div class="kpi-value">+\$${proyeccionAhorroMensual.toStringAsFixed(2)} MXN</div>
+        <div class="kpi-sub">Proyección anual: +\$${proyeccionAhorroAnual.toStringAsFixed(2)} MXN</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Costo por Platillo Casero</div>
+        <div class="kpi-value">\$${costoPorPlatillo.toStringAsFixed(2)} MXN</div>
+        <div class="kpi-sub">vs \$140.00 MXN en delivery comercial</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-title">Patrimonio en Despensa</div>
+        <div class="kpi-value">\$${capitalDespensa.toStringAsFixed(2)} MXN</div>
+        <div class="kpi-sub">Capital inventariado activo</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-title">Presupuesto Semanal Súper</div>
+        <div class="kpi-value">\$${presupuestoSemanal.toStringAsFixed(2)} MXN</div>
+        <div class="kpi-sub">Costo cotizado: \$${costoSuperSemanal.toStringAsFixed(2)} MXN</div>
+      </div>
+    </div>''');
+
+    if (impactoEcologico != null) {
+      final eco = impactoEcologico!;
+      buffer.writeln('''
+    <div class="eco-box">
+      <h3>🌱 Huella Positiva & Eco-Score del Hogar: ${eco.nivelSostenibilidad}</h3>
+      <p style="margin: 0 0 12px; font-size: 13px; color: #2E7D32;">
+        ${eco.metaforaImpacto} • ${eco.equivalenciaArboles}
+      </p>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div><strong>🌍 ${eco.co2PrevenidoKg.toStringAsFixed(1)} kg</strong> de CO₂ prevenidos</div>
+        <div><strong>💧 ${eco.aguaVirtualSalvadaLitros} Litros</strong> de agua virtual resguardada</div>
+        <div><strong>🥡 ${eco.envasesPlasticosAhorrados} envases</strong> de unicel/plástico evitados</div>
+      </div>
+    </div>''');
+    }
+
+    buffer.writeln('''
+    <div class="footer">
+      <p>Generado oficialmente desde <strong>Jitomate y Cebolla</strong> (www.jitomateycebolla.com) • Tu asistente culinario y financiero.</p>
+    </div>
+  </div>
+</body>
+</html>''');
+
+    return buffer.toString();
+  }
 
   /// Formatea un mensaje con estilo profesional y emojis para WhatsApp o portapapeles
   String formatearParaCompartir() {
@@ -157,6 +382,15 @@ class ReporteFinancieroHogar {
     buffer.writeln('🥫 *Patrimonio en Despensa:* \$${capitalDespensa.toStringAsFixed(2)} MXN');
     if (capitalEnRiesgoDesperdicio > 0) {
       buffer.writeln('⚠️ *Insumos frescos por cocinar:* \$${capitalEnRiesgoDesperdicio.toStringAsFixed(2)} MXN');
+    }
+    if (impactoEcologico != null) {
+      final eco = impactoEcologico!;
+      buffer.writeln('────────────────────────');
+      buffer.writeln('🌱 *Eco-Score & Huella Positiva:* ${eco.nivelSostenibilidad}');
+      buffer.writeln('  • CO₂ Prevenido: ${eco.co2PrevenidoKg.toStringAsFixed(1)} kg');
+      buffer.writeln('  • Agua Virtual Salvada: ${eco.aguaVirtualSalvadaLitros} Litros');
+      buffer.writeln('  • Envases Evitados: ${eco.envasesPlasticosAhorrados} recipientes');
+      buffer.writeln('  • Impacto: ${eco.metaforaImpacto}');
     }
     buffer.writeln('────────────────────────');
     buffer.writeln('💡 _"Cocinar en casa no solo cuida tu salud, sino que multiplica el patrimonio de tu hogar."_');
@@ -638,6 +872,62 @@ class ServicioFinanzasDomesticas {
       comidasCaserasMes: totalComidasCaseras,
       estadoMensaje: mensaje,
       metafora: metafora,
+    );
+  }
+
+  // =========================================================================
+  // 6. ECO-SCORE CULINARIO & HUELLA POSITIVA (PRIORIDAD 28)
+  // =========================================================================
+
+  /// Calcula el impacto ecológico positivo por cocinar en casa y evitar desperdicio
+  static ImpactoEcologico calcularImpactoEcologico({
+    required int comidasCaseras,
+    int insumosRescatados = 0,
+  }) {
+    final int comidas = max(0, comidasCaseras);
+    final int insumos = max(0, insumosRescatados);
+
+    // Cada platillo casero vs moto de delivery + empaques previene ~0.82 kg de CO2
+    final double co2 = (comidas * 0.82) + (insumos * 0.45);
+
+    // Cada platillo resguarda agua vs cadena comercial (~45 L), y cada insumo salvado (~150 L huella hídrica virtual)
+    final int agua = (comidas * 45) + (insumos * 150);
+
+    // Contenedores unicel/plástico y bolsas desechables evitadas (~2 por pedido)
+    final int envases = comidas * 2;
+
+    final int puntaje = comidas + (insumos * 2);
+    String nivel;
+    String metafora;
+    String equivalencia;
+
+    if (puntaje >= 30) {
+      nivel = 'Guardián del Planeta 🌍✨ (Nivel Élite)';
+      metafora = '¡Tu cocina es un santuario sustentable de cero desperdicio!';
+      equivalencia = 'Equivale a absorber el CO₂ emitido por un auto en un viaje de ${(co2 * 5.2).round()} km 🚗';
+    } else if (puntaje >= 15) {
+      nivel = 'Chef Sustentable 🌿 (Nivel 3)';
+      metafora = '¡Gran reducción de huella hídrica y plásticos de un solo uso!';
+      equivalencia = 'Equivale al agua de ${(agua / 70).round()} regaderazos de 5 minutos 🚿';
+    } else if (puntaje >= 6) {
+      nivel = 'Hogar Consciente 🍃 (Nivel 2)';
+      metafora = '¡Estás transformando tus hábitos y protegiendo el entorno!';
+      equivalencia = 'Has evitado $envases recipientes plásticos y unicel contaminante 🥡';
+    } else {
+      nivel = 'Semilla Verde 🌱 (Nivel 1)';
+      metafora = 'Cada comida casera y cada ingrediente aprovechado marca la diferencia.';
+      equivalencia = '¡Comenzando tu camino hacia la cocina de desperdicio cero!';
+    }
+
+    return ImpactoEcologico(
+      co2PrevenidoKg: co2,
+      aguaVirtualSalvadaLitros: agua,
+      envasesPlasticosAhorrados: envases,
+      comidasCaseras: comidas,
+      insumosRescatados: insumos,
+      nivelSostenibilidad: nivel,
+      metaforaImpacto: metafora,
+      equivalenciaArboles: equivalencia,
     );
   }
 }

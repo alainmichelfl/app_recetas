@@ -1009,6 +1009,58 @@ class MenuLateral extends StatelessWidget {
                     leading: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
+                        color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: Color(0xFF25D366),
+                        size: 20,
+                      ),
+                    ),
+                    title: const Text(
+                      'Danos tu Opinión por WhatsApp',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Feedback directo al Chef Alain',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25D366).withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        '1 Toque 💬',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      DialogoContactoSoporte.abrirWhatsAppFeedback(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
                         color: Colors.blueAccent.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),

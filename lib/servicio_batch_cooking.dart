@@ -4,6 +4,27 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 import 'config_api.dart';
 
+/// Item de compra al mayoreo o club inteligente para Batch Cooking (Prioridad 27)
+class ItemMayoreoBatchCooking {
+  final String nombreIngrediente;
+  final String categoria;
+  final String presentacionMenudeo;
+  final String presentacionMayoreo;
+  final String tiendaRecomendada;
+  final double ahorroPorcentual;
+  final String tipConservacion;
+
+  const ItemMayoreoBatchCooking({
+    required this.nombreIngrediente,
+    required this.categoria,
+    required this.presentacionMenudeo,
+    required this.presentacionMayoreo,
+    required this.tiendaRecomendada,
+    required this.ahorroPorcentual,
+    required this.tipConservacion,
+  });
+}
+
 /// Etapa o bloque de 30 minutos del Batch Cooking Dominical
 class EtapaBatchCooking {
   final int bloqueNumero;
@@ -375,5 +396,115 @@ class ServicioBatchCooking {
     }
 
     return baseLocal;
+  }
+
+  // =========================================================================
+  // 🥫 COMPRA AL MAYOREO INTELIGENTE PARA BATCH COOKING (PRIORIDAD 27)
+  // =========================================================================
+
+  /// Consolida los ingredientes de la semana en presentaciones de Club / Mayoreo
+  static List<ItemMayoreoBatchCooking> generarListaMayoreo(GuiaBatchCookingSemanal guia) {
+    final List<ItemMayoreoBatchCooking> items = [];
+
+    // 1. Carnes y Aves
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Pechuga de Pollo sin hueso ni piel',
+      categoria: 'Carnes & Aves',
+      presentacionMenudeo: 'Charola súper 800 g (~2 platillos)',
+      presentacionMayoreo: 'Charola Familiar Club 2.5 kg - 3 kg',
+      tiendaRecomendada: 'Costco / Sam\'s Club / Pollería Mayoreo',
+      ahorroPorcentual: 28.0,
+      tipConservacion: 'Porcionar en bolsas herméticas (2 pechugas c/u); congela lo de jueves y viernes.',
+    ));
+
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Carne Molida de Res (90/10)',
+      categoria: 'Carnes & Aves',
+      presentacionMenudeo: 'Bandejita 500 g (\$180/kg súper)',
+      presentacionMayoreo: 'Paquete Club 1.8 kg - 2.2 kg (\$135/kg)',
+      tiendaRecomendada: 'Costco / Sam\'s Club',
+      ahorroPorcentual: 25.0,
+      tipConservacion: 'Guisar toda la carne el domingo (ej. picadillo o boloñesa) y congelar en 2 tuppers.',
+    ));
+
+    // 2. Proteína Económica / Desayunos
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Huevo Blanco o Rojo Fresco',
+      categoria: 'Lácteos & Huevos',
+      presentacionMenudeo: 'Domo súper de 12 piezas (\$48 MXN)',
+      presentacionMayoreo: 'Cartera de 30 piezas (\$82 MXN)',
+      tiendaRecomendada: 'Central de Abasto / Cremería de Mayoreo',
+      ahorroPorcentual: 32.0,
+      tipConservacion: 'Mantener en lugar fresco o refri sin lavar. Dura 3 semanas en perfecto estado.',
+    ));
+
+    // 3. Granos & Abarrotes
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Arroz Integral o Blanco / Frijol',
+      categoria: 'Granos & Alacena',
+      presentacionMenudeo: 'Bolsitas de 900 g súper (\$38/kg)',
+      presentacionMayoreo: 'Bolsa Club / Costalito 2.5 kg - 5 kg (\$24/kg)',
+      tiendaRecomendada: 'Central de Abasto / Sam\'s Club',
+      ahorroPorcentual: 36.0,
+      tipConservacion: 'Guardar en frascos herméticos de vidrio con 1 hoja de laurel seca para evitar humedad.',
+    ));
+
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Avena en Hojuelas & Frutos Secos',
+      categoria: 'Granos & Alacena',
+      presentacionMenudeo: 'Bolsita de 400 g súper (\$45 MXN)',
+      presentacionMayoreo: 'Bolsa Club 1.5 kg - 2 kg (\$95 MXN)',
+      tiendaRecomendada: 'Costco / Central de Abasto',
+      ahorroPorcentual: 40.0,
+      tipConservacion: 'Almacenar en alacena oscura. Ideal para preparar 5 frascos de overnight oats el domingo.',
+    ));
+
+    // 4. Verduras & Salsas Base
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Jitomate Saladet & Cebolla Blanca',
+      categoria: 'Frutas & Verduras',
+      presentacionMenudeo: 'Charolitas emplayadas 1 kg (\$44/kg súper)',
+      presentacionMayoreo: 'Red o reja de 3 kg a 5 kg (\$20/kg)',
+      tiendaRecomendada: 'Central de Abasto / Mercado sobre ruedas',
+      ahorroPorcentual: 45.0,
+      tipConservacion: 'Cocer y licuar el domingo para tener 2 litros de recaudo/salsa madre listos en refri.',
+    ));
+
+    items.add(const ItemMayoreoBatchCooking(
+      nombreIngrediente: 'Aceite de Oliva Extra Virgen',
+      categoria: 'Granos & Alacena',
+      presentacionMenudeo: 'Botella de 500 ml (\$150 MXN)',
+      presentacionMayoreo: 'Botella Doble / Galón 2 Litros (\$320 MXN)',
+      tiendaRecomendada: 'Costco / Sam\'s Club',
+      ahorroPorcentual: 30.0,
+      tipConservacion: 'Guardar lejos del calor de la estufa para conservar antioxidantes.',
+    ));
+
+    return items;
+  }
+
+  /// Formatea la lista de compra al mayoreo en texto para WhatsApp o portapapeles
+  static String formatearListaMayoreoParaCompartir(List<ItemMayoreoBatchCooking> items) {
+    final buffer = StringBuffer();
+    buffer.writeln('🥫 *LISTA DE COMPRA AL MAYOREO & CLUB (BATCH COOKING)* 🛒✨');
+    buffer.writeln('App: *Jitomate y Cebolla* (www.jitomateycebolla.com)');
+    buffer.writeln('Ahorro estimado: *~32% vs comprar al menudeo en el súper*');
+    buffer.writeln('────────────────────────');
+
+    String catActual = '';
+    for (var item in items) {
+      if (item.categoria != catActual) {
+        catActual = item.categoria;
+        buffer.writeln('\n📦 *${catActual.toUpperCase()}*');
+      }
+      buffer.writeln('• *${item.nombreIngrediente}*');
+      buffer.writeln('  ▫️ Mayoreo: ${item.presentacionMayoreo}');
+      buffer.writeln('  ▫️ Dónde: ${item.tiendaRecomendada} (Ahorro: ~${item.ahorroPorcentual.toInt()}%)');
+      buffer.writeln('  💡 _Tip: ${item.tipConservacion}_');
+    }
+
+    buffer.writeln('\n────────────────────────');
+    buffer.writeln('💪 _"Comprar en bloque para tu Batch Cooking ahorra horas en la cocina y miles de pesos al mes."_');
+    return buffer.toString();
   }
 }

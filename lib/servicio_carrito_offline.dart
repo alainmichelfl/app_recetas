@@ -82,6 +82,15 @@ class ServicioCarritoOffline {
     return [];
   }
 
+  /// Invalida la memoria caché para forzar recarga fresca desde Supabase
+  static Future<void> invalidarCache() async {
+    _memoriaCache = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyCache);
+    } catch (_) {}
+  }
+
   /// Actualiza de forma optimista el estado 'comprado' de un producto:
   /// 1. Lo refleja de inmediato en caché local.
   /// 2. Intenta persistir en Supabase con timeout de 2.5s.

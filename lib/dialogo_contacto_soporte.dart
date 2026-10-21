@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Modal interactivo de Contacto y Soporte Oficial de Jitomate y Cebolla.
@@ -21,6 +22,33 @@ class DialogoContactoSoporte extends StatelessWidget {
   static const String emailContacto = 'contacto@jitomateycebolla.com';
   static const String emailAlain = 'alain@jitomateycebolla.com';
   static const String sitioWeb = 'https://www.jitomateycebolla.com';
+
+  /// Abre un chat de WhatsApp con un mensaje precargado en 1 toque.
+  /// Si WhatsApp no está disponible, comparte mediante el diálogo nativo o portapapeles.
+  static Future<void> abrirWhatsAppFeedback(
+    BuildContext context, {
+    String? mensajePersonalizado,
+  }) async {
+    final mensaje = mensajePersonalizado ??
+        '¡Hola Chef Alain! Estuve probando Jitomate y Cebolla (www.jitomateycebolla.com) y quiero compartirte mi experiencia / sugerencia: ';
+    final urlWhatsApp = 'https://wa.me/?text=${Uri.encodeComponent(mensaje)}';
+    final uri = Uri.parse(urlWhatsApp);
+
+    try {
+      final lanzado = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!lanzado && context.mounted) {
+        await SharePlus.instance.share(ShareParams(text: mensaje));
+      }
+    } catch (_) {
+      try {
+        await SharePlus.instance.share(ShareParams(text: mensaje));
+      } catch (_) {
+        if (context.mounted) {
+          _copiarAlPortapapeles(context, mensaje);
+        }
+      }
+    }
+  }
 
   static Future<void> _enviarCorreo(
     BuildContext context,
@@ -93,7 +121,7 @@ class DialogoContactoSoporte extends StatelessWidget {
       elevation: 16,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 680),
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 740),
         child: Padding(
           padding: const EdgeInsets.all(22.0),
           child: Column(
@@ -177,42 +205,49 @@ class DialogoContactoSoporte extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Lista de Correos
+              // Lista de Contactos
               Flexible(
-                child: ListView(
-                  shrinkWrap: true,
+                child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  children: [
-                    _construirTarjetaCorreo(
-                      context,
-                      icono: Icons.waving_hand_rounded,
-                      colorIcono: const Color(0xFF42A5F5),
-                      titulo: 'Hola & Comunidad',
-                      subtitulo: 'Dudas generales, bienvenida y sugerencias para la app.',
-                      email: emailHola,
-                      esPantallaPequena: esPantallaPequena,
-                    ),
-                    const SizedBox(height: 10),
-                    _construirTarjetaCorreo(
-                      context,
-                      icono: Icons.support_agent_rounded,
-                      colorIcono: const Color(0xFF66BB6A),
-                      titulo: 'Soporte Técnico & Cuenta',
-                      subtitulo: 'Reporte de fallas, sincronización o ayuda con tu usuario.',
-                      email: emailContacto,
-                      esPantallaPequena: esPantallaPequena,
-                    ),
-                    const SizedBox(height: 10),
-                    _construirTarjetaCorreo(
-                      context,
-                      icono: Icons.verified_user_rounded,
-                      colorIcono: const Color(0xFFFFA726),
-                      titulo: 'Alain Michel (Fundador)',
-                      subtitulo: 'Alianzas, negocios, nutrición B2B y feedback directo.',
-                      email: emailAlain,
-                      esPantallaPequena: esPantallaPequena,
-                    ),
-                  ],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _construirTarjetaWhatsApp(
+                        context,
+                        esPantallaPequena: esPantallaPequena,
+                      ),
+                      const SizedBox(height: 10),
+                      _construirTarjetaCorreo(
+                        context,
+                        icono: Icons.waving_hand_rounded,
+                        colorIcono: const Color(0xFF42A5F5),
+                        titulo: 'Hola & Comunidad',
+                        subtitulo: 'Dudas generales, bienvenida y sugerencias para la app.',
+                        email: emailHola,
+                        esPantallaPequena: esPantallaPequena,
+                      ),
+                      const SizedBox(height: 10),
+                      _construirTarjetaCorreo(
+                        context,
+                        icono: Icons.support_agent_rounded,
+                        colorIcono: const Color(0xFF66BB6A),
+                        titulo: 'Soporte Técnico & Cuenta',
+                        subtitulo: 'Reporte de fallas, sincronización o ayuda con tu usuario.',
+                        email: emailContacto,
+                        esPantallaPequena: esPantallaPequena,
+                      ),
+                      const SizedBox(height: 10),
+                      _construirTarjetaCorreo(
+                        context,
+                        icono: Icons.verified_user_rounded,
+                        colorIcono: const Color(0xFFFFA726),
+                        titulo: 'Alain Michel (Fundador)',
+                        subtitulo: 'Alianzas, negocios, nutrición B2B y feedback directo.',
+                        email: emailAlain,
+                        esPantallaPequena: esPantallaPequena,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -270,6 +305,102 @@ class DialogoContactoSoporte extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _construirTarjetaWhatsApp(
+    BuildContext context, {
+    required bool esPantallaPequena,
+  }) {
+    const Color colorWa = Color(0xFF25D366);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2621),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorWa.withValues(alpha: 0.45),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colorWa.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.chat_bubble_outline_rounded, color: colorWa, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Danos tu Opinión por WhatsApp 💬',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorWa.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '1 Toque ⚡',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: colorWa,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Escríbenos directamente para compartir tu opinión, sugerir nuevas funciones o reportar cualquier error.',
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontSize: 11.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorWa,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 12),
+              ),
+              icon: const Icon(Icons.send_rounded, size: 16),
+              label: Text(
+                'Abrir WhatsApp con mensaje listo 📱',
+                style: GoogleFonts.poppins(
+                  fontSize: esPantallaPequena ? 11.5 : 12.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                abrirWhatsAppFeedback(context);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

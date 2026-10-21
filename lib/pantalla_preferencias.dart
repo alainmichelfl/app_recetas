@@ -1225,6 +1225,64 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ),
                   const SizedBox(height: 20),
 
+                  // 💬 FEEDBACK EN 1 TOQUE POR WHATSAPP
+                  Card(
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      side: BorderSide(
+                        color: const Color(0xFF25D366).withValues(alpha: 0.35),
+                      ),
+                    ),
+                    color: const Color(0xFF25D366).withValues(alpha: 0.08),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366).withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: Color(0xFF25D366),
+                          size: 22,
+                        ),
+                      ),
+                      title: const Text(
+                        'Danos tu Opinión por WhatsApp 💬',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Escríbele tus ideas, dudas o comentarios directo al Chef Alain en 1 toque.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          '1 Toque 📲',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      onTap: () => DialogoContactoSoporte.abrirWhatsAppFeedback(context),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   // ✉️ CANALES OFICIALES DE CONTACTO
                   Card(
                     elevation: 1,
