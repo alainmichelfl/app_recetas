@@ -1785,7 +1785,7 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    superm,
+                                    superm == 'Central de Abasto' ? 'CEDA CDMX' : superm,
                                     style: TextStyle(
                                       fontWeight: esElMasBarato
                                           ? FontWeight.bold
@@ -1915,6 +1915,12 @@ class _PantallaCotizadorState extends State<PantallaCotizador> {
                             label: const Text('La Comer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'La Comer'),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.storefront_outlined, size: 13, color: Colors.green),
+                            label: const Text('CEDA CDMX', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            onPressed: () => PantallaCotizador.abrirTiendaSupermercado(context, 'Central de Abasto'),
                           ),
                         ],
                       ),

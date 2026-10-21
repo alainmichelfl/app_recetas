@@ -373,9 +373,10 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
     final bool estilosCumplidos = incompatibles == 0;
     final estilosTexto =
         _estilos.where((e) => e != PerfilesNutricionales.libre).toList();
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isLandscape ? 8 : 14),
       decoration: BoxDecoration(
         color: Colors.teal.shade50.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
@@ -400,14 +401,17 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     const Icon(Icons.track_changes, color: Colors.teal, size: 22),
                     const SizedBox(width: 8),
                     Flexible(
-                      child: Text(
-                        'Meta: $objetivoActivo',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Colors.teal,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Meta: $objetivoActivo',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.teal,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -429,12 +433,15 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     children: [
                       Icon(Icons.tune, size: 14, color: Colors.teal),
                       SizedBox(width: 4),
-                      Text(
-                        'Preferencias ⚙️',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Preferencias ⚙️',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
                         ),
                       ),
                     ],
@@ -603,10 +610,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
     final alerta = _alertaDescongelacion!;
     final String tiempoTexto = alerta.esParaManana ? 'Mañana' : 'Hoy';
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isLandscape ? 8 : 14),
       decoration: BoxDecoration(
         color: const Color(0xFFE3F2FD),
         borderRadius: BorderRadius.circular(16),
@@ -641,12 +649,16 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '🧊 Recordatorio para Descongelar',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.blue.shade900,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '🧊 Recordatorio para Descongelar',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.blue.shade900,
+                        ),
                       ),
                     ),
                     Text(
@@ -699,9 +711,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.check_circle_outline, size: 16),
-                label: const Text(
-                  'Ya lo bajé ✅',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Ya lo bajé ✅',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 onPressed: () async {
                   await ServicioRecordatorios.marcarComoAtendido(
@@ -731,9 +746,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   ),
                 ),
                 icon: const Icon(Icons.alarm_add_rounded, size: 16),
-                label: const Text(
-                  'Alarma 8:00 PM ⏰',
-                  style: TextStyle(fontSize: 12),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Alarma 8:00 PM ⏰',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
                 onPressed: () async {
                   final exito =
@@ -789,10 +807,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
         .toList();
     final bool tieneUrgentes =
         _alimentosEnRiesgo.any((e) => e['esUrgente'] == true);
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isLandscape ? 8 : 14),
       decoration: BoxDecoration(
         color: tieneUrgentes ? Colors.red.shade50 : Colors.amber.shade50,
         borderRadius: BorderRadius.circular(16),
@@ -814,16 +833,20 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  tieneUrgentes
-                      ? '🚨 ¡$cantidad insumos por vencer en tu despensa!'
-                      : '🍃 $cantidad insumos frescos para consumir pronto',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: tieneUrgentes
-                        ? Colors.red.shade900
-                        : Colors.brown.shade900,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    tieneUrgentes
+                        ? '🚨 ¡$cantidad insumos por vencer en tu despensa!'
+                        : '🍃 $cantidad insumos frescos para consumir pronto',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: tieneUrgentes
+                          ? Colors.red.shade900
+                          : Colors.brown.shade900,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -861,9 +884,12 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 ),
               );
             },
-            child: const Text(
-              'Rescatar 👨‍🍳',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            child: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Rescatar 👨‍🍳',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -873,6 +899,8 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
 
   /// 🍱 Asistente de Batch Cooking & Prep Day Dominical
   Widget _construirBannerBatchCooking() {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -902,7 +930,7 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: isLandscape ? 8 : 12),
             child: Row(
               children: [
                 Container(
@@ -920,12 +948,18 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            'Batch Cooking Dominical 🍱',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13.5,
+                          const Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Batch Cooking Dominical 🍱',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -2867,38 +2901,17 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mi Planeador 📅',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Mi Planeador 📅',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.soup_kitchen),
-            tooltip: 'Batch Cooking Dominical 🍱',
-            onPressed: () => DialogoBatchCooking.mostrar(
-              context,
-              planSemanal: miPlan,
-              objetivoNutricional: objetivoActivo,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            tooltip: 'Calendario de Comidas',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => PantallaCalendario(planesIniciales: miPlan)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.kitchen),
-            tooltip: 'Mi Despensa',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const PantallaDespensa()),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.auto_awesome),
             tooltip: 'Chef IA',
@@ -2915,10 +2928,73 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
               MaterialPageRoute(builder: (context) => const PantallaCarrito()),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.tips_and_updates_outlined, color: Colors.amberAccent),
-            tooltip: '💡 Tour, Preferencias y Cómo Funciona',
-            onPressed: _mostrarCentroDeAyudaYBienvenida,
+          PopupMenuButton<String>(
+            tooltip: 'Más herramientas del planeador',
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'batch') {
+                DialogoBatchCooking.mostrar(
+                  context,
+                  planSemanal: miPlan,
+                  objetivoNutricional: objetivoActivo,
+                );
+              } else if (value == 'calendario') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PantallaCalendario(planesIniciales: miPlan)),
+                );
+              } else if (value == 'despensa') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PantallaDespensa()),
+                );
+              } else if (value == 'ayuda') {
+                _mostrarCentroDeAyudaYBienvenida();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'batch',
+                child: Row(
+                  children: [
+                    Icon(Icons.soup_kitchen, color: Colors.deepOrange, size: 20),
+                    SizedBox(width: 10),
+                    Text('Batch Cooking Dominical 🍱'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'calendario',
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month_outlined, color: Colors.blueAccent, size: 20),
+                    SizedBox(width: 10),
+                    Text('Calendario de Comidas 📅'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'despensa',
+                child: Row(
+                  children: [
+                    Icon(Icons.kitchen, color: Colors.teal, size: 20),
+                    SizedBox(width: 10),
+                    Text('Mi Despensa 🥫'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'ayuda',
+                child: Row(
+                  children: [
+                    Icon(Icons.tips_and_updates_outlined, color: Colors.amber, size: 20),
+                    SizedBox(width: 10),
+                    Text('Tour y Cómo Funciona 💡'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -2942,142 +3018,157 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 slivers: [
                 // 🍏 1. Encabezado retráctil que se desplaza hacia arriba con el scroll
                 SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        // 🧊 Prioridad 9: Recordatorio Inteligente para Descongelar
-                        _construirBannerAlertaDescongelacion(),
-                        // 🚨 Prioridad 9: Alerta de Frescura y Desperdicio Cero
-                        _construirBannerAlertaFrescura(),
-                        // Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento
-                        _construirTarjetaCumplimiento(),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD32F2F),
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: planeandoIA
-                                ? null
-                                : complementarPlaneadorConChefIA1Click,
-                            icon: planeandoIA
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFD54F)),
-                            label: Text(
-                              planeandoIA
-                                  ? 'Chef IA planeando tu semana...'
-                                  : 'Complementar con Chef IA (1 Clic) 👨‍🍳✨',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
+                  child: Builder(
+                    builder: (context) {
+                      final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+                      return Container(
+                        padding: EdgeInsets.symmetric(horizontal: 15, vertical: isLandscape ? 6 : 12),
+                        color: Colors.white,
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
-                                icon: const Icon(
-                                  Icons.tune,
-                                  size: 16,
-                                  color: Color(0xFF1E2022),
-                                ),
-                                label: const Text(
-                                  'Personalizar',
-                                  style: TextStyle(
-                                    color: Color(0xFF1E2022),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
+                            // 🧊 Prioridad 9: Recordatorio Inteligente para Descongelar
+                            _construirBannerAlertaDescongelacion(),
+                            // 🚨 Prioridad 9: Alerta de Frescura y Desperdicio Cero
+                            _construirBannerAlertaFrescura(),
+                            // Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento
+                            _construirTarjetaCumplimiento(),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD32F2F),
+                                  foregroundColor: Colors.white,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 10,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PantallaCalendario(planesIniciales: miPlan),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.calendar_today,
-                                  size: 16,
-                                  color: Color(0xFF1E2022),
-                                ),
-                                label: const Text(
-                                  'Calendario',
-                                  style: TextStyle(
-                                    color: Color(0xFF1E2022),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 10,
+                                onPressed: planeandoIA
+                                    ? null
+                                    : complementarPlaneadorConChefIA1Click,
+                                icon: planeandoIA
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFD54F)),
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    planeandoIA
+                                        ? 'Chef IA planeando tu semana...'
+                                        : 'Complementar con Chef IA (1 Clic) 👨‍🍳✨',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.2,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: exportarTodaLaSemana,
-                                icon: const Icon(
-                                  Icons.file_upload_outlined,
-                                  size: 16,
-                                  color: Color(0xFF1E2022),
-                                ),
-                                label: const Text(
-                                  'Exportar',
-                                  style: TextStyle(
-                                    color: Color(0xFF1E2022),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: planeandoIA ? null : _mostrarSelectorDeObjetivo,
+                                    icon: const Icon(
+                                      Icons.tune,
+                                      size: 16,
+                                      color: Color(0xFF1E2022),
+                                    ),
+                                    label: const FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Personalizar',
+                                        style: TextStyle(
+                                          color: Color(0xFF1E2022),
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 10,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 10,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PantallaCalendario(planesIniciales: miPlan),
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: Color(0xFF1E2022),
+                                    ),
+                                    label: const FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Calendario',
+                                        style: TextStyle(
+                                          color: Color(0xFF1E2022),
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 10,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: exportarTodaLaSemana,
+                                    icon: const Icon(
+                                      Icons.file_upload_outlined,
+                                      size: 16,
+                                      color: Color(0xFF1E2022),
+                                    ),
+                                    label: const FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Exportar',
+                                        style: TextStyle(
+                                          color: Color(0xFF1E2022),
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: const Color(0xFF1E2022).withValues(alpha: 0.25)),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
                               onPressed: borrarTodoElPlan,
                               tooltip: 'Reiniciar plan',
                               icon: const Icon(
@@ -3141,9 +3232,11 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                         ),
                       ],
                     ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: Divider(height: 1)),
+                  );
+                },
+              ),
+            ),
+            const SliverToBoxAdapter(child: Divider(height: 1)),
                 if (miPlan.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -3376,12 +3469,19 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   size: 26,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  titulo,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorTema,
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      titulo,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colorTema,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -3402,12 +3502,15 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 ),
                 if (totalCalCategoria > 0) ...[
                   const Spacer(),
-                  Text(
-                    '~$totalCalCategoria kcal',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '~$totalCalCategoria kcal',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                 ] else ...[

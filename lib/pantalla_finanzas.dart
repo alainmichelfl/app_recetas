@@ -2543,12 +2543,16 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
               ),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text(
-                  'Comparativa de Ahorro Inteligente',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6D4C41),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Comparativa de Ahorro Inteligente',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6D4C41),
+                    ),
                   ),
                 ),
               ),
@@ -2595,7 +2599,7 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Text(
-                    'Central de Abasto',
+                    'CEDA CDMX',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -2619,8 +2623,8 @@ class _PantallaFinanzasState extends State<PantallaFinanzas> {
           const SizedBox(height: 10),
           Text(
             totalFav > 0
-                ? '💡 Surtir frutas, verduras y granos en Central de Abasto te ahorraría aproximadamente \$${ahorro.toStringAsFixed(2)} MXN en tu lista.'
-                : '💡 Agrega productos a tu lista de compras para calcular el comparativo de ahorro entre supermercados y Central de Abasto.',
+                ? '💡 Surtir frutas, verduras y granos en CEDA CDMX te ahorraría aproximadamente \$${ahorro.toStringAsFixed(2)} MXN en tu lista.'
+                : '💡 Agrega productos a tu lista de compras para calcular el comparativo de ahorro entre supermercados y CEDA CDMX.',
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF5D4037),

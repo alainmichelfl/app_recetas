@@ -1870,10 +1870,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
   Widget _construirBannerSaludo() {
     final String saludo = ServicioPerfilUsuario.obtenerSaludoHorario();
     final String subtitulo = ServicioPerfilUsuario.obtenerSubtituloHorario();
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: isLandscape ? 5 : 10),
       decoration: const BoxDecoration(
         color: Color(0xFF16171D),
         border: Border(
@@ -1887,12 +1888,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            saludo,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14.5,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              saludo,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: isLandscape ? 13 : 14.5,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -1902,7 +1907,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
-              fontSize: 11.5,
+              fontSize: isLandscape ? 10.5 : 11.5,
             ),
           ),
         ],
@@ -1920,6 +1925,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     Color? fondoInactivo,
     Widget? icono,
   }) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Material(
@@ -1929,8 +1935,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           borderRadius: BorderRadius.circular(24),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            constraints: const BoxConstraints(minHeight: 44),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: isLandscape ? 6 : 10),
+            constraints: BoxConstraints(minHeight: isLandscape ? 36 : 44),
             decoration: BoxDecoration(
               color: seleccionado ? fondoActivo : (fondoInactivo ?? Colors.grey[100]),
               borderRadius: BorderRadius.circular(24),
@@ -2079,9 +2085,13 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: Text(
-          tituloAppBar,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            tituloAppBar,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -2306,6 +2316,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 // 🌟 Filtro de Audiencia y Origen (Oficiales, Recién Salidas, Mis Recetas, Comunidad, Todas)
                 Builder(
                   builder: (context) {
+                    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+                    final double alturaFiltro = isLandscape ? 40 : 48;
+                    final double espaciadoFiltro = isLandscape ? 5 : 10;
+
                     final int countOficiales = todasLasRecetas.where(ServicioRecetas.esOficial).length;
                     final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
                     final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
@@ -2320,7 +2334,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       children: [
                         // 1. Selector de Audiencia y Origen
                         SizedBox(
-                          height: 48,
+                          height: alturaFiltro,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -2364,10 +2378,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: espaciadoFiltro),
                         // 2. Selector de Tiempos de Comida
                         SizedBox(
-                          height: 48,
+                          height: alturaFiltro,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -2391,10 +2405,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                             }).toList(),
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: espaciadoFiltro),
                         // 3. Selector de Cocina Práctica y Express
                         SizedBox(
-                          height: 48,
+                          height: alturaFiltro,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -2986,12 +3000,18 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   size: 26,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  titulo,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: colorTema,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      titulo,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: colorTema,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -3104,11 +3124,15 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                   ),
                 ),
         ),
-        title: Text(
-          titulo,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            titulo,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
         subtitle: Column(
@@ -3712,12 +3736,16 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      Text(
-                        'Los 5 Pilares de Jitomate y Cebolla',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Los 5 Pilares de Jitomate y Cebolla',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -3832,11 +3860,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       elevation: 3,
                     ),
                     icon: const Icon(Icons.tune_rounded, size: 16),
-                    label: Text(
-                      'Mis Preferencias ⚙️',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Mis Preferencias ⚙️',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -3865,11 +3896,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                       ),
                     ),
                     icon: const Icon(Icons.rocket_launch_rounded, size: 15, color: Color(0xFFFFB300)),
-                    label: Text(
-                      'Ver Manifiesto 🔥',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Ver Manifiesto 🔥',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),

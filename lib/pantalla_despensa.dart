@@ -831,9 +831,13 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mi Despensa 🥫',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Mi Despensa 🥫',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -865,107 +869,119 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
         onPressed: _mostrarOpcionesOrigenTicket,
         backgroundColor: Colors.red.shade800,
         icon: const Icon(Icons.receipt_long, color: Colors.white),
-        label: const Text(
-          'Escanear Ticket',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        label: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'Escanear Ticket',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            color: Colors.white,
-            child: Column(
-              children: [
-                Row(
+          Builder(
+            builder: (context) {
+              final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+              return Container(
+                padding: EdgeInsets.fromLTRB(16, isLandscape ? 8 : 16, 16, isLandscape ? 4 : 8),
+                color: Colors.white,
+                child: Column(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _itemController,
-                        decoration: InputDecoration(
-                          hintText: 'Agregar ingrediente a mano...',
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide.none,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _itemController,
+                            decoration: InputDecoration(
+                              hintText: 'Agregar ingrediente a mano...',
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            onSubmitted: (_) => _agregarManual(),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: _agregarManual,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade800,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                          ),
+                          child: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Cantidad a agregar:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                        onSubmitted: (_) => _agregarManual(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: _agregarManual,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade800,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                        const SizedBox(width: 6),
+                        _botonCantidad(
+                          icono: Icons.remove,
+                          tooltip: 'Menos',
+                          onPressed: () {
+                            if (_cantidadNueva > 1) {
+                              setState(() => _cantidadNueva--);
+                            }
+                          },
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            '$_cantidadNueva',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Text(
-                      'Cantidad a agregar:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    _botonCantidad(
-                      icono: Icons.remove,
-                      tooltip: 'Menos',
-                      onPressed: () {
-                        if (_cantidadNueva > 1) {
-                          setState(() => _cantidadNueva--);
-                        }
-                      },
-                    ),
-                    SizedBox(
-                      width: 32,
-                      child: Text(
-                        '$_cantidadNueva',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        _botonCantidad(
+                          icono: Icons.add,
+                          tooltip: 'Más',
+                          onPressed: () => setState(() => _cantidadNueva++),
                         ),
-                      ),
-                    ),
-                    _botonCantidad(
-                      icono: Icons.add,
-                      tooltip: 'Más',
-                      onPressed: () => setState(() => _cantidadNueva++),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'o escribe "6 plátanos"',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'o escribe "6 plátanos"',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      ],
                     ),
-                  ],
-                ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -1079,8 +1095,10 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                 ),
               ],
             ),
-          ),
-          const Divider(height: 1),
+          );
+        },
+      ),
+      const Divider(height: 1),
           BannerHogarFamiliar(
             onHogarActualizado: () {
               if (mounted) setState(() {});
@@ -1363,12 +1381,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '🧊 Congelador Inteligente ($cantidad items)',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '🧊 Congelador Inteligente ($cantidad items)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   const Text(
@@ -1409,12 +1431,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '❄️ Refrigerador ($cantidad items)',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '❄️ Refrigerador ($cantidad items)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   const Text(
@@ -1455,12 +1481,16 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '🥫 Alacena Seca ($cantidad items)',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '🥫 Alacena Seca ($cantidad items)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   const Text(
@@ -1832,19 +1862,23 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Mi Cava & Bar en Casa',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: const Text(
+                        'Mi Cava & Bar en Casa',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Sincronizado con el Sommelier IA para maridar tus platillos',
                       style: TextStyle(
                         color: Colors.white70,
@@ -1865,9 +1899,12 @@ class _PantallaDespensaState extends State<PantallaDespensa> {
                   visualDensity: VisualDensity.compact,
                 ),
                 icon: const Icon(Icons.auto_awesome, size: 14),
-                label: const Text(
-                  'Sommelier',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Sommelier',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
