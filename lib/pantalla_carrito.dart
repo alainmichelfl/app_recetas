@@ -441,121 +441,140 @@ class _PantallaCarritoState extends State<PantallaCarrito> {
   void _mostrarModalElegirSupermercadoOnline() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF1E2022),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      builder: (ctx) {
+        final double maxH = MediaQuery.of(ctx).size.height * 0.88;
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.teal.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                    child: const Icon(Icons.storefront_rounded, color: Colors.tealAccent, size: 24),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Comprar Súper (App o Web) 🛒',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
                         ),
-                        Text(
-                          'Abre su app oficial en tu teléfono o la tienda web:',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        child: const Icon(Icons.storefront_rounded, color: Colors.tealAccent, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Comprar Súper (App o Web) 🛒',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+                            ),
+                            Text(
+                              'Abre su app oficial en tu teléfono o la tienda web:',
+                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  ...[
+                    {'nombre': 'Walmart', 'url': 'super.walmart.com.mx', 'icono': Icons.shopping_cart, 'color': Colors.blue},
+                    {'nombre': 'Soriana', 'url': 'soriana.com', 'icono': Icons.store, 'color': Colors.red},
+                    {'nombre': 'La Comer', 'url': 'lacomer.com.mx', 'icono': Icons.local_grocery_store, 'color': Colors.orange},
+                    {'nombre': 'Chedraui', 'url': 'chedraui.com.mx', 'icono': Icons.shopping_basket, 'color': Colors.teal},
+                    {'nombre': 'Costco', 'url': 'costco.com.mx', 'icono': Icons.card_membership, 'color': Colors.indigo},
+                    {'nombre': 'Sam\'s Club', 'url': 'sams.com.mx', 'icono': Icons.loyalty, 'color': Colors.cyan},
+                  ].map((s) {
+                    final String nombre = s['nombre'] as String;
+                    final String url = s['url'] as String;
+                    final IconData icono = s['icono'] as IconData;
+                    final Color color = s['color'] as Color;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        tileColor: Colors.white.withValues(alpha: 0.06),
+                        leading: CircleAvatar(
+                          backgroundColor: color.withValues(alpha: 0.2),
+                          child: Icon(icono, color: color, size: 20),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('📱 App / 🌐 Web', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                            ),
+                          ],
+                        ),
+                        subtitle: Text(url, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          PantallaCotizador.abrirTiendaSupermercado(context, nombre);
+                        },
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 10),
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
                     ),
+                    tileColor: Colors.deepOrange.withValues(alpha: 0.12),
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.deepOrange,
+                      child: Icon(Icons.analytics_outlined, color: Colors.white, size: 20),
+                    ),
+                    title: const Text(
+                      'Comparar Precios en Cotizador 📊',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Ver desglose comparativo por súper y usar en Finanzas',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.deepOrangeAccent, size: 14),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      mostrarModalCotizaciones();
+                    },
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              ...[
-                {'nombre': 'Walmart', 'url': 'super.walmart.com.mx', 'icono': Icons.shopping_cart, 'color': Colors.blue},
-                {'nombre': 'Soriana', 'url': 'soriana.com', 'icono': Icons.store, 'color': Colors.red},
-                {'nombre': 'La Comer', 'url': 'lacomer.com.mx', 'icono': Icons.local_grocery_store, 'color': Colors.orange},
-                {'nombre': 'Chedraui', 'url': 'chedraui.com.mx', 'icono': Icons.shopping_basket, 'color': Colors.teal},
-                {'nombre': 'Costco', 'url': 'costco.com.mx', 'icono': Icons.card_membership, 'color': Colors.indigo},
-                {'nombre': 'Sam\'s Club', 'url': 'sams.com.mx', 'icono': Icons.loyalty, 'color': Colors.cyan},
-              ].map((s) {
-                final String nombre = s['nombre'] as String;
-                final String url = s['url'] as String;
-                final IconData icono = s['icono'] as IconData;
-                final Color color = s['color'] as Color;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    tileColor: Colors.white.withValues(alpha: 0.06),
-                    leading: CircleAvatar(
-                      backgroundColor: color.withValues(alpha: 0.2),
-                      child: Icon(icono, color: color, size: 20),
-                    ),
-                    title: Row(
-                      children: [
-                        Text(nombre, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text('📱 App / 🌐 Web', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                        ),
-                      ],
-                    ),
-                    subtitle: Text(url, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      PantallaCotizador.abrirTiendaSupermercado(context, nombre);
-                    },
-                  ),
-                );
-              }),
-                const SizedBox(height: 10),
-                ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(color: Colors.deepOrange.withValues(alpha: 0.5)),
-                  ),
-                  tileColor: Colors.deepOrange.withValues(alpha: 0.12),
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.deepOrange,
-                    child: Icon(Icons.analytics_outlined, color: Colors.white, size: 20),
-                  ),
-                  title: const Text(
-                    'Comparar Precios en Cotizador 📊',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Ver desglose comparativo por súper y usar en Finanzas',
-                    style: TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.deepOrangeAccent, size: 14),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    mostrarModalCotizaciones();
-                  },
-                ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
