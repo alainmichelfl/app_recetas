@@ -606,14 +606,15 @@ class _PantallaChefState extends State<PantallaChef> {
         if (m['sinAlcohol'] != null) sb.writeln('- Sin Alcohol: ${m['sinAlcohol']}');
       }
 
-      final String descCompleta = sb.toString().trim();
       final bool esPerruna = _modoPerruno;
+      final String tituloFinal = recetaGenerada['titulo'] ??
+          (esPerruna ? 'Snack Canino Chef' : 'Receta Chef IA');
+      final String descCompleta = sb.toString().trim();
       final String tipoComidaFinal =
           esPerruna ? 'Snack Canino' : (recetaGenerada['tipo_comida'] ?? 'Comida');
 
       final resReceta = await ServicioRecetas.insertarReceta(
-        titulo: recetaGenerada['titulo'] ??
-            (esPerruna ? 'Snack Canino Chef' : 'Receta Chef IA'),
+        titulo: tituloFinal,
         descripcion: descCompleta.isNotEmpty
             ? descCompleta
             : (recetaGenerada['descripcion'] ?? ''),
@@ -628,7 +629,10 @@ class _PantallaChefState extends State<PantallaChef> {
         macros: recetaGenerada['macros']?.toString(),
         imagenUrl: esPerruna
             ? 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500'
-            : 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=500',
+            : ServicioRecetas.resolverImagenPorSemantica(
+                tituloFinal,
+                tipoComidaFinal,
+              ),
         esOficial: esPerruna ? false : ServicioAdmin.esAdmin(),
         esPublica: true,
       );
