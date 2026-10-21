@@ -3167,32 +3167,10 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
         _titulosCocinados
             .contains(titulo.toString().toLowerCase().trim());
 
-    // 🏷️ Construcción organizada de píldoras / insignias (de 3 en 3)
+    // 🏷️ Curaduría Minimalista: Máximo 3 o 4 píldoras clave en 1 sola fila
     final List<Widget> pildoras = [];
 
-    // 1. Tipo de Comida (ej: Desayuno, Comida, etc.)
-    pildoras.add(
-      Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 2.5,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          tipo,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFFD32F2F),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-
-    // 2. Origen (Oficial, Mi Receta, Comunidad)
+    // 1. Origen / Identidad (Oficial, Mi Receta, Comunidad, o Tipo)
     if (ServicioRecetas.esOficial(receta)) {
       pildoras.add(
         Container(
@@ -3280,11 +3258,94 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           ),
         ),
       );
+    } else {
+      pildoras.add(
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 2.5,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD32F2F).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            tipo,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: Color(0xFFD32F2F),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
     }
 
-    // 3. Novedad
-    final bool esNovedad = ServicioRecetas.esNovedad(receta);
-    if (esNovedad) {
+    // 2. Match de Despensa (Prioridad máxima de decisión culinaria)
+    final m = _evaluarMatchReceta(receta);
+    if (_ingredientesDespensa.isNotEmpty && m.totalPrincipales > 0) {
+      if (m.listoParaCocinar) {
+        pildoras.add(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF81C784), width: 0.8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_rounded, size: 10.5, color: Color(0xFF2E7D32)),
+                SizedBox(width: 3),
+                Text(
+                  '🟢 ¡Tienes todo!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else if (m.faltaUno) {
+        pildoras.add(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8E1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFFFD54F), width: 0.8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.shopping_basket_outlined, size: 10.5, color: Color(0xFFF57F17)),
+                const SizedBox(width: 3),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 130),
+                  child: Text(
+                    '🟡 Falta 1: ${m.faltantes.first}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE65100),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    // 3. Novedad (si aplica)
+    if (ServicioRecetas.esNovedad(receta)) {
       pildoras.add(
         Container(
           padding: const EdgeInsets.symmetric(
@@ -3327,126 +3388,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       );
     }
 
-    // 4. Sello de Match con Mi Despensa
-    Widget? widgetMatchDespensa;
-    final m = _evaluarMatchReceta(receta);
-    if (_ingredientesDespensa.isNotEmpty && m.totalPrincipales > 0) {
-      if (m.listoParaCocinar) {
-        widgetMatchDespensa = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F5E9),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF81C784), width: 0.8),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle_rounded, size: 10.5, color: Color(0xFF2E7D32)),
-              SizedBox(width: 3),
-              Text(
-                '🟢 ¡Tienes todo!',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1B5E20),
-                ),
-              ),
-            ],
-          ),
-        );
-      } else if (m.faltaUno) {
-        widgetMatchDespensa = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF8E1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFFFD54F), width: 0.8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shopping_basket_outlined, size: 10.5, color: Color(0xFFF57F17)),
-              const SizedBox(width: 3),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 135),
-                child: Text(
-                  '🟡 Falta 1: ${m.faltantes.first}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE65100),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-
-    // Si hay match y no fue novedad, completa la fila 1 de 3
-    if (widgetMatchDespensa != null && !esNovedad) {
-      pildoras.add(widgetMatchDespensa);
-    }
-
-    // 5. Calorías
-    if (receta['calorias'] != null && (receta['calorias'] as num) > 0) {
-      pildoras.add(
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 2.5,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.teal.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '${receta['calorias']} kcal',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.teal[800],
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // 6 y 7. Sellos y Semáforo Nutricional Automático (hasta 2)
-    final sellos = _obtenerSellosReceta(receta);
-    for (final s in sellos.take(2)) {
-      pildoras.add(
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: s.colorFondo,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: s.colorTexto.withValues(alpha: 0.3), width: 0.8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(s.emoji, style: const TextStyle(fontSize: 10)),
-              const SizedBox(width: 3),
-              Text(
-                s.etiqueta,
-                style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                  color: s.colorTexto,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 8. Tiempo de Preparación Express
+    // 4. Tiempo de Preparación Express
     DesgloseTiempoCocina desglose;
     try {
       desglose = ServicioCocinaExpress.calcularDesglose(receta);
@@ -3460,7 +3402,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
     pildoras.add(
       Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 8,
+          horizontal: 7,
           vertical: 2.5,
         ),
         decoration: BoxDecoration(
@@ -3491,7 +3433,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             Text(
               desglose.insigniaCorta,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10.5,
                 color: desglose.totalMinutos <= 20
                     ? const Color(0xFFE65100)
                     : Colors.grey.shade800,
@@ -3503,8 +3445,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       ),
     );
 
-    // 9. Cero Trastes (1 Sartén)
-    if (ServicioCocinaExpress.esCeroTrastes(receta)) {
+    // 5. Calorías (kcal)
+    if (receta['calorias'] != null && (receta['calorias'] as num) > 0) {
       pildoras.add(
         Container(
           padding: const EdgeInsets.symmetric(
@@ -3512,83 +3454,43 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             vertical: 2.5,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xFFE0F2F1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Text(
-            '🍳 1 Sartén',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF00695C),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // 10. Fácil 5 (ingredientes)
-    if (ServicioCocinaExpress.esFacil5(receta)) {
-      pildoras.add(
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 7,
-            vertical: 2.5,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3E5F5),
+            color: Colors.teal.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '✨ ${ServicioCocinaExpress.contarIngredientes(receta)} ing',
-            style: const TextStyle(
-              fontSize: 10,
+            '${receta['calorias']} kcal',
+            style: TextStyle(
+              fontSize: 10.5,
+              color: Colors.teal[800],
               fontWeight: FontWeight.bold,
-              color: Color(0xFF6A1B9A),
             ),
           ),
         ),
       );
-    }
-
-    // Si había match de despensa y también novedad, se agrega aquí
-    if (widgetMatchDespensa != null && esNovedad) {
-      pildoras.add(widgetMatchDespensa);
-    }
-
-    // 11. Coincidencias de búsqueda por ingredientes (si está buscando)
-    if (_ingredientesSeleccionados.isNotEmpty) {
-      final count = _contarCoincidenciasIngredientes(receta);
-      if (count > 0) {
+    } else {
+      // Si no tiene calorías numéricas, muestra el primer sello nutricional destacado
+      final sellos = _obtenerSellosReceta(receta);
+      if (sellos.isNotEmpty) {
+        final s = sellos.first;
         pildoras.add(
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 2.5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
             decoration: BoxDecoration(
-              color: Colors.teal.shade50,
+              color: s.colorFondo,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.teal.shade300,
-                width: 0.8,
-              ),
+              border: Border.all(color: s.colorTexto.withValues(alpha: 0.3), width: 0.8),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.kitchen_rounded,
-                  size: 11,
-                  color: Colors.teal.shade800,
-                ),
-                const SizedBox(width: 4),
+                Text(s.emoji, style: const TextStyle(fontSize: 10)),
+                const SizedBox(width: 3),
                 Text(
-                  'Tienes $count ing',
+                  s.etiqueta,
                   style: TextStyle(
-                    fontSize: 10.5,
-                    color: Colors.teal.shade800,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.bold,
+                    color: s.colorTexto,
                   ),
                 ),
               ],
@@ -3598,12 +3500,12 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       }
     }
 
-    // 12. Fue cocinada / Preparada
+    // 6. Preparada (si fue cocinada y queda espacio)
     if (fueCocinada) {
       pildoras.add(
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: 8,
+            horizontal: 7,
             vertical: 2.5,
           ),
           decoration: BoxDecoration(
@@ -3622,11 +3524,11 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 size: 11,
                 color: Colors.green.shade800,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               Text(
                 'Preparada',
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 10,
                   color: Colors.green.shade800,
                   fontWeight: FontWeight.bold,
                 ),
@@ -3637,8 +3539,8 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
       );
     }
 
-    // Limitar a máximo 9 píldoras (exactamente hasta 3 filas de 3)
-    final pildorasVisibles = pildoras.take(9).toList();
+    // 🌟 Curaduría Minimalista: exactamente hasta 4 píldoras clave en 1 sola fila
+    final pildorasVisibles = pildoras.take(4).toList();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -3838,22 +3740,14 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 ],
               ),
 
-              // 2. SECCIÓN DE PÍLDORAS ORGANIZADAS DE 3 EN 3
+              // 2. SECCIÓN DE PÍLDORAS CURADAS (1 SOLA FILA LIMPIA)
               if (pildorasVisibles.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                for (int i = 0; i < pildorasVisibles.length; i += 3) ...[
-                  if (i > 0) const SizedBox(height: 5),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: pildorasVisibles.sublist(
-                      i,
-                      (i + 3 > pildorasVisibles.length)
-                          ? pildorasVisibles.length
-                          : i + 3,
-                    ),
-                  ),
-                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: pildorasVisibles,
+                ),
               ],
             ],
           ),
