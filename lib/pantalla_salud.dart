@@ -508,9 +508,12 @@ class _PantallaSaludState extends State<PantallaSalud> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       icon: const Icon(Icons.check_circle_outline, size: 20),
-                      label: const Text(
-                        'Aplicar como mi Meta Diaria ✅',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Aplicar como mi Meta Diaria ✅',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
                       ),
                       onPressed: () async {
                         final sp = await SharedPreferences.getInstance();
@@ -978,9 +981,12 @@ class _PantallaSaludState extends State<PantallaSalud> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                label: Text(
-                  'Iniciar Ayuno $_protocoloAyuno 🔥',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Iniciar Ayuno $_protocoloAyuno 🔥',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                 ),
                 onPressed: () => _iniciarAyuno(_protocoloAyuno),
               ),
@@ -1291,9 +1297,13 @@ class _PantallaSaludState extends State<PantallaSalud> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mi Salud 🍏',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Mi Salud 🍏',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -1878,10 +1888,13 @@ class _PantallaSaludState extends State<PantallaSalud> {
                     ),
                   ),
                   icon: const Icon(Icons.add, size: 16),
-                  label: const Text(
-                    '+1 Vaso (250 ml)',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '+1 Vaso (250 ml)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
                   ),
                   onPressed: () => _ajustarVasosAgua(1),
                 ),
@@ -1899,10 +1912,13 @@ class _PantallaSaludState extends State<PantallaSalud> {
                     ),
                   ),
                   icon: const Icon(Icons.water_drop, size: 16),
-                  label: const Text(
-                    '+ Botella (500 ml)',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '+ Botella (500 ml)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
                   ),
                   onPressed: () => _ajustarVasosAgua(2),
                 ),

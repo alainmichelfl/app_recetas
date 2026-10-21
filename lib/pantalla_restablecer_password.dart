@@ -244,11 +244,14 @@ class _PantallaRestablecerPasswordState
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : Text(
-                                  'Guardar y Acceder',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                              : FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Guardar y Acceder',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                         ),

@@ -297,7 +297,10 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           icon: const Icon(Icons.share, size: 17),
-                          label: const Text('WhatsApp 📱', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('WhatsApp 📱', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
                           onPressed: () async {
                             Navigator.pop(ctx);
                             await SharePlus.instance.share(ShareParams(text: textoParaCompartir));
@@ -314,7 +317,10 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           icon: const Icon(Icons.add_shopping_cart, size: 17),
-                          label: const Text('Al Carrito 🛒', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          label: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Al Carrito 🛒', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
                           onPressed: () async {
                             Navigator.pop(ctx);
                             try {
@@ -568,9 +574,12 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                        label: const Text(
-                          'Mayoreo & Club (Costco / Central) 🥫',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Mayoreo & Club (Costco / CEDA) 🥫',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         onPressed: _mostrarModalCompraMayoreo,
                       ),
@@ -582,9 +591,12 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.share, size: 18),
-                        label: const Text(
-                          'Compartir por WhatsApp 📱',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Compartir por WhatsApp 📱',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         onPressed: _compartirPorWhatsApp,
                       ),
@@ -602,7 +614,10 @@ class _DialogoBatchCookingState extends State<DialogoBatchCooking> {
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.deepOrange),
                               )
                             : const Icon(Icons.auto_awesome, size: 18),
-                        label: Text(_generandoIA ? 'Optimizando...' : 'Personalizar con Chef IA ✨'),
+                        label: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(_generandoIA ? 'Optimizando...' : 'Personalizar con Chef IA ✨'),
+                        ),
                         onPressed: _generandoIA ? null : _regenerarConIA,
                       ),
                     ],

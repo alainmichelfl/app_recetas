@@ -1064,7 +1064,10 @@ class _DialogoOnboardingBienvenidaState
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  label: const Text('Siguiente'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Siguiente'),
+                  ),
                   onPressed: () => setState(() => _pasoActual++),
                 )
               else
@@ -1076,7 +1079,10 @@ class _DialogoOnboardingBienvenidaState
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.rocket_launch_rounded, size: 18),
-                  label: const Text('¡Cocinar con Chef IA!'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('¡Cocinar con Chef IA!'),
+                  ),
                   onPressed: () => _completarOnboarding(irAlChef: true),
                 ),
             ],

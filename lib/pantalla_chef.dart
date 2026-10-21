@@ -981,7 +981,14 @@ class _PantallaChefState extends State<PantallaChef> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: Text(_modoPerruno ? 'Chef Perruno 🐾' : 'Chef IA 👨‍🍳'),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _modoPerruno ? 'Chef Perruno 🐾' : 'Chef IA 👨‍🍳',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -1375,24 +1382,27 @@ class _PantallaChefState extends State<PantallaChef> {
                         ),
                       )
                     : Icon(_modoPerruno ? Icons.pets : Icons.restaurant_menu),
-                label: Text(
-                  _generando
-                      ? 'Cocinando...'
-                      : (_modoPerruno
-                            ? 'Cocinar Snack Perruno 🐾'
-                            : (_electrodomesticoSeleccionado ==
-                                    ModoElectrodomestico.thermomix
-                                ? 'Cocinar con Thermomix 🤖'
-                                : (_electrodomesticoSeleccionado ==
-                                        ModoElectrodomestico.airFryer
-                                    ? 'Cocinar con Air Fryer 🍟'
-                                    : (_tipoCocinaSeleccionado ==
-                                            TiposCocina.todas
-                                        ? 'Cocinar Receta con IA 👨‍🍳'
-                                        : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')))),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _generando
+                        ? 'Cocinando...'
+                        : (_modoPerruno
+                              ? 'Cocinar Snack Perruno 🐾'
+                              : (_electrodomesticoSeleccionado ==
+                                      ModoElectrodomestico.thermomix
+                                  ? 'Cocinar con Thermomix 🤖'
+                                  : (_electrodomesticoSeleccionado ==
+                                          ModoElectrodomestico.airFryer
+                                      ? 'Cocinar con Air Fryer 🍟'
+                                      : (_tipoCocinaSeleccionado ==
+                                              TiposCocina.todas
+                                          ? 'Cocinar Receta con IA 👨‍🍳'
+                                          : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')))),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 style: ElevatedButton.styleFrom(

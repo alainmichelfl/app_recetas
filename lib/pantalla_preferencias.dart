@@ -189,9 +189,13 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Text(
-          'Mis Preferencias ⚙️',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Mis Preferencias ⚙️',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,
@@ -201,84 +205,90 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           ? const Center(
               child: CircularProgressIndicator(color: Colors.blueGrey),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 👤 IDENTIDAD CULINARIA & APODO
-                  const Text(
-                    '👤 Identidad Culinaria',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.person, color: Color(0xFFD32F2F), size: 26),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  '¿Cómo te gustaría que te llamemos?',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  ServicioPerfilUsuario.obtenerNombreSincrono(),
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E2022),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              ServicioPerfilUsuario.mostrarDialogoEditarNombre(
-                                context,
-                                alGuardar: () => setState(() {}),
-                              );
-                            },
-                            icon: const Icon(Icons.edit, size: 14),
-                            label: const Text('Cambiar'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFD32F2F),
-                              side: const BorderSide(color: Color(0xFFD32F2F)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
+          : Builder(
+              builder: (context) {
+                final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+                return SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: isLandscape ? 32 : 20, vertical: isLandscape ? 12 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 👤 IDENTIDAD CULINARIA & APODO
+                      const Text(
+                        '👤 Identidad Culinaria',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey,
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD32F2F).withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.person, color: Color(0xFFD32F2F), size: 26),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '¿Cómo te gustaría que te llamemos?',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      ServicioPerfilUsuario.obtenerNombreSincrono(),
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1E2022),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  ServicioPerfilUsuario.mostrarDialogoEditarNombre(
+                                    context,
+                                    alGuardar: () => setState(() {}),
+                                  );
+                                },
+                                icon: const Icon(Icons.edit, size: 14),
+                                label: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Cambiar'),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFD32F2F),
+                                  side: const BorderSide(color: Color(0xFFD32F2F)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                   const SizedBox(height: 24),
 
                   // 💡 1. PERFIL NUTRICIONAL (DIETA Y ALERGIAS)
@@ -518,11 +528,15 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Expanded(
-                                child: Text(
-                                  'Gastronomías del Mundo',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Gastronomías del Mundo',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -716,11 +730,15 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Expanded(
-                                child: Text(
-                                  'Electrodomésticos y Equipo',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Electrodomésticos y Equipo',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -972,11 +990,17 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Porciones por defecto',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                              const Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Porciones por defecto',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                                 ),
                               ),
                               Row(
@@ -1043,19 +1067,28 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Presupuesto Semanal Súper',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                              const Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Presupuesto Semanal Súper',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              Text(
-                                '\$${presupuestoSemanal.toInt()} MXN',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '\$${presupuestoSemanal.toInt()} MXN',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1207,11 +1240,14 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                               ),
                             )
                           : const Icon(Icons.save),
-                      label: Text(
-                        guardando ? 'Guardando...' : 'Guardar Preferencias',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          guardando ? 'Guardando...' : 'Guardar Preferencias',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -1332,7 +1368,9 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   const SizedBox(height: 30),
                 ],
               ),
-            ),
+            );
+          },
+        ),
     );
   }
 }

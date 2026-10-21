@@ -197,15 +197,19 @@ class _PantallaSommelierState extends State<PantallaSommelier>
             onPressed: () => Scaffold.of(ctx).openDrawer(),
           ),
         ),
-        title: const Row(
-          children: [
-            Text('🍷', style: TextStyle(fontSize: 22)),
-            SizedBox(width: 8),
-            Text(
-              'Sommelier IA',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              Text('🍷', style: TextStyle(fontSize: 22)),
+              SizedBox(width: 8),
+              Text(
+                'Sommelier IA',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,

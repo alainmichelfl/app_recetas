@@ -965,13 +965,14 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
         )
         .toList();
 
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: CustomScrollView(
         slivers: [
           // 🖼️ CABECERA TIPO REVISTA
           SliverAppBar(
-            expandedHeight: 300.0,
+            expandedHeight: isLandscape ? 180.0 : 300.0,
             pinned: true,
             backgroundColor: const Color(0xFF1E2022),
             foregroundColor: Colors.white,
@@ -1101,21 +1102,24 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                 end: 72,
                 bottom: 16,
               ),
-              title: Text(
-                widget.titulo,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  shadows: [
-                    Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
-                    Shadow(color: Colors.black, blurRadius: 20),
-                    Shadow(color: Colors.black, blurRadius: 4),
-                  ],
+              title: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  widget.titulo,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 10, offset: Offset(0, 2)),
+                      Shadow(color: Colors.black, blurRadius: 20),
+                      Shadow(color: Colors.black, blurRadius: 4),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
               ),
               background: Stack(
                 fit: StackFit.expand,
@@ -1244,12 +1248,18 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                               children: [
                                 Row(
                                   children: [
-                                    const Text(
-                                      '¡Ya preparaste esta receta! 👨‍🍳✨',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1B5E20),
+                                    const Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          '¡Ya preparaste esta receta! 👨‍🍳✨',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1B5E20),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     if (_registroCocina!.veces > 1) ...[
@@ -2200,8 +2210,10 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
               ),
             ),
           SizedBox(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: 60,
+            width: isLandscape
+                ? MediaQuery.of(context).size.width * 0.6
+                : MediaQuery.of(context).size.width * 0.9,
+            height: isLandscape ? 48 : 60,
             child: FloatingActionButton.extended(
               onPressed: () async {
                 await Navigator.push(
@@ -2228,16 +2240,19 @@ class _PantallaDetalleRecetaState extends State<PantallaDetalleReceta> {
                     ? Icons.soup_kitchen
                     : Icons.local_fire_department,
                 color: Colors.white,
-                size: 28,
+                size: isLandscape ? 22 : 28,
               ),
-              label: Text(
-                _registroCocina != null
-                    ? '¡Volver a Cocinar Receta!'
-                    : '¡Entrar al Modo Cocina!',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+              label: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _registroCocina != null
+                      ? '¡Volver a Cocinar Receta!'
+                      : '¡Entrar al Modo Cocina!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isLandscape ? 15 : 18,
+                  ),
                 ),
               ),
             ),

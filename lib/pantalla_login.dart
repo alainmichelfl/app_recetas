@@ -511,32 +511,36 @@ class _PantallaLoginState extends State<PantallaLogin> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(30.0),
+            padding: EdgeInsets.symmetric(horizontal: isLandscape ? 40.0 : 30.0, vertical: isLandscape ? 15.0 : 30.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Un ícono de cocina como logo
-                Icon(Icons.restaurant_menu, size: 100, color: colorPrincipal),
-                const SizedBox(height: 20),
+                Icon(Icons.restaurant_menu, size: isLandscape ? 50 : 100, color: colorPrincipal),
+                SizedBox(height: isLandscape ? 10 : 20),
 
                 const Text(
                   'Bienvenido a',
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
-                Text(
-                  'Jitomate y Cebolla',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: colorPrincipal,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Jitomate y Cebolla',
+                    style: TextStyle(
+                      fontSize: isLandscape ? 26 : 32,
+                      fontWeight: FontWeight.bold,
+                      color: colorPrincipal,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                SizedBox(height: isLandscape ? 20 : 40),
 
                 // Campo de Correo
                 TextField(
@@ -599,11 +603,14 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     ),
                     child: _cargando
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                        : const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Iniciar Sesión',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                   ),

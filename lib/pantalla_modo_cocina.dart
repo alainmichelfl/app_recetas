@@ -470,9 +470,9 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
     }
   }
 
-  Widget _construirSelectorModo() {
+  Widget _construirSelectorModo({bool isLandscape = false}) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+      margin: EdgeInsets.fromLTRB(16, isLandscape ? 2 : 4, 16, isLandscape ? 4 : 10),
       decoration: BoxDecoration(
         color: Colors.grey[850],
         borderRadius: BorderRadius.circular(16),
@@ -507,18 +507,20 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                     Text(modo.icono, style: const TextStyle(fontSize: 14)),
                     const SizedBox(width: 4),
                     Flexible(
-                      child: Text(
-                        modo == ModoElectrodomestico.thermomix
-                            ? 'Thermomix'
-                            : modo == ModoElectrodomestico.airFryer
-                                ? 'Air Fryer'
-                                : 'Tradicional',
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[400],
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          modo == ModoElectrodomestico.thermomix
+                              ? 'Thermomix'
+                              : modo == ModoElectrodomestico.airFryer
+                                  ? 'Air Fryer'
+                                  : 'Tradicional',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.grey[400],
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 12,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -571,6 +573,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
         .length;
 
     final Color colorActual = _modoActual.colorPrimario;
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -582,13 +585,16 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
           icon: const Icon(Icons.close, size: 30),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          _modoActual == ModoElectrodomestico.thermomix
-              ? 'Modo Thermomix 🤖'
-              : _modoActual == ModoElectrodomestico.airFryer
-                  ? 'Modo Air Fryer 🍟'
-                  : 'Modo Cocina 🔥',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            _modoActual == ModoElectrodomestico.thermomix
+                ? 'Modo Thermomix 🤖'
+                : _modoActual == ModoElectrodomestico.airFryer
+                    ? 'Modo Air Fryer 🍟'
+                    : 'Modo Cocina 🔥',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -653,7 +659,7 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
           Column(
             children: [
               // Selector de Electrodoméstico / Equipo
-              _construirSelectorModo(),
+              _construirSelectorModo(isLandscape: isLandscape),
 
               // Barra de progreso superior
               LinearProgressIndicator(
@@ -731,17 +737,17 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                         pagina['parametros'] as ParametrosPasoRobot?;
 
                     return Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: EdgeInsets.all(isLandscape ? 8.0 : 20.0),
                       child: Card(
                         color: Colors.white,
                         elevation: 10,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(isLandscape ? 20 : 30),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 25,
-                            vertical: 30,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isLandscape ? 16 : 25,
+                            vertical: isLandscape ? 14 : 30,
                           ),
                           child: Column(
                             mainAxisAlignment: esPreparacion
@@ -750,9 +756,9 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                             children: [
                               // 💡 Etiqueta Superior Dinámica
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 8,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isLandscape ? 14 : 20,
+                                  vertical: isLandscape ? 5 : 8,
                                 ),
                                 decoration: BoxDecoration(
                                   color: esPreparacion
@@ -777,16 +783,21 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                                           : colorActual,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      esPreparacion
-                                          ? pagina['titulo']
-                                          : 'Paso $numPaso de $totalPasosReales (${_modoActual.etiqueta.split(' ')[0]})',
-                                      style: TextStyle(
-                                        color: esPreparacion
-                                            ? Colors.orange[800]
-                                            : colorActual,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                    Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          esPreparacion
+                                              ? pagina['titulo']
+                                              : 'Paso $numPaso de $totalPasosReales (${_modoActual.etiqueta.split(' ')[0]})',
+                                          style: TextStyle(
+                                            color: esPreparacion
+                                                ? Colors.orange[800]
+                                                : colorActual,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: isLandscape ? 14 : 16,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -856,8 +867,10 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                                         ? TextAlign.left
                                         : TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: esPreparacion ? 17 : 24,
-                                      height: esPreparacion ? 1.6 : 1.4,
+                                      fontSize: esPreparacion
+                                          ? (isLandscape ? 15 : 17)
+                                          : (isLandscape ? 19 : 24),
+                                      height: esPreparacion ? 1.5 : 1.35,
                                       fontWeight: esPreparacion
                                           ? FontWeight.normal
                                           : FontWeight.w600,
@@ -882,73 +895,81 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
               ),
 
               // Botonera Inferior
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 30.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Botón Anterior
-                    Opacity(
-                      opacity: _pasoActual > 0 ? 1.0 : 0.0,
-                      child: FloatingActionButton(
-                        heroTag: 'btnAnterior',
-                        backgroundColor: Colors.grey[800],
-                        foregroundColor: Colors.white,
-                        onPressed: _pasoActual > 0
-                            ? () {
-                                _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            : null,
-                        child: const Icon(Icons.arrow_back_ios_new),
-                      ),
+              Builder(
+                builder: (context) {
+                  final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: isLandscape ? 10.0 : 26.0,
                     ),
-
-                    // Botón Siguiente / Terminar
-                    FloatingActionButton.extended(
-                      heroTag: 'btnSiguiente',
-                      backgroundColor: _pasoActual == paginasCocina.length - 1
-                          ? Colors.green
-                          : colorActual,
-                      foregroundColor: Colors.white,
-                      onPressed: () {
-                        if (_pasoActual < paginasCocina.length - 1) {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        } else {
-                          _finalizarYCocinar();
-                        }
-                      },
-                      label: Text(
-                        _pasoActual == paginasCocina.length - 1
-                            ? '¡Terminar!'
-                            : _pasoActual == 0 &&
-                                  paginasCocina[0]['tipo'] == 'preparacion'
-                            ? '¡A Cocinar!'
-                            : 'Siguiente Paso',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Botón Anterior
+                        Opacity(
+                          opacity: _pasoActual > 0 ? 1.0 : 0.0,
+                          child: FloatingActionButton(
+                            heroTag: 'btnAnterior',
+                            backgroundColor: Colors.grey[800],
+                            foregroundColor: Colors.white,
+                            onPressed: _pasoActual > 0
+                                ? () {
+                                    _pageController.previousPage(
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                : null,
+                            child: const Icon(Icons.arrow_back_ios_new),
+                          ),
                         ),
-                      ),
-                      icon: Icon(
-                        _pasoActual == paginasCocina.length - 1
-                            ? Icons.check_circle
-                            : _pasoActual == 0 &&
-                                  paginasCocina[0]['tipo'] == 'preparacion'
-                            ? Icons.local_fire_department
-                            : Icons.arrow_forward_ios,
-                      ),
+
+                        // Botón Siguiente / Terminar
+                        FloatingActionButton.extended(
+                          heroTag: 'btnSiguiente',
+                          backgroundColor: _pasoActual == paginasCocina.length - 1
+                              ? Colors.green
+                              : colorActual,
+                          foregroundColor: Colors.white,
+                          onPressed: () {
+                            if (_pasoActual < paginasCocina.length - 1) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            } else {
+                              _finalizarYCocinar();
+                            }
+                          },
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _pasoActual == paginasCocina.length - 1
+                                  ? '¡Terminar!'
+                                  : _pasoActual == 0 &&
+                                        paginasCocina[0]['tipo'] == 'preparacion'
+                                  ? '¡A Cocinar!'
+                                  : 'Siguiente Paso',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          icon: Icon(
+                            _pasoActual == paginasCocina.length - 1
+                                ? Icons.check_circle
+                                : _pasoActual == 0 &&
+                                      paginasCocina[0]['tipo'] == 'preparacion'
+                                  ? Icons.local_fire_department
+                                  : Icons.arrow_forward_ios,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -1375,10 +1396,13 @@ class _PantallaModoCocinaState extends State<PantallaModoCocina> {
                     _temporizadorActivo ? Icons.pause : Icons.play_arrow,
                     size: 16,
                   ),
-                  label: Text(
-                    _temporizadorActivo ? 'Pausar' : 'Reanudar',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 12),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _temporizadorActivo ? 'Pausar' : 'Reanudar',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
                   ),
                   onPressed: _alternarPausaTemporizador,
                 ),

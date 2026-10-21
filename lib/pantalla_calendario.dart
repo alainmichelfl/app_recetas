@@ -712,9 +712,13 @@ class _PantallaCalendarioState extends State<PantallaCalendario> {
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
-        title: const Text(
-          'Calendario de Comidas 📅',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Calendario de Comidas 📅',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         backgroundColor: const Color(0xFF1E2022),
         foregroundColor: Colors.white,

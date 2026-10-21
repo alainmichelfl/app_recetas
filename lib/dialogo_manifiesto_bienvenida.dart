@@ -270,13 +270,16 @@ class _DialogoManifiestoBienvenidaState
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(
-                                      _paginaActual == 3
-                                          ? '¡A Cocinar! 🚀'
-                                          : 'Siguiente',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        _paginaActual == 3
+                                            ? '¡A Cocinar! 🚀'
+                                            : 'Siguiente',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
