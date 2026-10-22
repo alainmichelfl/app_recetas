@@ -396,6 +396,57 @@ void main() {
       expect(imgHuevo, isNotNull);
       expect(imgHuevo, isNot(contains('photo-1539185441755'))); // no vinilo
       expect(imgHuevo, contains('photo-1525351484163-7529414344d8')); // huevo pochado con aguacate
+
+      // Bloque 6: Desacoplamiento de Proteínas, Trío de Avenas y Especialista de Bebidas
+      // ID 33: Tostadas Ligeras de Bistec de Res (desacoplada de ID 134 Fajitas)
+      final imgTostadasBistec = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 33,
+        titulo: 'Tostadas Ligeras de Bistec de Res',
+      );
+      expect(imgTostadasBistec, isNotNull);
+      expect(imgTostadasBistec, contains('tostadas_bistec_res'));
+
+      // ID 81: Atún a la Mexicana (desacoplada de ID 115 Ensalada Fría)
+      final imgAtunMexicana = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 81,
+        titulo: 'Atún a la Mexicana',
+      );
+      expect(imgAtunMexicana, isNotNull);
+      expect(imgAtunMexicana, isNot(contains('photo-1622756144420'))); // no ensalada de atún
+      expect(imgAtunMexicana, contains('atun_a_la_mexicana'));
+
+      // ID 31: Avena Trasnochada con Manzana y Canela (desacoplada en tarro de vidrio mason jar)
+      final imgAvenaTrasnochada = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 31,
+        titulo: 'Avena Trasnochada con Manzana y Canela',
+      );
+      expect(imgAvenaTrasnochada, isNotNull);
+      expect(imgAvenaTrasnochada, contains('avena_trasnochada_manzana'));
+
+      // ID 37: Smoothie Verde Energizante (fotografía de estudio especialista en bebidas)
+      final imgSmoothieVerde = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 37,
+        titulo: 'Smoothie Verde Energizante',
+      );
+      expect(imgSmoothieVerde, isNotNull);
+      expect(imgSmoothieVerde, contains('smoothie_verde_energizante'));
+
+      // Bloque 7: Desacoplamiento de Pastas y Debut de Street Food Artisan
+      // ID 82: Ensalada de Pasta Fría con Pollo (desacoplada de ID 44 Pasta al Pesto)
+      final imgPastaFria = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 82,
+        titulo: 'Ensalada de Pasta Fría con Pollo',
+      );
+      expect(imgPastaFria, isNotNull);
+      expect(imgPastaFria, contains('ensalada_pasta_fria_pollo'));
+
+      // ID 42: Tacos Veganos de Lentejas al Pastor (Debut de Street Food Artisan)
+      final imgTacosPastor = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 42,
+        titulo: 'Tacos Veganos de Lentejas al Pastor',
+      );
+      expect(imgTacosPastor, isNotNull);
+      expect(imgTacosPastor, contains('tacos_lentejas_al_pastor'));
     });
 
     test('Retorna null cuando no hay URL ni título', () {
@@ -447,6 +498,19 @@ void main() {
         titulo: 'Bowl tibio de avena con manzana',
       );
       expect(imgSemAvenaCanela, contains('bowl_avena_manzana_canela'));
+
+      // 5. Semántica Bloque 7
+      final imgPudinChia = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 119,
+        titulo: 'Pudín de Chía con Leche de Almendras y Frutos Rojos',
+      );
+      expect(imgPudinChia, contains('pudin_chia_frutos_rojos'));
+
+      final imgLicuadoAvena = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 59,
+        titulo: 'Licuado de Avena, Plátano y Crema de Maní',
+      );
+      expect(imgLicuadoAvena, contains('licuado_avena_platano_mani'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {

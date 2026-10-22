@@ -265,18 +265,18 @@ class ServicioRecetas {
   /// Mapa de imágenes curadas y verificadas (HTTP 200) para recetas oficiales del catálogo.
   /// Garantiza que nunca se muestren fotos rotas (404), duplicadas o con cargas infinitas.
   static const Map<int, String> imagenesVerificadasPorId = {
-    31: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Avena Trasnochada con Manzana y Canela
+    31: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/avena_trasnochada_manzana.jpg', // Avena Trasnochada con Manzana y Canela
     32: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80', // Bowl de Pollo y Vegetales al Chipotle
-    33: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', // Tostadas Ligeras de Bistec de Res
+    33: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostadas_bistec_res.jpg', // Tostadas Ligeras de Bistec de Res
     34: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=600&q=80', // Snack de Yogurt Griego con Moras
     35: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=600&q=80', // Huevos a la Mexicana Ligeros
     36: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80', // Pancakes de Avena y Plátano
-    37: 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80', // Smoothie Verde Energizante
+    37: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_verde_energizante.jpg', // Smoothie Verde Energizante
     38: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=600&q=80', // Toast de Aguacate con Huevo Poché
     39: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chilaquiles_horneados_fitness.jpg', // Chilaquiles Horneados Fitness
     40: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=600&q=80', // Pechuga de Pollo al Limón y Romero
     41: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80', // Salmón al Horno con Quinoa
-    42: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80', // Tacos Veganos de Lentejas al Pastor
+    42: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lentejas_al_pastor.jpg', // Tacos Veganos de Lentejas al Pastor
     43: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&w=600&q=80', // Ensalada César con Pollo a la Parrilla
     44: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80', // Pasta Integral al Pesto con Tomate Cherry
     45: 'https://images.unsplash.com/photo-1501595091296-3aa970afb3ff?auto=format&fit=crop&w=600&q=80', // Atún Sellado con Costra de Ajonjolí
@@ -293,7 +293,7 @@ class ServicioRecetas {
     56: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Tazón de Yogurt con Chía y Mango
     57: 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80', // Enchiladas Suizas Ligeras
     58: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Pan Francés Saludable con Frutos Rojos
-    59: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?auto=format&fit=crop&w=600&q=80', // Licuado de Avena, Plátano y Crema de Maní
+    59: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/licuado_avena_platano_mani.jpg', // Licuado de Avena, Plátano y Crema de Maní
     60: 'https://images.unsplash.com/photo-1597958792579-bd3517df6399?auto=format&fit=crop&w=600&q=80', // Poke Bowl de Atún Fresco y Arroz
     61: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600&q=80', // Milanesa de Pollo Horneada
     62: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80', // Albóndigas de Pavo en Chipotle
@@ -315,8 +315,8 @@ class ServicioRecetas {
     78: 'https://plus.unsplash.com/premium_photo-1731950424220-17ce9415dcc7?auto=format&fit=crop&w=600&q=80', // Quesadillas de Huevo con Espinaca
     79: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_bowl_frutos_rojos.jpg', // Smoothie Bowl de Frutos Rojos
     80: 'https://images.unsplash.com/photo-1768179669433-bd9d52949c20?auto=format&fit=crop&w=600&q=80', // Pechuga en Salsa Verde con Calabacitas
-    81: 'https://images.unsplash.com/photo-1622756144420-6877b1b7476e?auto=format&fit=crop&w=600&q=80', // Atún a la Mexicana
-    82: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80', // Ensalada de Pasta Fría con Pollo
+    81: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/atun_a_la_mexicana.jpg', // Atún a la Mexicana
+    82: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/ensalada_pasta_fria_pollo.jpg', // Ensalada de Pasta Fría con Pollo
     83: 'https://plus.unsplash.com/premium_photo-1664478294917-c11274b9ce79?auto=format&fit=crop&w=600&q=80', // Fajitas de Res con Pimientos
     84: 'https://images.unsplash.com/photo-1535399831218-d5bd36d1a6b3?auto=format&fit=crop&w=600&q=80', // Ceviche de Soya
     85: 'https://plus.unsplash.com/premium_photo-1673590981774-d9f534e0c617?auto=format&fit=crop&w=600&q=80', // Tostadas de Salpicón de Pollo
@@ -353,7 +353,7 @@ class ServicioRecetas {
     116: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg', // Sopa de Tortilla Tradicional Saludable
     117: 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80', // Guacamole Rústico con Totopos Horneados
     118: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepinos_locos_preparados.jpg', // Pepinos Locos Rellenos de Zanahoria y Limón
-    119: 'https://images.unsplash.com/photo-1651256785544-fc012585e6a2?auto=format&fit=crop&w=600&q=80', // Pudín de Chía con Leche de Almendras y Frutos Rojos
+    119: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pudin_chia_frutos_rojos.jpg', // Pudín de Chía con Leche de Almendras y Frutos Rojos
     120: 'https://images.unsplash.com/photo-1781567502827-3c671d8cae63?auto=format&fit=crop&w=600&q=80', // Brochetas Caprese con Jitomate Cherry y Panela
     121: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80', // Manzana en Rebanadas con Crema de Cacahuate y Canela
     122: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bocaditos_calabaza_zanahoria_perro.jpg', // Bocaditos Crujientes de Calabaza y Zanahoria
@@ -392,6 +392,9 @@ class ServicioRecetas {
     final t = titulo.toLowerCase().trim();
 
     // 1. Avena, porridge y overnight oats
+    if (t.contains('trasnochada') || (t.contains('overnight') && (t.contains('manzana') || t.contains('canela') || t.contains('avena')))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/avena_trasnochada_manzana.jpg';
+    }
     if ((t.contains('avena') || t.contains('porridge') || t.contains('oatmeal')) && (t.contains('manzana') || t.contains('canela'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bowl_avena_manzana_canela.jpg';
     }
@@ -428,6 +431,9 @@ class ServicioRecetas {
     }
 
     // 4. Platillos tradicionales mexicanos
+    if (t.contains('tostada') && (t.contains('bistec') || t.contains('res') || t.contains('carne'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostadas_bistec_res.jpg';
+    }
     if (t.contains('picadillo')) {
       return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
     }
@@ -461,6 +467,9 @@ class ServicioRecetas {
     if (t.contains('quesadilla') || t.contains('sincronizada')) {
       return 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80';
     }
+    if ((t.contains('taco') || t.contains('lenteja')) && t.contains('pastor')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lentejas_al_pastor.jpg';
+    }
     if (t.contains('taco') || t.contains('taquito') || t.contains('pastor') || t.contains('carnitas') || t.contains('barbacoa') || t.contains('alambre') || t.contains('fajita')) {
       return 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80';
     }
@@ -469,6 +478,9 @@ class ServicioRecetas {
     }
 
     // 5. Pescados y mariscos
+    if ((t.contains('atún') || t.contains('atun')) && t.contains('mexicana')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/atun_a_la_mexicana.jpg';
+    }
     if (t.contains('ceviche') || t.contains('aguachile') || t.contains('tiradito')) {
       return 'https://images.unsplash.com/photo-1535400255456-984241443b29?auto=format&fit=crop&w=600&q=80';
     }
@@ -523,6 +535,9 @@ class ServicioRecetas {
     }
     if (t.contains('pizza') || t.contains('focaccia') || t.contains('calzone')) {
       return 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80';
+    }
+    if ((t.contains('pasta') || t.contains('fusilli')) && (t.contains('fría') || t.contains('fria') || t.contains('ensalada'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/ensalada_pasta_fria_pollo.jpg';
     }
     if (t.contains('pasta') || t.contains('espagueti') || t.contains('spaghetti') || t.contains('fettuccine') || t.contains('penne') || t.contains('ravioli') || t.contains('carbonara') || t.contains('boloñesa') || t.contains('bolognese') || t.contains('alfredo') || t.contains('pesto')) {
       return 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80';
@@ -609,11 +624,20 @@ class ServicioRecetas {
     if ((t.contains('smoothie') || t.contains('bowl')) && (t.contains('frutos rojos') || t.contains('fruto rojo') || t.contains('berries') || t.contains('mora'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_bowl_frutos_rojos.jpg';
     }
+    if ((t.contains('smoothie') || t.contains('licuado') || t.contains('batido') || t.contains('jugo')) && (t.contains('verde') || t.contains('espinaca') || t.contains('detox'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/smoothie_verde_energizante.jpg';
+    }
+    if ((t.contains('smoothie') || t.contains('licuado') || t.contains('batido')) && (t.contains('platano') || t.contains('plátano') || t.contains('maní') || t.contains('mani') || t.contains('cacahuate'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/licuado_avena_platano_mani.jpg';
+    }
     if (t.contains('smoothie') || t.contains('licuado') || t.contains('batido') || t.contains('jugo')) {
       return 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('gelatina') && (t.contains('yogurt') || t.contains('yogur') || t.contains('griego') || t.contains('fruto'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gelatina_yogurt_frutos_rojos.jpg';
+    }
+    if ((t.contains('pudín') || t.contains('pudin') || t.contains('chia') || t.contains('chía')) && (t.contains('fruto') || t.contains('berry') || t.contains('fresa') || t.contains('almendra'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pudin_chia_frutos_rojos.jpg';
     }
     if ((t.contains('yogur') || t.contains('yogurt') || t.contains('copa')) && (t.contains('mandarina') || t.contains('guayaba'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/copa_yogur_mandarina_guayaba.jpg';
