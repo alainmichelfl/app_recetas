@@ -271,7 +271,7 @@ void main() {
       expect(imgTostadaCamote, isNot(contains('photo-1525351484163'))); // no aguacate
       expect(imgTostadaCamote, contains('tostada_camote_huevo_poche'));
 
-      // Bloque 3: Platos Fuertes y Guisados
+      // Bloque 3 y 4: Platos Fuertes, Guisados y Familias Diferenciadas
       // ID 101: Tazón Mediterráneo de Pollo (no dip de hummus)
       final imgTazonMed = ServicioRecetas.obtenerImagenOptimizada(
         idReceta: 101,
@@ -279,7 +279,31 @@ void main() {
       );
       expect(imgTazonMed, isNotNull);
       expect(imgTazonMed, isNot(contains('photo-1511690656952'))); // no hummus
-      expect(imgTazonMed, contains('photo-1540420773420'));
+      expect(imgTazonMed, contains('tazon_mediterraneo_pollo'));
+
+      // ID 39: Chilaquiles Horneados Fitness (versión ligera de estudio)
+      final imgChilaquilesFit = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 39,
+        titulo: 'Chilaquiles Horneados Fitness',
+      );
+      expect(imgChilaquilesFit, isNotNull);
+      expect(imgChilaquilesFit, contains('chilaquiles_horneados_fitness'));
+
+      // ID 55: Omelette de Claras con Espinaca (versión de claras de estudio)
+      final imgOmeletteClaras = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 55,
+        titulo: 'Omelette de Claras con Espinaca',
+      );
+      expect(imgOmeletteClaras, isNotNull);
+      expect(imgOmeletteClaras, contains('omelette_claras_espinaca'));
+
+      // ID 107: Pechuga de Pollo al Limón con Calabacitas Asadas (versión de estudio)
+      final imgPechugaCalabacitas = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 107,
+        titulo: 'Pechuga de Pollo al Limón con Calabacitas Asadas',
+      );
+      expect(imgPechugaCalabacitas, isNotNull);
+      expect(imgPechugaCalabacitas, contains('pechuga_limon_calabacitas'));
 
       // ID 111: Lentejas Guisadas con Zanahoria y Plátano Macho
       final imgLentejasPlatano = ServicioRecetas.obtenerImagenOptimizada(

@@ -273,7 +273,7 @@ class ServicioRecetas {
     36: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?auto=format&fit=crop&w=600&q=80', // Pancakes de Avena y Plátano
     37: 'https://images.unsplash.com/photo-1628557044797-f21a177c37ec?auto=format&fit=crop&w=600&q=80', // Smoothie Verde Energizante
     38: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=600&q=80', // Toast de Aguacate con Huevo Poché
-    39: 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80', // Chilaquiles Horneados Fitness
+    39: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chilaquiles_horneados_fitness.jpg', // Chilaquiles Horneados Fitness
     40: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=600&q=80', // Pechuga de Pollo al Limón y Romero
     41: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80', // Salmón al Horno con Quinoa
     42: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80', // Tacos Veganos de Lentejas al Pastor
@@ -289,7 +289,7 @@ class ServicioRecetas {
     52: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gelatina_yogurt_frutos_rojos.jpg', // Gelatina de Yogurt Griego con Frutos Rojos
     53: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=600&q=80', // Mix Energético de Nueces y Chocolate Amargo
     54: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80', // Galletas de Avena y Plátano al Microondas
-    55: 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80', // Omelette de Claras con Espinaca
+    55: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/omelette_claras_espinaca.jpg', // Omelette de Claras con Espinaca
     56: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Tazón de Yogurt con Chía y Mango
     57: 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80', // Enchiladas Suizas Ligeras
     58: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Pan Francés Saludable con Frutos Rojos
@@ -335,13 +335,13 @@ class ServicioRecetas {
     98: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pechuga al Sartén en Salsa Rústica de Jitomate y Cebolla con Arroz
     99: 'https://images.unsplash.com/photo-1560717845-968823efbee1?auto=format&fit=crop&w=600&q=80', // Salmón Sellado con Espárragos Salteados y Aguacate
     100: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80', // Pollo al Mojo de Ajo Cítrico con Lentejas Rostizadas y Espinacas
-    101: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80', // Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki
+    101: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tazon_mediterraneo_pollo.jpg', // Tazón Mediterráneo de Pollo al Limón, Garbanzos y Tzatziki
     102: 'https://plus.unsplash.com/premium_photo-1661776841313-1bd2be380a64?auto=format&fit=crop&w=600&q=80', // Chilaquiles Verdes Ligeros con Pollo Deshebrado
     103: 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80', // Omelette de Espinacas, Champiñones y Queso Panela
     104: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg', // Molletes Tradicionales con Pico de Gallo Fresco
     105: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Bowl de Avena Cremosa con Manzana y Canela
     106: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostadas de Huevo Pochado con Aguacate y Jitomate Cherry
-    107: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pechuga de Pollo al Limón con Calabacitas Asadas
+    107: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pechuga_limon_calabacitas.jpg', // Pechuga de Pollo al Limón con Calabacitas Asadas
     108: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80', // Pescado a la Veracruzana con Arroz Integral
     109: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80', // Tinga de Pollo Casera en Tostadas Horneadas
     110: 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80', // Picadillo Tradicional de Res con Verduras Mixtas
@@ -421,7 +421,7 @@ class ServicioRecetas {
       return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('omelette') || t.contains('tortilla francesa') || t.contains('frittata')) {
-      return 'https://plus.unsplash.com/premium_photo-1667807521536-bc35c8d8b64b?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/omelette_claras_espinaca.jpg';
     }
     if (t.contains('huevo') || t.contains('shakshuka')) {
       return 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=600&q=80';
@@ -432,7 +432,7 @@ class ServicioRecetas {
       return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('chilaquil')) {
-      return 'https://images.unsplash.com/photo-1599974579688-8dbdd335c77f?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chilaquiles_horneados_fitness.jpg';
     }
     if (t.contains('sopa de tortilla') || t.contains('sopa azteca')) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg';
@@ -495,6 +495,9 @@ class ServicioRecetas {
     if (t.contains('tejocote') || (t.contains('pollo') && t.contains('camote morado'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/guisado_pollo_camote_tejocote.jpg';
     }
+    if ((t.contains('pollo') || t.contains('pechuga')) && (t.contains('calabacita') || t.contains('calabacitas') || (t.contains('limon') && t.contains('asada')))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pechuga_limon_calabacitas.jpg';
+    }
     if (t.contains('guisado') || t.contains('estofado')) {
       return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80';
     }
@@ -554,6 +557,9 @@ class ServicioRecetas {
     }
 
     // 10. Ensaladas y bowls saludables
+    if ((t.contains('mediterráneo') || t.contains('mediterraneo') || t.contains('tzatziki')) && (t.contains('pollo') || t.contains('garbanzo') || t.contains('bowl') || t.contains('tazón') || t.contains('tazon'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tazon_mediterraneo_pollo.jpg';
+    }
     if (t.contains('ensalada') || t.contains('salad') || t.contains('caprese')) {
       return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80';
     }
