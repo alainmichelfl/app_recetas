@@ -305,6 +305,43 @@ void main() {
       expect(imgPechugaCalabacitas, isNotNull);
       expect(imgPechugaCalabacitas, contains('pechuga_limon_calabacitas'));
 
+      // Bloque 5: Saneamiento Mayor de Snacks y Especialista Canino
+      // ID 73: Bastones de Apio con Queso Crema (no chícharos)
+      final imgApio = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 73,
+        titulo: 'Bastones de Apio con Queso Crema',
+      );
+      expect(imgApio, isNotNull);
+      expect(imgApio, isNot(contains('photo-1592394533824'))); // no chícharos
+      expect(imgApio, contains('bastones_apio_queso_crema'));
+
+      // ID 88: Rollitos de Pepino con Atún (no arroz blanco/pilaf)
+      final imgRollitosPepino = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 88,
+        titulo: 'Rollitos de Pepino con Atún',
+      );
+      expect(imgRollitosPepino, isNotNull);
+      expect(imgRollitosPepino, isNot(contains('photo-1757715377412'))); // no arroz
+      expect(imgRollitosPepino, contains('rollitos_pepino_atun'));
+
+      // ID 118: Pepinos Locos Rellenos de Zanahoria y Limón (no huacal de pepinos crudos)
+      final imgPepinosLocos = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 118,
+        titulo: 'Pepinos Locos Rellenos de Zanahoria y Limón',
+      );
+      expect(imgPepinosLocos, isNotNull);
+      expect(imgPepinosLocos, isNot(contains('photo-1788509814866'))); // no huacal
+      expect(imgPepinosLocos, contains('pepinos_locos_preparados'));
+
+      // ID 122: Bocaditos Crujientes de Calabaza y Zanahoria (Especialista Canino, no dátiles humanos)
+      final imgCanina = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 122,
+        titulo: 'Bocaditos Crujientes de Calabaza y Zanahoria',
+      );
+      expect(imgCanina, isNotNull);
+      expect(imgCanina, isNot(contains('photo-1678554500191'))); // no dátiles humanos
+      expect(imgCanina, contains('bocaditos_calabaza_zanahoria_perro'));
+
       // ID 111: Lentejas Guisadas con Zanahoria y Plátano Macho
       final imgLentejasPlatano = ServicioRecetas.obtenerImagenOptimizada(
         idReceta: 111,

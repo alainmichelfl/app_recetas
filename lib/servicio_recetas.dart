@@ -307,7 +307,7 @@ class ServicioRecetas {
     70: 'https://images.unsplash.com/photo-1730596140741-6cc4963ad816?auto=format&fit=crop&w=600&q=80', // Edamames al Vapor con Limón y Tajín
     71: 'https://images.unsplash.com/photo-1651256785544-fc012585e6a2?auto=format&fit=crop&w=600&q=80', // Pudín de Chía y Almendras
     72: 'https://images.unsplash.com/photo-1789546554683-2edf71bcf2e7?auto=format&fit=crop&w=600&q=80', // Mix Saludable de Semillas y Cacao
-    73: 'https://images.unsplash.com/photo-1592394533824-9440e5d68530?auto=format&fit=crop&w=600&q=80', // Bastones de Apio con Queso Crema
+    73: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bastones_apio_queso_crema.jpg', // Bastones de Apio con Queso Crema
     74: 'https://images.unsplash.com/photo-1522065235999-38c8248e5898?auto=format&fit=crop&w=600&q=80', // Smoothie de Cacao y Proteína
     75: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80', // Toast de Crema de Cacahuate y Plátano
     76: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_huevo_nopal.jpg', // Tacos de Huevo con Nopal
@@ -322,7 +322,7 @@ class ServicioRecetas {
     85: 'https://plus.unsplash.com/premium_photo-1673590981774-d9f534e0c617?auto=format&fit=crop&w=600&q=80', // Tostadas de Salpicón de Pollo
     86: 'https://plus.unsplash.com/premium_photo-1663842680485-45592e97b54b?auto=format&fit=crop&w=600&q=80', // Sopa de Fideos de Calabacita (Zoodles)
     87: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_flor_calabaza.jpg', // Quesadillas de Flor de Calabaza
-    88: 'https://images.unsplash.com/photo-1757715377412-749d66c9c297?auto=format&fit=crop&w=600&q=80', // Rollitos de Pepino con Atún
+    88: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/rollitos_pepino_atun.jpg', // Rollitos de Pepino con Atún
     89: 'https://images.unsplash.com/photo-1753173301157-8136a70b4178?auto=format&fit=crop&w=600&q=80', // Tazón de Queso Cottage con Fresas
     90: 'https://plus.unsplash.com/premium_photo-1694336203192-c9e7f2891b95?auto=format&fit=crop&w=600&q=80', // Manzana Asada con Canela
     91: 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&w=600&q=80', // Palomitas de Maíz Naturales
@@ -352,11 +352,11 @@ class ServicioRecetas {
     115: 'https://images.unsplash.com/photo-1622756144420-6877b1b7476e?auto=format&fit=crop&w=600&q=80', // Ensalada Fresca de Atún con Jitomate y Aguacate
     116: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_tortilla_tradicional.jpg', // Sopa de Tortilla Tradicional Saludable
     117: 'https://images.unsplash.com/photo-1680992071073-cb1696ba8d3e?auto=format&fit=crop&w=600&q=80', // Guacamole Rústico con Totopos Horneados
-    118: 'https://images.unsplash.com/photo-1788509814866-e1ddecfa6f0a?auto=format&fit=crop&w=600&q=80', // Pepinos Locos Rellenos de Zanahoria y Limón
+    118: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepinos_locos_preparados.jpg', // Pepinos Locos Rellenos de Zanahoria y Limón
     119: 'https://images.unsplash.com/photo-1651256785544-fc012585e6a2?auto=format&fit=crop&w=600&q=80', // Pudín de Chía con Leche de Almendras y Frutos Rojos
     120: 'https://images.unsplash.com/photo-1781567502827-3c671d8cae63?auto=format&fit=crop&w=600&q=80', // Brochetas Caprese con Jitomate Cherry y Panela
     121: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80', // Manzana en Rebanadas con Crema de Cacahuate y Canela
-    122: 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80', // Bocaditos Crujientes de Calabaza y Zanahoria
+    122: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bocaditos_calabaza_zanahoria_perro.jpg', // Bocaditos Crujientes de Calabaza y Zanahoria
     123: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80', // Pollo al Limón Mediterráneo con Salteado Rústico de Calabacita y Pimiento
     124: 'https://images.unsplash.com/photo-1784571246476-ae530d147e2e?auto=format&fit=crop&w=600&q=80', // Salmón Crujiente al Romero con Puré de Camote y Espárragos
     125: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bowl_avena_manzana_canela.jpg', // Bowl Tibio de Avena con Manzana y Canela
@@ -571,6 +571,15 @@ class ServicioRecetas {
     }
 
     // 11. Snacks, postres y dulces
+    if (t.contains('apio')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bastones_apio_queso_crema.jpg';
+    }
+    if ((t.contains('pepino') || t.contains('pepinos')) && (t.contains('rollito') || t.contains('atún') || t.contains('atun'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/rollitos_pepino_atun.jpg';
+    }
+    if (t.contains('pepino loco') || t.contains('pepinos locos') || (t.contains('pepino') && t.contains('zanahoria'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepinos_locos_preparados.jpg';
+    }
     if (t.contains('pepita') || t.contains('semilla') || t.contains('semillas')) {
       return 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80';
     }
@@ -618,7 +627,7 @@ class ServicioRecetas {
 
     // 12. Nutrición canina
     if (t.contains('perro') || t.contains('canin') || t.contains('lomito') || t.contains('dog')) {
-      return 'https://images.unsplash.com/photo-1678554500191-3885a6fbf8c2?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/bocaditos_calabaza_zanahoria_perro.jpg';
     }
 
     final tipo = (tipoComida ?? '').toLowerCase();
