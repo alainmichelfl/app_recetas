@@ -586,6 +586,19 @@ void main() {
         titulo: 'Enchiladas Suizas Ligeras',
       );
       expect(imgEnchiladas, contains('enchiladas_suizas_ligeras'));
+
+      // 9. Semántica Bloque 11 Parcial
+      final imgMilanesa = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 61,
+        titulo: 'Milanesa de Pollo Horneada',
+      );
+      expect(imgMilanesa, contains('milanesa_pollo_horneada'));
+
+      final imgAlbondigas = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 62,
+        titulo: 'Albóndigas de Pavo en Chipotle',
+      );
+      expect(imgAlbondigas, contains('albondigas_pavo_chipotle'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {

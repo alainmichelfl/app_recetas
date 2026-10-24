@@ -295,8 +295,8 @@ class ServicioRecetas {
     58: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Pan Francés Saludable con Frutos Rojos
     59: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/licuado_avena_platano_mani.jpg', // Licuado de Avena, Plátano y Crema de Maní
     60: 'https://images.unsplash.com/photo-1597958792579-bd3517df6399?auto=format&fit=crop&w=600&q=80', // Poke Bowl de Atún Fresco y Arroz
-    61: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=600&q=80', // Milanesa de Pollo Horneada
-    62: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80', // Albóndigas de Pavo en Chipotle
+    61: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/milanesa_pollo_horneada.jpg', // Milanesa de Pollo Horneada
+    62: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/albondigas_pavo_chipotle.jpg', // Albóndigas de Pavo en Chipotle
     63: 'https://images.unsplash.com/photo-1782821961510-aa2b6baed210?auto=format&fit=crop&w=600&q=80', // Tacos de Pescado a la Plancha
     64: 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?auto=format&fit=crop&w=600&q=80', // Pimientos Rellenos de Quinoa
     65: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80', // Pizza Ligera de Base de Coliflor
@@ -522,11 +522,14 @@ class ServicioRecetas {
     if (t.contains('guisado') || t.contains('estofado')) {
       return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80';
     }
+    if (t.contains('milanesa')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/milanesa_pollo_horneada.jpg';
+    }
     if (t.contains('pollo') || t.contains('pechuga') || t.contains('alitas')) {
       return 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('albondiga') || t.contains('albóndiga')) {
-      return 'https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/albondigas_pavo_chipotle.jpg';
     }
     if (t.contains('hamburguesa') || t.contains('burger')) {
       return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
