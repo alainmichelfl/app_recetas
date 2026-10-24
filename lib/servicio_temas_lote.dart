@@ -310,6 +310,22 @@ REGLA INFLEXIBLE:
 - Ideal para días de calor o cuando se carece de estufa disponible.
 ''',
     ),
+    OpcionTemaLote(
+      id: 'estilo_lunch_escolar_kids',
+      grupo: GrupoTemaLote.estilosVida,
+      tituloCorto: 'Lunch Escolar 🎒',
+      icono: '🎒',
+      temaCompleto: 'Especial Lunch Escolar & Snacks: Loncheras Saludables y Fáciles para Niños',
+      resumenEnfoque: 'Snacks nutritivos, loncheras balanceadas y preparaciones prácticas para niños/as que papás y mamás pueden adelantar fácilmente.',
+      directrizPrompt: '''
+ENFOQUE: Snacks y Lunches Escolares para Niños y Niñas.
+DIRECTRICES ESPECÍFICAS:
+1. Platillos coloridos, apetitosos, sin frituras industriales, ni azúcares añadidos refinados.
+2. Formatos ideales para loncheras y recipientes herméticos o térmicos: rollitos de jamón y panela, wraps ligeros, bastones crujientes con dip de yogurt o hummus, brochetas seguras de fruta, galletas caseras de avena, chips horneados y muffins salados o dulces naturales.
+3. Fáciles de comer con las manos o tenedor pequeño, que se mantengan frescos durante horas sin batirse.
+4. Tiempos de preparación rápidos de adelantar la noche anterior o armar express en la mañana.
+''',
+    ),
   ];
 
   // --- 3. FITNESS & NUTRICIÓN CLÍNICA (5 Temas) ---

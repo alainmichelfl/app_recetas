@@ -2159,7 +2159,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                     children: [
                       Icon(Icons.rocket_launch, color: Color(0xFFD32F2F)),
                       SizedBox(width: 10),
-                      Text('Carga Masiva Mensual (20 IA) 🚀'),
+                      Text('Carga Masiva Mensual (25 IA) 🚀'),
                     ],
                   ),
                 ),

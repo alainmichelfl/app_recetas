@@ -107,17 +107,18 @@ class _PantallaCargaMasivaRecetasState
 
       final prompt = '''
       Eres el chef ejecutivo y nutriólogo principal de la app "Jitomate y Cebolla".
-      Tu objetivo es generar exactamente 20 recetas oficiales de alta calidad para el catálogo de la app.
+      Tu objetivo es generar exactamente 25 recetas oficiales de alta calidad para el catálogo de la app.
       
       TEMA / ENFOQUE DEL LOTE: "$tema"
       
       ${_temaSeleccionado.directrizPrompt}
       
-      DISTRIBUCIÓN ESTRICTA (5 recetas por categoría):
+      DISTRIBUCIÓN ESTRICTA (5 recetas por categoría, 25 en total):
       - Exactamente 5 recetas de "Desayuno"
       - Exactamente 5 recetas de "Comida"
       - Exactamente 5 recetas de "Cena"
       - Exactamente 5 recetas de "Snack"
+      - Exactamente 5 recetas de "Lunch Escolar" (recetas, snacks saludables y loncheras prácticas fáciles de preparar por papás y mamás para niños y niñas, para llevar en recipientes o lonchera)
       
       REGLAS DE FORMATO Y CONTENIDO:
       1. Títulos atractivos y variados (evita repeticiones).
@@ -129,8 +130,9 @@ class _PantallaCargaMasivaRecetasState
       7. DESGLOSE DE TIEMPO Y COCINA PRÁCTICA:
       - En "descripcion" incluye SIEMPRE al inicio el desglose: "Tiempo activo: X min | Cocción: Y min. Breve descripción apetitosa..."
       - Al menos 2 de las 5 recetas por categoría DEBEN ser Express (tiempo total ≤ 20 min) o técnicas Cero Trastes (1 sartén, air fryer o ensamble en frío).
+      - Para las 5 recetas de "Lunch Escolar": deben ser muy fáciles de preparar la noche anterior o en la mañana, atractivas para niños y niñas, prácticas para empacar en recipientes sin batirse ni derramarse, coloridas y equilibradas (ej. rollitos de jamón y panela, wraps de verduras, bastones crujientes con dip saludable, brochetas de fruta, chips horneados, galletas caseras de avena, bocaditos de fruta y semillas).
       
-      RESPONDE ÚNICAMENTE con un arreglo JSON de 20 objetos con esta estructura exacta:
+      RESPONDE ÚNICAMENTE con un arreglo JSON de 25 objetos con esta estructura exacta:
       [
         {
           "titulo": "Huevos a la Mexicana con Frijoles de la Olla",
@@ -1000,7 +1002,7 @@ class _PantallaCargaMasivaRecetasState
                           Icon(Icons.auto_awesome, color: Colors.orange.shade800),
                           const SizedBox(width: 8),
                           const Text(
-                            'Lote de 20 Recetas Oficiales',
+                            'Lote de 25 Recetas Oficiales',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -1183,7 +1185,7 @@ class _PantallaCargaMasivaRecetasState
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              '💡 Directriz Activa: La IA adaptará las 20 recetas a este especial respetando sus ingredientes y técnicas.',
+                              '💡 Directriz Activa: La IA adaptará las 25 recetas (5 por categoría, incluyendo 5 de Lunch Escolar) a este especial respetando sus ingredientes y técnicas.',
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontStyle: FontStyle.italic,
@@ -1223,8 +1225,8 @@ class _PantallaCargaMasivaRecetasState
                         : const Icon(Icons.flash_on),
                     label: Text(
                       _generandoIA
-                          ? 'Generando 20 recetas con Gemini...'
-                          : 'Generar Lote del Mes con IA (20 recetas) 🪄',
+                          ? 'Generando 25 recetas con Gemini...'
+                          : 'Generar Lote del Mes con IA (25 recetas) 🪄',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -1293,6 +1295,7 @@ class _PantallaCargaMasivaRecetasState
                           'Comida',
                           'Cena',
                           'Snack',
+                          'Lunch Escolar',
                         ].map((cat) {
                           final bool sel = _filtroCategoria == cat;
                           return Padding(
@@ -1332,7 +1335,7 @@ class _PantallaCargaMasivaRecetasState
                           ),
                           const SizedBox(height: 16),
                           const Text(
-                            'Genera o previsualiza aquí el lote mensual de 20 recetas oficiales.\n'
+                            'Genera o previsualiza aquí el lote mensual de 25 recetas oficiales (incluye 5 de Lunch Escolar).\n'
                             'Podrás revisarlas y publicarlas con un solo clic.',
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -1413,23 +1416,33 @@ class _PantallaCargaMasivaRecetasState
                                     children: [
                                       Row(
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.orange.shade100,
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              cat,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.orange.shade900,
-                                              ),
-                                            ),
+                                          Builder(
+                                            builder: (_) {
+                                              final bool esEscolar = cat.toLowerCase().contains('escolar') ||
+                                                  cat.toLowerCase().contains('lunch');
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: esEscolar
+                                                      ? const Color(0xFFE0F2F1)
+                                                      : Colors.orange.shade100,
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  esEscolar ? '🎒 $cat' : cat,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: esEscolar
+                                                        ? const Color(0xFF00695C)
+                                                        : Colors.orange.shade900,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
                                           const SizedBox(width: 6),
                                           Expanded(
