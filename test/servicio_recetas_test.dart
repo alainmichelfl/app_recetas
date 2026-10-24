@@ -166,7 +166,7 @@ void main() {
         titulo: 'Picadillo Tradicional',
         rawUrl: null,
       );
-      expect(imgPicadillo, contains('photo-1590655367923-fa80b7e61b6c'));
+      expect(imgPicadillo, contains('picadillo_tradicional_res'));
     });
 
     test('Maneja el caso especial del picadillo por título cuando la URL es nula o rota', () {
@@ -561,6 +561,31 @@ void main() {
         titulo: 'Gajos de Mandarina con Salpicado de Canela y Pepitas',
       );
       expect(imgGajosMandarina, contains('gajos_mandarina_canela_pepitas'));
+
+      // 8. Semántica Bloque 10 (Platos Fuertes Tradicionales)
+      final imgTinga = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 109,
+        titulo: 'Tinga de Pollo Casera en Tostadas Horneadas',
+      );
+      expect(imgTinga, contains('tinga_pollo_tostadas_horneadas'));
+
+      final imgPicadillo = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 110,
+        titulo: 'Picadillo Tradicional de Res con Verduras Mixtas',
+      );
+      expect(imgPicadillo, contains('picadillo_tradicional_res'));
+
+      final imgVeracruzana = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 108,
+        titulo: 'Pescado a la Veracruzana con Arroz Integral',
+      );
+      expect(imgVeracruzana, contains('pescado_veracruzana_arroz_integral'));
+
+      final imgEnchiladas = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 57,
+        titulo: 'Enchiladas Suizas Ligeras',
+      );
+      expect(imgEnchiladas, contains('enchiladas_suizas_ligeras'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {

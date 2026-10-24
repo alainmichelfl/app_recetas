@@ -291,7 +291,7 @@ class ServicioRecetas {
     54: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80', // Galletas de Avena y Plátano al Microondas
     55: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/omelette_claras_espinaca.jpg', // Omelette de Claras con Espinaca
     56: 'https://images.unsplash.com/photo-1494597564530-871f2b93ac55?auto=format&fit=crop&w=600&q=80', // Tazón de Yogurt con Chía y Mango
-    57: 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80', // Enchiladas Suizas Ligeras
+    57: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/enchiladas_suizas_ligeras.jpg', // Enchiladas Suizas Ligeras
     58: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&w=600&q=80', // Pan Francés Saludable con Frutos Rojos
     59: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/licuado_avena_platano_mani.jpg', // Licuado de Avena, Plátano y Crema de Maní
     60: 'https://images.unsplash.com/photo-1597958792579-bd3517df6399?auto=format&fit=crop&w=600&q=80', // Poke Bowl de Atún Fresco y Arroz
@@ -342,9 +342,9 @@ class ServicioRecetas {
     105: 'https://plus.unsplash.com/premium_photo-1669559809547-6e4c4fe41371?auto=format&fit=crop&w=600&q=80', // Bowl de Avena Cremosa con Manzana y Canela
     106: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80', // Tostadas de Huevo Pochado con Aguacate y Jitomate Cherry
     107: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pechuga_limon_calabacitas.jpg', // Pechuga de Pollo al Limón con Calabacitas Asadas
-    108: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80', // Pescado a la Veracruzana con Arroz Integral
-    109: 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80', // Tinga de Pollo Casera en Tostadas Horneadas
-    110: 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80', // Picadillo Tradicional de Res con Verduras Mixtas
+    108: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pescado_veracruzana_arroz_integral.jpg', // Pescado a la Veracruzana con Arroz Integral
+    109: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tinga_pollo_tostadas_horneadas.jpg', // Tinga de Pollo Casera en Tostadas Horneadas
+    110: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/picadillo_tradicional_res.jpg', // Picadillo Tradicional de Res con Verduras Mixtas
     111: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/lentejas_platano_macho.jpg', // Lentejas Guisadas con Zanahoria y Plátano Macho
     112: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tacos_lechuga_salpicon_pollo.jpg', // Tacos de Lechuga con Salpicón de Pollo
     113: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80', // Crema Ligera de Calabacita con Queso Panela
@@ -435,7 +435,7 @@ class ServicioRecetas {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostadas_bistec_res.jpg';
     }
     if (t.contains('picadillo')) {
-      return 'https://images.unsplash.com/photo-1590655367923-fa80b7e61b6c?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/picadillo_tradicional_res.jpg';
     }
     if (t.contains('chilaquil')) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chilaquiles_horneados_fitness.jpg';
@@ -455,7 +455,10 @@ class ServicioRecetas {
     if (t.contains('mollete')) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/molletes_pico_de_gallo.jpg';
     }
-    if (t.contains('enchilada') || t.contains('enfrijolada') || t.contains('entomatada') || t.contains('suizas')) {
+    if (t.contains('suiza') || (t.contains('enchilada') && t.contains('verde'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/enchiladas_suizas_ligeras.jpg';
+    }
+    if (t.contains('enchilada') || t.contains('enfrijolada') || t.contains('entomatada')) {
       return 'https://plus.unsplash.com/premium_photo-1673018249121-b7618b433466?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('guacamole')) {
@@ -490,13 +493,16 @@ class ServicioRecetas {
     if (t.contains('camarón') || t.contains('camaron') || t.contains('camarones') || t.contains('marisco') || t.contains('gambas')) {
       return 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=600&q=80';
     }
+    if (t.contains('veracruzana')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pescado_veracruzana_arroz_integral.jpg';
+    }
     if (t.contains('salmon') || t.contains('salmón') || t.contains('pescado') || t.contains('atún') || t.contains('atun') || t.contains('filete') || t.contains('mojarra') || t.contains('huachinango') || t.contains('tilapia')) {
       return 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80';
     }
 
     // 6. Aves y carnes
     if (t.contains('tinga')) {
-      return 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tinga_pollo_tostadas_horneadas.jpg';
     }
     if (t.contains('rollito') || t.contains('pavo')) {
       return 'https://images.unsplash.com/photo-1514944298352-7b0b30efcf72?auto=format&fit=crop&w=600&q=80';
