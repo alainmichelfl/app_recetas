@@ -56,7 +56,10 @@ class ServicioPerfilUsuario {
     if (_nombreEnMemoria != null && _nombreEnMemoria!.trim().isNotEmpty) {
       return _nombreEnMemoria!.trim();
     }
-    final user = Supabase.instance.client.auth.currentUser;
+    User? user;
+    try {
+      user = Supabase.instance.client.auth.currentUser;
+    } catch (_) {}
     final metaName = user?.userMetadata?['nombre_usuario']?.toString() ??
         user?.userMetadata?['nombre']?.toString() ??
         user?.userMetadata?['displayName']?.toString();

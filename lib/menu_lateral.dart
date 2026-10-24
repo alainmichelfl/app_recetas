@@ -222,13 +222,13 @@ class MenuLateral extends StatelessWidget {
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ExpansionTile(
+      child: Material(
+        color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
@@ -322,8 +322,9 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _construirMenuPlaneadorConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'planeador' || rutaActual == 'calendario';
@@ -332,13 +333,13 @@ class MenuLateral extends StatelessWidget {
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: esGrupoActivo ? Colors.teal.withValues(alpha: esOscuro ? 0.15 : 0.05) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ExpansionTile(
+      child: Material(
+        color: esGrupoActivo ? Colors.teal.withValues(alpha: esOscuro ? 0.15 : 0.05) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
@@ -386,8 +387,9 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _construirMenuDespensaYComprasConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'despensa' ||
@@ -400,13 +402,13 @@ class MenuLateral extends StatelessWidget {
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ExpansionTile(
+      child: Material(
+        color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
@@ -477,8 +479,9 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _construirMenuAsistentesIAConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'chef' || rutaActual == 'sommelier';
@@ -487,13 +490,13 @@ class MenuLateral extends StatelessWidget {
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: esGrupoActivo ? Colors.amber.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ExpansionTile(
+      child: Material(
+        color: esGrupoActivo ? Colors.amber.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
@@ -541,8 +544,9 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _construirMenuBienestarYFinanzasConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'salud' || rutaActual == 'finanzas';
@@ -552,13 +556,13 @@ class MenuLateral extends StatelessWidget {
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        decoration: BoxDecoration(
-          color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ExpansionTile(
+      child: Material(
+        color: esGrupoActivo ? colorGrupo.withValues(alpha: esOscuro ? 0.15 : 0.06) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          child: ExpansionTile(
           initiallyExpanded: esGrupoActivo,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
           childrenPadding: const EdgeInsets.only(left: 14, right: 8, bottom: 6),
@@ -605,12 +609,16 @@ class MenuLateral extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
+    User? user;
+    try {
+      user = Supabase.instance.client.auth.currentUser;
+    } catch (_) {}
     final String nombreUsuario = ServicioPerfilUsuario.obtenerNombreSincrono();
     final String emailUsuario = user?.email ?? 'Chef Invitado';
     final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
@@ -1252,9 +1260,12 @@ class MenuLateral extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Jitomate y Cebolla v1.0.4',
-                    style: TextStyle(fontSize: 11, color: colorMuted),
+                  Flexible(
+                    child: Text(
+                      'Jitomate y Cebolla v1.0.4',
+                      style: TextStyle(fontSize: 11, color: colorMuted),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   if (kIsWeb)
                     InkWell(
