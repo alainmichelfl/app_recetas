@@ -536,6 +536,31 @@ void main() {
         titulo: 'Crema Ligera de Calabaza con Hongos Salteados',
       );
       expect(imgCremaCalabaza, contains('crema_calabaza_hongos_salteados'));
+
+      // 7. Semántica Bloque 9 (Sopas, Tostadas y Botanas)
+      final imgTostadasCeviche = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 47,
+        titulo: 'Tostadas de Ceviche de Coliflor',
+      );
+      expect(imgTostadasCeviche, contains('tostadas_ceviche_coliflor'));
+
+      final imgSopaZoodles = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 86,
+        titulo: 'Sopa de Fideos de Calabacita (Zoodles)',
+      );
+      expect(imgSopaZoodles, contains('sopa_fideos_calabacita_zoodles'));
+
+      final imgPepitas = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 142,
+        titulo: 'Pepitas de Calabaza Tostadas al Comal con Canela',
+      );
+      expect(imgPepitas, contains('pepitas_calabaza_tostadas_comal'));
+
+      final imgGajosMandarina = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 144,
+        titulo: 'Gajos de Mandarina con Salpicado de Canela y Pepitas',
+      );
+      expect(imgGajosMandarina, contains('gajos_mandarina_canela_pepitas'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {

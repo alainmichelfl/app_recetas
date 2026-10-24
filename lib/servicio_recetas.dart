@@ -281,7 +281,7 @@ class ServicioRecetas {
     44: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=600&q=80', // Pasta Integral al Pesto con Tomate Cherry
     45: 'https://images.unsplash.com/photo-1501595091296-3aa970afb3ff?auto=format&fit=crop&w=600&q=80', // Atún Sellado con Costra de Ajonjolí
     46: 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?auto=format&fit=crop&w=600&q=80', // Sopa Minestrone Reconstituyente
-    47: 'https://images.unsplash.com/photo-1562707774-553917f561df?auto=format&fit=crop&w=600&q=80', // Tostadas de Ceviche de Coliflor
+    47: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostadas_ceviche_coliflor.jpg', // Tostadas de Ceviche de Coliflor
     48: 'https://images.unsplash.com/photo-1618040996337-56904b7850b9?auto=format&fit=crop&w=600&q=80', // Quesadillas de Champiñones y Epazote
     49: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80', // Bowl Nocturno de Quinoa y Huevo Cocido
     50: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=600&q=80', // Hummus Casero con Palitos de Zanahoria
@@ -320,7 +320,7 @@ class ServicioRecetas {
     83: 'https://plus.unsplash.com/premium_photo-1664478294917-c11274b9ce79?auto=format&fit=crop&w=600&q=80', // Fajitas de Res con Pimientos
     84: 'https://images.unsplash.com/photo-1535399831218-d5bd36d1a6b3?auto=format&fit=crop&w=600&q=80', // Ceviche de Soya
     85: 'https://plus.unsplash.com/premium_photo-1673590981774-d9f534e0c617?auto=format&fit=crop&w=600&q=80', // Tostadas de Salpicón de Pollo
-    86: 'https://plus.unsplash.com/premium_photo-1663842680485-45592e97b54b?auto=format&fit=crop&w=600&q=80', // Sopa de Fideos de Calabacita (Zoodles)
+    86: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_fideos_calabacita_zoodles.jpg', // Sopa de Fideos de Calabacita (Zoodles)
     87: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/quesadillas_flor_calabaza.jpg', // Quesadillas de Flor de Calabaza
     88: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/rollitos_pepino_atun.jpg', // Rollitos de Pepino con Atún
     89: 'https://images.unsplash.com/photo-1753173301157-8136a70b4178?auto=format&fit=crop&w=600&q=80', // Tazón de Queso Cottage con Fresas
@@ -376,9 +376,9 @@ class ServicioRecetas {
     139: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80', // Salteado Oriental de Calabaza de Castilla y Pollo
     140: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/compota_manzana_guayaba_canela.jpg', // Compota Tibia de Manzana y Guayaba con Canela
     141: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chips_camote_morado_betabel.jpg', // Chips de Camote Morado y Betabel al Horno
-    142: 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80', // Pepitas de Calabaza Tostadas al Comal con Canela
+    142: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepitas_calabaza_tostadas_comal.jpg', // Pepitas de Calabaza Tostadas al Comal con Canela
     143: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=600&q=80', // Gajos de Manzana Dorada con Requesón y Nuez
-    144: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80', // Gajos de Mandarina con Salpicado de Canela y Pepitas
+    144: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gajos_mandarina_canela_pepitas.jpg', // Gajos de Mandarina con Salpicado de Canela y Pepitas
   };
 
   /// Lista negra de URLs erróneas conocidas (tocadiscos de vinilo, placeholders o fotos discordantes)
@@ -481,6 +481,9 @@ class ServicioRecetas {
     if ((t.contains('atún') || t.contains('atun')) && t.contains('mexicana')) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/atun_a_la_mexicana.jpg';
     }
+    if (t.contains('ceviche') && t.contains('coliflor')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/tostadas_ceviche_coliflor.jpg';
+    }
     if (t.contains('ceviche') || t.contains('aguachile') || t.contains('tiradito')) {
       return 'https://images.unsplash.com/photo-1535400255456-984241443b29?auto=format&fit=crop&w=600&q=80';
     }
@@ -561,6 +564,9 @@ class ServicioRecetas {
     }
 
     // 9. Sopas, cremas y caldos
+    if (t.contains('zoodles') || (t.contains('fideos') && t.contains('calabacita'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/sopa_fideos_calabacita_zoodles.jpg';
+    }
     if (t.contains('crema') && (t.contains('calabaza') || t.contains('hongo'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/crema_calabaza_hongos_salteados.jpg';
     }
@@ -598,11 +604,17 @@ class ServicioRecetas {
     if (t.contains('pepino loco') || t.contains('pepinos locos') || (t.contains('pepino') && t.contains('zanahoria'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepinos_locos_preparados.jpg';
     }
-    if (t.contains('pepita') || t.contains('semilla') || t.contains('semillas')) {
+    if (t.contains('pepita') || t.contains('pepitas')) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/pepitas_calabaza_tostadas_comal.jpg';
+    }
+    if (t.contains('semilla') || t.contains('semillas')) {
       return 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('chip') || t.contains('chips') || (t.contains('camote') && t.contains('betabel'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chips_camote_morado_betabel.jpg';
+    }
+    if (t.contains('mandarina') && (t.contains('pepita') || t.contains('canela') || t.contains('gajo'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/gajos_mandarina_canela_pepitas.jpg';
     }
     if (t.contains('mandarina') || t.contains('naranja') || t.contains('citrico') || t.contains('cítrico')) {
       return 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80';
