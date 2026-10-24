@@ -27,6 +27,8 @@ class PreferenciasUsuario {
   final bool alertaDescongelado;
   final bool alertaFrescura;
   final String horaDescongelado;
+  final bool alertaLunchEscolar;
+  final String horaLunchEscolar;
 
   const PreferenciasUsuario({
     this.objetivo = PerfilesNutricionales.mantenimiento,
@@ -41,6 +43,8 @@ class PreferenciasUsuario {
     this.alertaDescongelado = true,
     this.alertaFrescura = true,
     this.horaDescongelado = '20:00',
+    this.alertaLunchEscolar = true,
+    this.horaLunchEscolar = '20:30',
   });
 
   factory PreferenciasUsuario.fromMap(
@@ -84,6 +88,10 @@ class PreferenciasUsuario {
           ? map['alerta_frescura'] as bool
           : (map['alerta_frescura']?.toString().toLowerCase() != 'false'),
       horaDescongelado: map['hora_descongelado']?.toString() ?? '20:00',
+      alertaLunchEscolar: map['alerta_lunch_escolar'] is bool
+          ? map['alerta_lunch_escolar'] as bool
+          : (map['alerta_lunch_escolar']?.toString().toLowerCase() != 'false'),
+      horaLunchEscolar: map['hora_lunch_escolar']?.toString() ?? '20:30',
     );
   }
 
@@ -101,6 +109,8 @@ class PreferenciasUsuario {
       'alerta_descongelado': alertaDescongelado,
       'alerta_frescura': alertaFrescura,
       'hora_descongelado': horaDescongelado,
+      'alerta_lunch_escolar': alertaLunchEscolar,
+      'hora_lunch_escolar': horaLunchEscolar,
       'actualizado_en': DateTime.now().toIso8601String(),
     };
   }
@@ -118,6 +128,8 @@ class PreferenciasUsuario {
     bool? alertaDescongelado,
     bool? alertaFrescura,
     String? horaDescongelado,
+    bool? alertaLunchEscolar,
+    String? horaLunchEscolar,
   }) {
     return PreferenciasUsuario(
       objetivo: objetivo ?? this.objetivo,
@@ -132,6 +144,8 @@ class PreferenciasUsuario {
       alertaDescongelado: alertaDescongelado ?? this.alertaDescongelado,
       alertaFrescura: alertaFrescura ?? this.alertaFrescura,
       horaDescongelado: horaDescongelado ?? this.horaDescongelado,
+      alertaLunchEscolar: alertaLunchEscolar ?? this.alertaLunchEscolar,
+      horaLunchEscolar: horaLunchEscolar ?? this.horaLunchEscolar,
     );
   }
 }
@@ -153,6 +167,8 @@ class ServicioPreferencias {
     bool? alertaDescongeladoLocal;
     bool? alertaFrescuraLocal;
     String? horaDescongeladoLocal;
+    bool? alertaLunchEscolarLocal;
+    String? horaLunchEscolarLocal;
     try {
       final sp = await SharedPreferences.getInstance();
       final guardado = sp.getString(_keyTiposCocinaLocal);
@@ -166,6 +182,8 @@ class ServicioPreferencias {
       alertaDescongeladoLocal = sp.getBool('pref_alerta_descongelado_v1');
       alertaFrescuraLocal = sp.getBool('pref_alerta_frescura_v1');
       horaDescongeladoLocal = sp.getString('pref_hora_descongelado_v1');
+      alertaLunchEscolarLocal = sp.getBool('pref_alerta_lunch_escolar_v1');
+      horaLunchEscolarLocal = sp.getString('pref_hora_lunch_escolar_v1');
     } catch (e) {
       debugPrint('Error al leer preferencias locales: $e');
     }
@@ -190,6 +208,12 @@ class ServicioPreferencias {
           if (horaDescongeladoLocal != null && !map.containsKey('hora_descongelado')) {
             map['hora_descongelado'] = horaDescongeladoLocal;
           }
+          if (alertaLunchEscolarLocal != null && !map.containsKey('alerta_lunch_escolar')) {
+            map['alerta_lunch_escolar'] = alertaLunchEscolarLocal;
+          }
+          if (horaLunchEscolarLocal != null && !map.containsKey('hora_lunch_escolar')) {
+            map['hora_lunch_escolar'] = horaLunchEscolarLocal;
+          }
           _cache = PreferenciasUsuario.fromMap(
             map,
             fallbackTiposCocina: tiposCocinaLocales,
@@ -208,6 +232,8 @@ class ServicioPreferencias {
       alertaDescongelado: alertaDescongeladoLocal ?? true,
       alertaFrescura: alertaFrescuraLocal ?? true,
       horaDescongelado: horaDescongeladoLocal ?? '20:00',
+      alertaLunchEscolar: alertaLunchEscolarLocal ?? true,
+      horaLunchEscolar: horaLunchEscolarLocal ?? '20:30',
     );
     return _cache!;
   }
@@ -234,6 +260,8 @@ class ServicioPreferencias {
       await sp.setBool('pref_alerta_descongelado_v1', prefs.alertaDescongelado);
       await sp.setBool('pref_alerta_frescura_v1', prefs.alertaFrescura);
       await sp.setString('pref_hora_descongelado_v1', prefs.horaDescongelado);
+      await sp.setBool('pref_alerta_lunch_escolar_v1', prefs.alertaLunchEscolar);
+      await sp.setString('pref_hora_lunch_escolar_v1', prefs.horaLunchEscolar);
     } catch (e) {
       debugPrint('Error al persistir preferencias en local: $e');
     }

@@ -8,6 +8,7 @@ enum FiltroAudienciaReceta {
   todas,
   oficiales,
   recienSalidas,
+  escolares,
   puedoCocinarHoy,
   misRecetas,
   comunidad,
@@ -203,6 +204,105 @@ class ServicioRecetas {
     }
     return false;
   }
+
+  /// Determina si una receta es idónea para snacks y lunch escolar (lonchera de niños)
+  static bool esRecetaEscolar(Map<String, dynamic> receta) {
+    if (esRecetaCanina(receta)) return false;
+
+    // 1. Verificación por indicador o etiqueta explícita
+    if (receta.containsKey('es_escolar')) {
+      final val = receta['es_escolar'];
+      if (val is bool) return val;
+      if (val is String) return val.toLowerCase() == 'true';
+    }
+
+    final tipo = (receta['tipo_comida'] ?? '').toString().toLowerCase();
+    final categoria = (receta['categoria'] ?? '').toString().toLowerCase();
+    if (tipo.contains('escolar') ||
+        tipo.contains('lunch') ||
+        tipo.contains('kids') ||
+        tipo.contains('infantil') ||
+        categoria.contains('escolar') ||
+        categoria.contains('lunch') ||
+        categoria.contains('kids')) {
+      return true;
+    }
+
+    // 2. IDs curados del catálogo oficial ideales para lonchera y snacks escolares
+    final dynamic idRaw = receta['id_receta'] ?? receta['id'];
+    final int idInt = idRaw is int ? idRaw : (int.tryParse(idRaw?.toString() ?? '0') ?? 0);
+    const Set<int> idsCuradosEscolares = {
+      34, // Snack de yogurt griego con moras
+      36, // Pancakes de avena y plátano
+      41, // Ensalada fresca de atún con verduras
+      50, // Hummus casero con palitos de zanahoria
+      51, // Manzana con crema de cacahuate y canela
+      52, // Gelatina de yogurt griego con frutos rojos
+      53, // Mix energético de nueces y chocolate amargo
+      54, // Galletas de avena y plátano al microondas
+      58, // Pan francés saludable con frutos rojos
+      61, // Milanesa de pollo horneada (tiritas saludables)
+      66, // Wrap ligero de pollo y aguacate
+      68, // Rollitos de jamón de pavo con panela
+      70, // Edamames al vapor con limón y tajín
+      71, // Pudín de chía y almendras
+      72, // Mix saludable de semillas y cacao
+      73, // Bastones de apio y zanahoria con queso crema
+      75, // Toast de crema de cacahuate y plátano
+      78, // Quesadillas de huevo con espinaca
+      82, // Ensalada de pasta fría con pollo (tupper escolar)
+      85, // Tostadas de salpicón de pollo
+      88, // Rollitos de pepino con atún
+      89, // Tazón de queso cottage con fresas
+      90, // Manzana asada con canela
+      91, // Palomitas de maíz caseras naturales
+      92, // Rollitos de pechuga de pavo
+      93, // Almendras tostadas con sal de mar
+      94, // Gelatina light de limón con yogurt
+      96, // Bocaditos energéticos de avena, cacahuate y chocolate
+      104, // Molletes tradicionales con pico de gallo fresco
+      117, // Guacamole rústico con totopos horneados
+      118, // Pepinos locos rellenos de zanahoria y limón
+      119, // Pudín de chía con frutos rojos
+      120, // Brochetas Caprese con jitomate cherry y panela
+      121, // Manzana con crema de cacahuate y canela
+      126, // Pancakes de calabaza de Castilla especiada
+      129, // Copa de yogur con mandarina, guayaba y canela
+      140, // Compota tibia de manzana y guayaba con canela
+      141, // Chips de camote morado y betabel al horno
+      142, // Pepitas de calabaza tostadas al comal
+      143, // Gajos de manzana dorada con requesón y nuez
+      144, // Gajos de mandarina con canela y pepitas
+    };
+    if (idsCuradosEscolares.contains(idInt)) {
+      return true;
+    }
+
+    // 3. Heurística por título o descripción típica de lonchera/snack escolar
+    final titulo = (receta['titulo'] ?? '').toString().toLowerCase();
+    if (titulo.contains('rollito') ||
+        titulo.contains('wrap') ||
+        titulo.contains('lonchera') ||
+        titulo.contains('lunch') ||
+        titulo.contains('bocadito') ||
+        titulo.contains('bastones') ||
+        titulo.contains('palomitas') ||
+        titulo.contains('pancakes') ||
+        titulo.contains('galletas de avena') ||
+        titulo.contains('chips de camote') ||
+        titulo.contains('brochetas') ||
+        titulo.contains('mini') ||
+        titulo.contains('escolar') ||
+        titulo.contains('para niños') ||
+        titulo.contains('nuggets')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Alias de conveniencia para filtros y auditorías
+  static bool esEscolar(Map<String, dynamic> receta) => esRecetaEscolar(receta);
 
   /// Determina si el usuario actual tiene permisos para eliminar o editar la receta
   static bool puedeModificar(Map<String, dynamic> receta) {

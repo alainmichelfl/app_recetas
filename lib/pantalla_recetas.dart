@@ -554,6 +554,9 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
           case FiltroAudienciaReceta.recienSalidas:
             coincideAudiencia = ServicioRecetas.esNovedad(receta);
             break;
+          case FiltroAudienciaReceta.escolares:
+            coincideAudiencia = ServicioRecetas.esRecetaEscolar(receta);
+            break;
           case FiltroAudienciaReceta.puedoCocinarHoy:
             final match = _evaluarMatchReceta(receta);
             coincideAudiencia = match.listoParaCocinar || match.faltaUno;
@@ -2052,21 +2055,25 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             ? 'recetas_mias'
             : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
                 ? 'recetas_novedades'
-                : (widget.filtroInicial == FiltroAudienciaReceta.caninas
-                    ? 'caninas'
-                    : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-                        ? 'recetas_oficiales'
-                        : 'recetas'))));
+                : (widget.filtroInicial == FiltroAudienciaReceta.escolares
+                    ? 'recetas_escolares'
+                    : (widget.filtroInicial == FiltroAudienciaReceta.caninas
+                        ? 'caninas'
+                        : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                            ? 'recetas_oficiales'
+                            : 'recetas')))));
 
     final String tituloAppBar = widget.filtroInicial == FiltroAudienciaReceta.misRecetas
         ? 'Mis Creaciones 👨‍🍳'
         : (widget.filtroInicial == FiltroAudienciaReceta.recienSalidas
             ? 'Recién Salidas 🔥'
-            : (widget.filtroInicial == FiltroAudienciaReceta.caninas
-                ? 'Recetas Caninas 🐾'
-                : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
-                    ? 'Catálogo Oficial 🌟'
-                    : 'Mis Recetas 📖')));
+            : (widget.filtroInicial == FiltroAudienciaReceta.escolares
+                ? 'Lunches y Snacks 🎒🍎'
+                : (widget.filtroInicial == FiltroAudienciaReceta.caninas
+                    ? 'Recetas Caninas 🐾'
+                    : (widget.filtroInicial == FiltroAudienciaReceta.oficiales
+                        ? 'Catálogo Oficial 🌟'
+                        : 'Mis Recetas 📖'))));
 
     final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
 
@@ -2327,6 +2334,7 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
 
                     final int countOficiales = todasLasRecetas.where(ServicioRecetas.esOficial).length;
                     final int countNovedades = todasLasRecetas.where(ServicioRecetas.esNovedad).length;
+                    final int countEscolares = todasLasRecetas.where(ServicioRecetas.esRecetaEscolar).length;
                     final int countMisRecetas = todasLasRecetas.where(ServicioRecetas.esMiReceta).length;
                     final int countComunidad = todasLasRecetas.where(ServicioRecetas.esComunidad).length;
                     final int countCaninas = recetasCaninas.length;
@@ -2376,6 +2384,25 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                       _filtroAudiencia = FiltroAudienciaReceta.oficiales;
                                     } else {
                                       _filtroAudiencia = FiltroAudienciaReceta.recienSalidas;
+                                      _filtroExpress = FiltroExpress.todos;
+                                    }
+                                    categoriaSeleccionada = 'Todos';
+                                    _filtrarRecetas();
+                                  });
+                                },
+                              ),
+                              // 2.5 Lunch Escolar
+                              _construirPildoraFiltro(
+                                etiqueta: '🎒 Lunch Escolar ($countEscolares)',
+                                seleccionado: _filtroAudiencia == FiltroAudienciaReceta.escolares,
+                                colorActivo: const Color(0xFF00897B),
+                                fondoActivo: const Color(0xFFE0F2F1),
+                                onTap: () {
+                                  setState(() {
+                                    if (_filtroAudiencia == FiltroAudienciaReceta.escolares) {
+                                      _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                                    } else {
+                                      _filtroAudiencia = FiltroAudienciaReceta.escolares;
                                       _filtroExpress = FiltroExpress.todos;
                                     }
                                     categoriaSeleccionada = 'Todos';
@@ -2526,6 +2553,60 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                           ),
                         ),
                         // Banners informativos ubicados DEBAJO de todos los selectores para evitar saltos de altura
+                        if (_filtroAudiencia == FiltroAudienciaReceta.escolares) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2F1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFF80CBC4), width: 0.8),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.backpack_rounded, size: 18, color: Color(0xFF00897B)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Lunches y snacks saludables para niños ($countEscolares). Fáciles de empacar y preparar con amor.',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF004D40),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () => ServicioRecordatorios.mostrarModalCentroRecordatorios(context),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00897B),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.alarm_add_rounded, size: 12, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Alerta ⏰',
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
                           const SizedBox(height: 10),
                           InkWell(
@@ -2832,47 +2913,81 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
             Icon(
               _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? Icons.local_fire_department_outlined
-                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
-                      ? Icons.kitchen_outlined
-                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
-                          ? Icons.pets
-                          : Icons.search_off)),
+                  : (_filtroAudiencia == FiltroAudienciaReceta.escolares
+                      ? Icons.backpack_outlined
+                      : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                          ? Icons.kitchen_outlined
+                          : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                              ? Icons.pets
+                              : Icons.search_off))),
               size: 70,
               color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? Colors.orange.shade400
-                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
-                      ? Colors.teal.shade400
-                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
-                          ? Colors.brown.shade400
-                          : Colors.grey[400])),
+                  : (_filtroAudiencia == FiltroAudienciaReceta.escolares
+                      ? const Color(0xFF00897B)
+                      : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                          ? Colors.teal.shade400
+                          : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                              ? Colors.brown.shade400
+                              : Colors.grey[400]))),
             ),
             const SizedBox(height: 10),
             Text(
               _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                   ? '¡Muy pronto nuevas recetas recién salidas del sartén!'
-                  : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
-                      ? 'No hay recetas completas con tu despensa actual'
-                      : (_filtroAudiencia == FiltroAudienciaReceta.caninas
-                          ? 'Aún no hay recetas caninas con estos filtros'
-                          : 'No se encontraron recetas con los filtros aplicados')),
+                  : (_filtroAudiencia == FiltroAudienciaReceta.escolares
+                      ? 'No hay snacks o recetas de lunch escolar con los filtros actuales'
+                      : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                          ? 'No hay recetas completas con tu despensa actual'
+                          : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                              ? 'Aún no hay recetas caninas con estos filtros'
+                              : 'No se encontraron recetas con los filtros aplicados'))),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas ||
+                        _filtroAudiencia == FiltroAudienciaReceta.escolares ||
                         _filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy ||
                         _filtroAudiencia == FiltroAudienciaReceta.caninas)
                     ? FontWeight.bold
                     : FontWeight.normal,
                 color: _filtroAudiencia == FiltroAudienciaReceta.recienSalidas
                     ? Colors.brown.shade800
-                    : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
-                        ? Colors.teal.shade900
-                        : (_filtroAudiencia == FiltroAudienciaReceta.caninas
-                            ? Colors.brown.shade900
-                            : Colors.grey)),
+                    : (_filtroAudiencia == FiltroAudienciaReceta.escolares
+                        ? const Color(0xFF00695C)
+                        : (_filtroAudiencia == FiltroAudienciaReceta.puedoCocinarHoy
+                            ? Colors.teal.shade900
+                            : (_filtroAudiencia == FiltroAudienciaReceta.caninas
+                                ? Colors.brown.shade900
+                                : Colors.grey))),
               ),
             ),
-            if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
+            if (_filtroAudiencia == FiltroAudienciaReceta.escolares) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Descubre snacks fáciles, brochetas, wraps y loncheras nutritivas para los peques.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                    _filtrarRecetas();
+                  });
+                },
+                icon: const Icon(Icons.star_rounded, size: 18),
+                label: const Text('Ver Todo el Catálogo'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00897B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ] else if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
               const SizedBox(height: 6),
               Text(
                 'El Chef está preparando el próximo lote de temporada.',

@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'pantalla_recetas.dart';
 import 'servicio_exportar_calendario.dart';
+import 'servicio_recetas.dart';
 
 /// Datos estructurados de una alerta de descongelación
 class AlertaDescongelacion {
@@ -27,6 +29,23 @@ class AlertaDescongelacion {
   });
 }
 
+/// Datos estructurados de un recordatorio para lunch escolar
+class AlertaLunchEscolar {
+  final bool activa;
+  final String fechaManana;
+  final String horaProgramada;
+  final String idIdentificador;
+  final String? platilloSugerido;
+
+  const AlertaLunchEscolar({
+    required this.activa,
+    required this.fechaManana,
+    this.horaProgramada = '20:30',
+    this.idIdentificador = '',
+    this.platilloSugerido,
+  });
+}
+
 /// Preferencias y ajustes del centro de recordatorios inteligentes
 class ConfiguracionRecordatorios {
   final bool alertaDescongelar;
@@ -37,6 +56,8 @@ class ConfiguracionRecordatorios {
   final String horaInicioVentana;
   final String horaFinVentana;
   final int minutosAnticipacionAyuno;
+  final bool alertaLunchEscolar;
+  final String horaLunchEscolar;
 
   const ConfiguracionRecordatorios({
     this.alertaDescongelar = true,
@@ -47,6 +68,8 @@ class ConfiguracionRecordatorios {
     this.horaInicioVentana = '12:00',
     this.horaFinVentana = '20:00',
     this.minutosAnticipacionAyuno = 30,
+    this.alertaLunchEscolar = true,
+    this.horaLunchEscolar = '20:30',
   });
 
   Map<String, dynamic> toMap() => {
@@ -58,6 +81,8 @@ class ConfiguracionRecordatorios {
     'horaInicioVentana': horaInicioVentana,
     'horaFinVentana': horaFinVentana,
     'minutosAnticipacionAyuno': minutosAnticipacionAyuno,
+    'alertaLunchEscolar': alertaLunchEscolar,
+    'horaLunchEscolar': horaLunchEscolar,
   };
 
   factory ConfiguracionRecordatorios.fromMap(Map<String, dynamic> map) {
@@ -70,6 +95,34 @@ class ConfiguracionRecordatorios {
       horaInicioVentana: map['horaInicioVentana'] ?? '12:00',
       horaFinVentana: map['horaFinVentana'] ?? '20:00',
       minutosAnticipacionAyuno: map['minutosAnticipacionAyuno'] ?? 30,
+      alertaLunchEscolar: map['alertaLunchEscolar'] ?? true,
+      horaLunchEscolar: map['horaLunchEscolar'] ?? '20:30',
+    );
+  }
+
+  ConfiguracionRecordatorios copyWith({
+    bool? alertaDescongelar,
+    String? horaDescongelar,
+    bool? alertaMermaRefri,
+    int? diasUmbralMerma,
+    bool? alertaAyunoIntermitente,
+    String? horaInicioVentana,
+    String? horaFinVentana,
+    int? minutosAnticipacionAyuno,
+    bool? alertaLunchEscolar,
+    String? horaLunchEscolar,
+  }) {
+    return ConfiguracionRecordatorios(
+      alertaDescongelar: alertaDescongelar ?? this.alertaDescongelar,
+      horaDescongelar: horaDescongelar ?? this.horaDescongelar,
+      alertaMermaRefri: alertaMermaRefri ?? this.alertaMermaRefri,
+      diasUmbralMerma: diasUmbralMerma ?? this.diasUmbralMerma,
+      alertaAyunoIntermitente: alertaAyunoIntermitente ?? this.alertaAyunoIntermitente,
+      horaInicioVentana: horaInicioVentana ?? this.horaInicioVentana,
+      horaFinVentana: horaFinVentana ?? this.horaFinVentana,
+      minutosAnticipacionAyuno: minutosAnticipacionAyuno ?? this.minutosAnticipacionAyuno,
+      alertaLunchEscolar: alertaLunchEscolar ?? this.alertaLunchEscolar,
+      horaLunchEscolar: horaLunchEscolar ?? this.horaLunchEscolar,
     );
   }
 }
@@ -195,7 +248,7 @@ class ServicioRecordatorios {
     final fechaAlarma = DateTime(hoy.year, hoy.month, hoy.day, 20, 0, 0);
     final fechaFin = fechaAlarma.add(const Duration(minutes: 30));
 
-    if (kIsWeb && context != null) {
+    if (kIsWeb && context != null && context.mounted) {
       final item = {
         'recetas': {
           'titulo': 'Descongelar $proteina',
@@ -232,6 +285,123 @@ class ServicioRecordatorios {
       return false;
     } catch (e) {
       debugPrint('Error al agregar evento de descongelado al calendario: $e');
+      return false;
+    }
+  }
+
+  /// Detecta si corresponde mostrar el recordatorio de la noche anterior para preparar lunch escolar
+  static Future<AlertaLunchEscolar?> detectarAlertaLunchEscolar(
+    List<dynamic> plan, {
+    ConfiguracionRecordatorios? configOverride,
+  }) async {
+    final sp = await SharedPreferences.getInstance();
+    final config = configOverride ?? await obtenerConfiguracion();
+    if (!config.alertaLunchEscolar) return null;
+
+    final ahora = DateTime.now();
+    final manana = ahora.add(const Duration(days: 1));
+    final mananaStr =
+        '${manana.year}-${manana.month.toString().padLeft(2, '0')}-${manana.day.toString().padLeft(2, '0')}';
+
+    final idIdentificador = 'lunch_escolar_$mananaStr';
+    if (sp.getBool('lunch_escolar_atendido_$idIdentificador') == true) {
+      return null;
+    }
+
+    // Comprobar si mañana es día escolar (Lunes=1 a Viernes=5)
+    final bool mananaEsDiaEscolar =
+        manana.weekday >= DateTime.monday && manana.weekday <= DateTime.friday;
+
+    // Buscar si hay algún snack o receta escolar programada en el planeador para mañana
+    String? platilloSugerido;
+    for (final item in plan) {
+      final f = item['fecha']?.toString() ?? '';
+      if (f == mananaStr) {
+        final receta = item['recetas'];
+        if (receta is Map<String, dynamic> &&
+            ServicioRecetas.esRecetaEscolar(receta)) {
+          platilloSugerido = receta['titulo']?.toString();
+          break;
+        }
+      }
+    }
+
+    if (mananaEsDiaEscolar || platilloSugerido != null) {
+      return AlertaLunchEscolar(
+        activa: true,
+        fechaManana: mananaStr,
+        horaProgramada: config.horaLunchEscolar,
+        idIdentificador: idIdentificador,
+        platilloSugerido: platilloSugerido,
+      );
+    }
+
+    return null;
+  }
+
+  /// Marca el recordatorio de lunch escolar como atendido
+  static Future<void> marcarLunchEscolarComoAtendido(String idIdentificador) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setBool('lunch_escolar_atendido_$idIdentificador', true);
+  }
+
+  /// Agrega un evento al calendario o genera exportación para preparar el lunch escolar
+  static Future<bool> agendarAlarmaLunchEscolarEnCalendario({
+    String? hora,
+    String? platillo,
+    BuildContext? context,
+  }) async {
+    final config = await obtenerConfiguracion();
+    if (context != null && !context.mounted) return false;
+    final horaSel = hora ?? config.horaLunchEscolar;
+    final partes = horaSel.split(':');
+    final h = partes.isNotEmpty ? int.tryParse(partes[0]) ?? 20 : 20;
+    final m = partes.length > 1 ? int.tryParse(partes[1]) ?? 30 : 30;
+
+    final hoy = DateTime.now();
+    final fechaAlarma = DateTime(hoy.year, hoy.month, hoy.day, h, m, 0);
+    final fechaFin = fechaAlarma.add(const Duration(minutes: 30));
+
+    final platilloTexto = platillo != null && platillo.isNotEmpty
+        ? 'Preparar "$platillo"'
+        : 'Dejar listos recipientes, fruta fresca y snacks saludables para la lonchera escolar de mañana.';
+
+    if (kIsWeb && context != null && context.mounted) {
+      final item = {
+        'recetas': {
+          'titulo': 'Preparar Lunch y Snacks Escolares 🎒',
+          'descripcion': platilloTexto,
+          'calorias': 'N/A',
+        },
+        'tipo_comida': 'Recordatorio Escolar',
+        'fecha':
+            '${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}',
+      };
+      ServicioExportarCalendario.mostrarModalExportacion(
+        context: context,
+        items: [item],
+        titulo: 'Alarma de Lunch Escolar 🎒',
+        subtitulo: 'A las $horaSel hrs',
+      );
+      return true;
+    }
+
+    final Event event = Event(
+      title: '🎒 Preparar Lunch y Snacks Escolares',
+      description: 'Recordatorio de Jitomate y Cebolla:\n$platilloTexto',
+      location: 'Mi Cocina',
+      startDate: fechaAlarma,
+      endDate: fechaFin,
+      allDay: false,
+    );
+
+    try {
+      if (!kIsWeb) {
+        return await Add2Calendar.addEvent2Cal(event);
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error al agregar evento escolar al calendario: $e');
       return false;
     }
   }
@@ -402,6 +572,126 @@ class ServicioRecordatorios {
                     ),
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text('¡Entendido Chef! 👨‍🍳✨'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Muestra una guía interactiva de loncheras escolares saludables y seguras
+  static void mostrarModalTipsLunchEscolar(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          padding: const EdgeInsets.all(22),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 45,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Icon(Icons.backpack_rounded, color: Color(0xFF00897B), size: 28),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Guía de Loncheras Escolares Saludables 🎒🍎',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Tips de nutriólogos y pediatras para armar lunches deliciosos, completos y sin carreras en la mañana.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                ),
+                const SizedBox(height: 18),
+
+                _construirTarjetaMetodo(
+                  icono: Icons.pie_chart_outline_rounded,
+                  colorIcono: const Color(0xFF00897B),
+                  fondoColor: const Color(0xFFE0F2F1),
+                  titulo: '1. La Fórmula del Lunch Equilibrado 🧩',
+                  recomendado: true,
+                  descripcion:
+                      'Combina 3 grupos clave: 1) Fruta o verdura fresca picada (manzana, pepino, uvas), 2) Proteína saciante (panela, jamón de pavo, huevo, atún), 3) Carbohidrato de energía sostenida (tortilla de maíz, avena, pan integral).',
+                  tiempo: '🍎 Equilibrio nutricional diario',
+                ),
+                const SizedBox(height: 14),
+
+                _construirTarjetaMetodo(
+                  icono: Icons.bedtime_outlined,
+                  colorIcono: Colors.indigo,
+                  fondoColor: Colors.indigo.shade50,
+                  titulo: '2. El Hábito de la Noche Anterior 🌙',
+                  recomendado: false,
+                  descripcion:
+                      'Lava y seca la fruta, corta los bastones de verdura y déjalos en tuppers herméticos en el refri. Dejar la lonchera semilista a las 8:30 PM ahorra hasta 25 minutos de estrés matutino.',
+                  tiempo: '⚡ Ahorro: 20-25 min en la mañana',
+                ),
+                const SizedBox(height: 14),
+
+                _construirTarjetaMetodo(
+                  icono: Icons.shield_outlined,
+                  colorIcono: Colors.amber.shade800,
+                  fondoColor: Colors.amber.shade50,
+                  titulo: '3. Evita que la Comida se Agüe o Seque 🥪',
+                  recomendado: false,
+                  descripcion:
+                      'En sándwiches y wraps, unta aguacate o queso crema en el centro, nunca en las orillas. Coloca una hoja de lechuga completamente seca entre el pan y los jitomates cherry para que no absorba humedad.',
+                  tiempo: '🥪 Frescura garantizada hasta el recreo',
+                ),
+                const SizedBox(height: 14),
+
+                _construirTarjetaMetodo(
+                  icono: Icons.ac_unit_rounded,
+                  colorIcono: Colors.blueAccent,
+                  fondoColor: Colors.blue.shade50,
+                  titulo: '4. Cadena de Frío en Climas Cálidos 🧊',
+                  recomendado: false,
+                  descripcion:
+                      'Si el lunch lleva queso fresco, jamón o yogurt y la escuela no tiene refrigerador, incluye un gel refrigerante pequeño dentro de la lonchera térmica para conservar los alimentos 100% frescos y seguros.',
+                  tiempo: '🧊 Seguridad alimentaria total',
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00897B),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('¡Excelente, a preparar la lonchera! 🎒✨'),
                   ),
                 ),
               ],
@@ -680,23 +970,37 @@ class _DialogoCentroRecordatoriosModalState
                     activo: _config.alertaDescongelar,
                     onChanged: (val) {
                       _actualizar(
-                        ConfiguracionRecordatorios(
-                          alertaDescongelar: val,
-                          horaDescongelar: _config.horaDescongelar,
-                          alertaMermaRefri: _config.alertaMermaRefri,
-                          diasUmbralMerma: _config.diasUmbralMerma,
-                          alertaAyunoIntermitente: _config.alertaAyunoIntermitente,
-                          horaInicioVentana: _config.horaInicioVentana,
-                          horaFinVentana: _config.horaFinVentana,
-                          minutosAnticipacionAyuno: _config.minutosAnticipacionAyuno,
-                        ),
+                        _config.copyWith(alertaDescongelar: val),
                       );
                     },
-                    accionExtra: TextButton.icon(
-                      icon: const Icon(Icons.tips_and_updates_outlined, size: 16),
-                      label: const Text('Ver Guía de Descongelado'),
-                      onPressed: () =>
-                          ServicioRecordatorios.mostrarModalTipsDescongelado(context),
+                    accionExtra: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.schedule, size: 16),
+                          label: Text('Hora (${_config.horaDescongelar})'),
+                          onPressed: () async {
+                            final partes = _config.horaDescongelar.split(':');
+                            final h = partes.isNotEmpty ? int.tryParse(partes[0]) ?? 20 : 20;
+                            final m = partes.length > 1 ? int.tryParse(partes[1]) ?? 0 : 0;
+                            final pick = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay(hour: h, minute: m),
+                            );
+                            if (pick != null) {
+                              final str =
+                                  '${pick.hour.toString().padLeft(2, '0')}:${pick.minute.toString().padLeft(2, '0')}';
+                              _actualizar(_config.copyWith(horaDescongelar: str));
+                            }
+                          },
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.tips_and_updates_outlined, size: 16),
+                          label: const Text('Ver Guía de Descongelado'),
+                          onPressed: () =>
+                              ServicioRecordatorios.mostrarModalTipsDescongelado(context),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -757,18 +1061,89 @@ class _DialogoCentroRecordatoriosModalState
                         : null,
                     onChanged: (val) {
                       _actualizar(
-                        ConfiguracionRecordatorios(
-                          alertaDescongelar: _config.alertaDescongelar,
-                          horaDescongelar: _config.horaDescongelar,
-                          alertaMermaRefri: _config.alertaMermaRefri,
-                          diasUmbralMerma: _config.diasUmbralMerma,
-                          alertaAyunoIntermitente: val,
-                          horaInicioVentana: _config.horaInicioVentana,
-                          horaFinVentana: _config.horaFinVentana,
-                          minutosAnticipacionAyuno: _config.minutosAnticipacionAyuno,
-                        ),
+                        _config.copyWith(alertaAyunoIntermitente: val),
                       );
                     },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Tarjeta 4: Lunch & Snacks Escolares (Noche anterior)
+                  _tarjetaRecordatorio(
+                    icono: Icons.backpack_rounded,
+                    color: const Color(0xFF00897B),
+                    titulo: 'Lunch & Snacks Escolares (${_config.horaLunchEscolar})',
+                    descripcion:
+                        'Avisa la noche anterior a las ${_config.horaLunchEscolar} para dejar lista la lonchera, recipientes y fruta sin prisas matutinas.',
+                    activo: _config.alertaLunchEscolar,
+                    onChanged: (val) {
+                      _actualizar(
+                        _config.copyWith(alertaLunchEscolar: val),
+                      );
+                    },
+                    accionExtra: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.schedule, size: 16),
+                          label: Text('Cambiar Hora (${_config.horaLunchEscolar})'),
+                          onPressed: () async {
+                            final partes = _config.horaLunchEscolar.split(':');
+                            final h = partes.isNotEmpty ? int.tryParse(partes[0]) ?? 20 : 20;
+                            final m = partes.length > 1 ? int.tryParse(partes[1]) ?? 30 : 30;
+                            final pick = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay(hour: h, minute: m),
+                            );
+                            if (pick != null) {
+                              final str =
+                                  '${pick.hour.toString().padLeft(2, '0')}:${pick.minute.toString().padLeft(2, '0')}';
+                              _actualizar(_config.copyWith(horaLunchEscolar: str));
+                            }
+                          },
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.backpack_rounded, size: 16),
+                          label: const Text('Ver Recetas 🎒'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PantallaRecetas(
+                                  filtroInicial: FiltroAudienciaReceta.escolares,
+                                  rutaMenu: 'recetas_escolares',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.tips_and_updates_outlined, size: 16),
+                          label: const Text('Guía de Loncheras 🍎'),
+                          onPressed: () =>
+                              ServicioRecordatorios.mostrarModalTipsLunchEscolar(context),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.alarm_add_rounded, size: 16),
+                          label: const Text('Probar Alarma ⏰'),
+                          onPressed: () async {
+                            final ok = await ServicioRecordatorios
+                                .agendarAlarmaLunchEscolarEnCalendario(context: context);
+                            if (context.mounted && ok && !kIsWeb) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '¡Alarma de lunch escolar programada para las ${_config.horaLunchEscolar}! 🎒⏰',
+                                  ),
+                                  backgroundColor: const Color(0xFF00897B),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),

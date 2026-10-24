@@ -44,6 +44,7 @@ class MenuLateral extends StatelessWidget {
 
     if (rutaDestino == 'recetas' ||
         rutaDestino == 'recetas_novedades' ||
+        rutaDestino == 'recetas_escolares' ||
         rutaDestino == 'recetas_mias') {
       // Si volvemos al catálogo principal, novedades o mis creaciones, limpiar el stack para mantenerlo en la base
       Navigator.pushAndRemoveUntil(
@@ -212,6 +213,7 @@ class MenuLateral extends StatelessWidget {
   Widget _construirMenuRecetasConSubmenu(BuildContext context) {
     final bool esGrupoActivo = rutaActual == 'recetas' ||
         rutaActual == 'recetas_novedades' ||
+        rutaActual == 'recetas_escolares' ||
         rutaActual == 'recetas_mias' ||
         rutaActual == 'caninas';
     final bool esOscuro = Theme.of(context).brightness == Brightness.dark;
@@ -262,6 +264,20 @@ class MenuLateral extends StatelessWidget {
               pantalla: () => const PantallaRecetas(
                 filtroInicial: FiltroAudienciaReceta.recienSalidas,
                 rutaMenu: 'recetas_novedades',
+              ),
+            ),
+            const SizedBox(height: 2),
+            _construirSubItem(
+              context: context,
+              ruta: 'recetas_escolares',
+              titulo: 'Snacks & Lunch Escolar 🎒',
+              subtitulo: 'Fáciles, nutritivos y para llevar',
+              icono: Icons.backpack_rounded,
+              colorIcono: const Color(0xFF00897B),
+              badge: 'KIDS',
+              pantalla: () => const PantallaRecetas(
+                filtroInicial: FiltroAudienciaReceta.escolares,
+                rutaMenu: 'recetas_escolares',
               ),
             ),
             const SizedBox(height: 2),

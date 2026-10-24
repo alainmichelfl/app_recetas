@@ -12,6 +12,7 @@ import 'pantalla_despensa.dart';
 import 'pantalla_carrito.dart';
 import 'pantalla_preferencias.dart';
 import 'pantalla_calendario.dart';
+import 'pantalla_recetas.dart';
 import 'perfiles_nutricionales.dart';
 import 'tipos_cocina.dart';
 import 'widget_deslizador_cocinas.dart';
@@ -68,7 +69,9 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
   // 🧊 Prioridad 9: Recordatorios para descongelar y frescura de alimentos
   bool _alertaDescongeladoActiva = true;
   bool _alertaFrescuraActiva = true;
+  bool _alertaLunchEscolarActiva = true;
   AlertaDescongelacion? _alertaDescongelacion;
+  AlertaLunchEscolar? _alertaLunchEscolar;
   List<Map<String, dynamic>> _alimentosEnRiesgo = [];
 
   @override
@@ -91,12 +94,20 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
       final prefs = await ServicioPreferencias.obtenerPreferencias();
       _alertaDescongeladoActiva = prefs.alertaDescongelado;
       _alertaFrescuraActiva = prefs.alertaFrescura;
+      _alertaLunchEscolarActiva = prefs.alertaLunchEscolar;
 
       if (_alertaDescongeladoActiva && miPlan.isNotEmpty) {
         _alertaDescongelacion =
             await ServicioRecordatorios.detectarAlertaDescongelacion(miPlan);
       } else {
         _alertaDescongelacion = null;
+      }
+
+      if (_alertaLunchEscolarActiva) {
+        _alertaLunchEscolar =
+            await ServicioRecordatorios.detectarAlertaLunchEscolar(miPlan);
+      } else {
+        _alertaLunchEscolar = null;
       }
 
       if (_alertaFrescuraActiva) {
@@ -787,6 +798,215 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                 ),
                 onPressed: () =>
                     ServicioRecordatorios.mostrarModalTipsDescongelado(context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirBannerAlertaLunchEscolar() {
+    if (!_alertaLunchEscolarActiva || _alertaLunchEscolar == null) {
+      return const SizedBox.shrink();
+    }
+
+    final alerta = _alertaLunchEscolar!;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(isLandscape ? 8 : 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0F2F1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF80CBC4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00897B).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFB2DFDB),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.backpack_rounded,
+                  color: Color(0xFF00695C),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '🎒 Recordatorio: Lunch Escolar de Mañana',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF004D40),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      alerta.platilloSugerido != null
+                          ? 'Sugerencia: ${alerta.platilloSugerido}'
+                          : 'Prepara los snacks o lonchera de los niños',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF00695C),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18, color: Colors.blueGrey),
+                tooltip: 'Descartar aviso',
+                onPressed: () {
+                  setState(() => _alertaLunchEscolar = null);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '💡 La noche anterior es el mejor momento para dejar lista la fruta lavada, recipientes y porciones de lunch para evitar carreras en la mañana.',
+            style: TextStyle(
+              fontSize: 12.5,
+              color: Colors.black87,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00897B),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.check_circle_outline, size: 16),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '¡Ya lo alisté! ✅',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                onPressed: () async {
+                  await ServicioRecordatorios.marcarLunchEscolarComoAtendido(
+                    alerta.idIdentificador,
+                  );
+                  if (!mounted) return;
+                  setState(() => _alertaLunchEscolar = null);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        '¡Excelente hábito familiar! Lunch listo para mañana. 🎒🍎',
+                      ),
+                      backgroundColor: Color(0xFF00897B),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                },
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF004D40),
+                  side: const BorderSide(color: Color(0xFF80CBC4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.alarm_add_rounded, size: 16),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Alarma ${alerta.horaProgramada} ⏰',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                onPressed: () async {
+                  final exito =
+                      await ServicioRecordatorios.agendarAlarmaLunchEscolarEnCalendario(
+                    context: context,
+                    platillo: alerta.platilloSugerido,
+                    hora: alerta.horaProgramada,
+                  );
+                  if (!mounted) return;
+                  if (exito && !kIsWeb) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '¡Alarma de lunch programada en tu calendario a las ${alerta.horaProgramada}! 📅⏰',
+                        ),
+                        backgroundColor: const Color(0xFF00897B),
+                      ),
+                    );
+                  }
+                },
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF00695C),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                ),
+                icon: const Icon(Icons.menu_book_rounded, size: 16),
+                label: const Text(
+                  'Ideas de Lunch 🎒',
+                  style: TextStyle(fontSize: 12),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PantallaRecetas(
+                        filtroInicial: FiltroAudienciaReceta.escolares,
+                        rutaMenu: 'recetas_escolares',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF00695C),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                ),
+                icon: const Icon(Icons.tips_and_updates_outlined, size: 16),
+                label: const Text(
+                  'Guía Niños 🍎',
+                  style: TextStyle(fontSize: 12),
+                ),
+                onPressed: () =>
+                    ServicioRecordatorios.mostrarModalTipsLunchEscolar(context),
               ),
             ],
           ),
@@ -3028,6 +3248,8 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                           children: [
                             // 🧊 Prioridad 9: Recordatorio Inteligente para Descongelar
                             _construirBannerAlertaDescongelacion(),
+                            // 🎒 Recordatorio Nocturno de Lunch Escolar para Niños
+                            _construirBannerAlertaLunchEscolar(),
                             // 🚨 Prioridad 9: Alerta de Frescura y Desperdicio Cero
                             _construirBannerAlertaFrescura(),
                             // Tarjeta Inteligente de Objetivo Nutricional y Cumplimiento

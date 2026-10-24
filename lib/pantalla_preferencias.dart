@@ -30,8 +30,10 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   final TextEditingController alergiasController = TextEditingController();
   bool notificacionesActivas = true;
   bool alertaDescongeladoActiva = true;
+  bool alertaLunchEscolarActiva = true;
   bool alertaFrescuraActiva = true;
   String horaDescongelado = '20:00';
+  String horaLunchEscolar = '20:30';
   bool guardando = false;
   bool cargando = true;
 
@@ -111,8 +113,10 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         presupuestoSemanal = prefs.presupuestoSemanal.clamp(500.0, 5000.0);
         notificacionesActivas = prefs.notificaciones;
         alertaDescongeladoActiva = prefs.alertaDescongelado;
+        alertaLunchEscolarActiva = prefs.alertaLunchEscolar;
         alertaFrescuraActiva = prefs.alertaFrescura;
         horaDescongelado = prefs.horaDescongelado;
+        horaLunchEscolar = prefs.horaLunchEscolar;
         cargando = false;
       });
     } catch (e) {
@@ -136,8 +140,10 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         presupuestoSemanal: presupuestoSemanal,
         notificaciones: notificacionesActivas,
         alertaDescongelado: alertaDescongeladoActiva,
+        alertaLunchEscolar: alertaLunchEscolarActiva,
         alertaFrescura: alertaFrescuraActiva,
         horaDescongelado: horaDescongelado,
+        horaLunchEscolar: horaLunchEscolar,
       );
 
       await ServicioPreferencias.guardarPreferencias(prefs);
@@ -1132,21 +1138,127 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                             Icons.ac_unit_rounded,
                             color: Colors.blueAccent,
                           ),
+                          title: Row(
+                            children: [
+                              const Text(
+                                'Alertas para Descongelar',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () async {
+                                  final partes = horaDescongelado.split(':');
+                                  final h = partes.isNotEmpty ? int.tryParse(partes[0]) ?? 20 : 20;
+                                  final m = partes.length > 1 ? int.tryParse(partes[1]) ?? 0 : 0;
+                                  final pick = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay(hour: h, minute: m),
+                                  );
+                                  if (pick != null) {
+                                    setState(() {
+                                      horaDescongelado =
+                                          '${pick.hour.toString().padLeft(2, '0')}:${pick.minute.toString().padLeft(2, '0')}';
+                                    });
+                                  }
+                                },
+                                child: Text(
+                                  horaDescongelado,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Text(
+                            'Avisa la noche anterior ($horaDescongelado) si tu comida planeada requiere bajar carne o pollo al refri.',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          activeThumbColor: Colors.blueAccent,
+                          value: alertaDescongeladoActiva,
+                          onChanged: (val) =>
+                              setState(() => alertaDescongeladoActiva = val),
+                        ),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.backpack_rounded,
+                            color: Color(0xFF00897B),
+                          ),
+                          title: Row(
+                            children: [
+                              const Text(
+                                'Lunch & Snacks Escolares 🎒',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.5,
+                                ),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () async {
+                                  final partes = horaLunchEscolar.split(':');
+                                  final h = partes.isNotEmpty ? int.tryParse(partes[0]) ?? 20 : 20;
+                                  final m = partes.length > 1 ? int.tryParse(partes[1]) ?? 30 : 30;
+                                  final pick = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay(hour: h, minute: m),
+                                  );
+                                  if (pick != null) {
+                                    setState(() {
+                                      horaLunchEscolar =
+                                          '${pick.hour.toString().padLeft(2, '0')}:${pick.minute.toString().padLeft(2, '0')}';
+                                    });
+                                  }
+                                },
+                                child: Text(
+                                  horaLunchEscolar,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00897B)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Text(
+                            'Avisa la noche anterior ($horaLunchEscolar) a mamás y papás para preparar recipientes y lonchera de los peques.',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          activeThumbColor: const Color(0xFF00897B),
+                          value: alertaLunchEscolarActiva,
+                          onChanged: (val) =>
+                              setState(() => alertaLunchEscolarActiva = val),
+                        ),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          secondary: const Icon(
+                            Icons.backpack_rounded,
+                            color: Color(0xFF00897B),
+                          ),
                           title: const Text(
-                            'Alertas para Descongelar',
+                            'Recordatorio de Lunch Escolar 🎒🍎',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14.5,
                             ),
                           ),
                           subtitle: const Text(
-                            'Avisa la noche anterior si tu comida planeada requiere bajar carne o pollo al refri.',
+                            'Avisa la noche anterior (8:30 PM) para preparar los snacks y lonchera escolar de los niños sin prisas.',
                             style: TextStyle(fontSize: 12),
                           ),
-                          activeThumbColor: Colors.blueAccent,
-                          value: alertaDescongeladoActiva,
+                          activeThumbColor: const Color(0xFF00897B),
+                          value: alertaLunchEscolarActiva,
                           onChanged: (val) =>
-                              setState(() => alertaDescongeladoActiva = val),
+                              setState(() => alertaLunchEscolarActiva = val),
                         ),
                         const Divider(height: 1),
                         SwitchListTile(

@@ -109,6 +109,66 @@ void main() {
       );
     });
 
+    test('Identifica recetas idóneas para Lunch y Snacks Escolares infantiles', () {
+      // 1. Receta explícita es_escolar
+      expect(
+        ServicioRecetas.esRecetaEscolar({'es_escolar': true, 'titulo': 'Sándwich Estrella'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'es_escolar': true, 'titulo': 'Sándwich Estrella'}),
+        isTrue,
+      );
+
+      // 2. IDs curados del catálogo oficial
+      expect(
+        ServicioRecetas.esEscolar({'id_receta': 68, 'titulo': 'Rollitos de Jamón de Pavo con Panela'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'id_receta': 82, 'titulo': 'Ensalada de Pasta Fría con Pollo'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'id_receta': 121, 'titulo': 'Manzana en Rebanadas con Crema de Cacahuate'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'id_receta': 141, 'titulo': 'Chips de Camote Morado y Betabel'}),
+        isTrue,
+      );
+
+      // 3. Por heurística de lonchera y palabras clave
+      expect(
+        ServicioRecetas.esEscolar({'titulo': 'Wrap Ligero de Pollo y Aguacate'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'titulo': 'Pancakes de Avena y Plátano'}),
+        isTrue,
+      );
+      expect(
+        ServicioRecetas.esEscolar({'titulo': 'Lonchera de Frutas con Yogur'}),
+        isTrue,
+      );
+
+      // 4. Exclusión estricta de recetas caninas
+      expect(
+        ServicioRecetas.esEscolar({
+          'id_receta': 122,
+          'tipo_comida': 'Snack Canino',
+          'titulo': 'Bocaditos Crujientes de Calabaza y Zanahoria',
+        }),
+        isFalse,
+      );
+      expect(
+        ServicioRecetas.esEscolar({
+          'titulo': 'Galletas para perro de avena',
+        }),
+        isFalse,
+      );
+    });
+
     test('Identifica recetas de Recién Salidas del Sartén por es_novedad o heurística de lote', () {
       final recetaNovedadExplicita = {
         'id_receta': 150,
@@ -630,6 +690,28 @@ void main() {
       );
       expect(audit3['cambiada'], isTrue);
       expect(audit3['url'], contains('1669559809547-6e4c4fe41371'));
+    });
+
+    test('Identifica recetas escolares y loncheras nutritivas (esRecetaEscolar)', () {
+      // 1. Por ID curado oficial
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 36, 'titulo': 'Pancakes de avena'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 68, 'titulo': 'Rollitos de jamón de pavo'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 96, 'titulo': 'Bocaditos energéticos'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 141, 'titulo': 'Chips de camote'}), isTrue);
+
+      // 2. Por etiqueta o tipo de comida
+      expect(ServicioRecetas.esRecetaEscolar({'tipo_comida': 'Lunch Escolar', 'titulo': 'Sándwich mixto'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'es_escolar': true, 'titulo': 'Mini muffins de manzana'}), isTrue);
+
+      // 3. Por palabras clave en título
+      expect(ServicioRecetas.esRecetaEscolar({'titulo': 'Wrap ligero de pollo y verduras'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'titulo': 'Bastones de apio y zanahoria'}), isTrue);
+      expect(ServicioRecetas.esRecetaEscolar({'titulo': 'Palomitas caseras'}), isTrue);
+
+      // 4. Recetas que NO son escolares (ej. platillos complejos o caninos)
+      expect(ServicioRecetas.esRecetaEscolar({'tipo_comida': 'Canino', 'titulo': 'Premios de avena'}), isFalse);
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 1, 'titulo': 'Chilaquiles Rojos con Epazote'}), isFalse);
+      expect(ServicioRecetas.esRecetaEscolar({'id_receta': 108, 'titulo': 'Pescado a la Veracruzana'}), isFalse);
     });
   });
 }

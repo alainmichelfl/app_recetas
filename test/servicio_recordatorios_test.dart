@@ -164,5 +164,49 @@ void main() {
       );
       expect(ayuno, contains('En período de ayuno'));
     });
+
+    test('ConfiguracionRecordatorios soporta lunch escolar y persistencia', () async {
+      final configDefault = await ServicioRecordatorios.obtenerConfiguracion();
+      expect(configDefault.alertaLunchEscolar, isTrue);
+      expect(configDefault.horaLunchEscolar, '20:30');
+
+      final updated = configDefault.copyWith(
+        alertaLunchEscolar: false,
+        horaLunchEscolar: '19:45',
+      );
+      await ServicioRecordatorios.guardarConfiguracion(updated);
+
+      final recargada = await ServicioRecordatorios.obtenerConfiguracion();
+      expect(recargada.alertaLunchEscolar, isFalse);
+      expect(recargada.horaLunchEscolar, '19:45');
+    });
+
+    test('detectarAlertaLunchEscolar detecta platillos y respeta atenderlo', () async {
+      final manana = DateTime.now().add(const Duration(days: 1)).toIso8601String().split('T')[0];
+
+      final plan = [
+        {
+          'id_planeador': 201,
+          'fecha': manana,
+          'tipo_comida': 'Lunch Escolar',
+          'recetas': {
+            'id_receta': 68,
+            'titulo': 'Rollitos de jamón de pavo con panela',
+            'descripcion': 'Rollitos fáciles y ricos en proteína para llevar.',
+          },
+        },
+      ];
+
+      // 1. Detecta la alerta escolar para mañana
+      var alerta = await ServicioRecordatorios.detectarAlertaLunchEscolar(plan);
+      expect(alerta, isNotNull);
+      expect(alerta!.activa, isTrue);
+      expect(alerta.platilloSugerido, 'Rollitos de jamón de pavo con panela');
+
+      // 2. Al marcar como atendido, ya no debe mostrarla
+      await ServicioRecordatorios.marcarLunchEscolarComoAtendido(alerta.idIdentificador);
+      alerta = await ServicioRecordatorios.detectarAlertaLunchEscolar(plan);
+      expect(alerta, isNull);
+    });
   });
 }
