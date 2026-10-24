@@ -978,6 +978,27 @@ class _PantallaPlaneadorState extends State<PantallaPlaneador> {
                   foregroundColor: const Color(0xFF00695C),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 ),
+                icon: const Icon(Icons.auto_awesome, size: 16),
+                label: const Text(
+                  'Chef Escolar 🎒✨',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PantallaChef(
+                        modoEscolarInicial: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF00695C),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                ),
                 icon: const Icon(Icons.menu_book_rounded, size: 16),
                 label: const Text(
                   'Ideas de Lunch 🎒',

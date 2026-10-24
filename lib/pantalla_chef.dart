@@ -18,6 +18,7 @@ import 'servicio_cocina_express.dart';
 class PantallaChef extends StatefulWidget {
   final String? ingredientesIniciales;
   final bool modoPerrunoInicial;
+  final bool modoEscolarInicial;
   final bool modoExpressInicial;
   final bool modoCeroTrastesInicial;
   final bool modoSinFuegoInicial;
@@ -26,100 +27,28 @@ class PantallaChef extends StatefulWidget {
     super.key,
     this.ingredientesIniciales,
     this.modoPerrunoInicial = false,
+    this.modoEscolarInicial = false,
     this.modoExpressInicial = false,
     this.modoCeroTrastesInicial = false,
     this.modoSinFuegoInicial = false,
   });
 
-  @override
-  State<PantallaChef> createState() => _PantallaChefState();
-}
-
-class _PantallaChefState extends State<PantallaChef> {
-  final SupabaseClient supabase = Supabase.instance.client;
-  bool _generando = false;
-  bool _modoPerruno = false; // 🐾 Interruptor para recetas de perritos
-  bool _modoExpress = false; // ⚡ Modo Express (≤ 15 min)
-  bool _modoCeroTrastes = false; // 🍳 Modo One-Pan (1 sola sartén)
-  bool _modoSinFuego = false; // 🥗 Modo Sin Fuego / Frío (5-10 min)
-  ModoElectrodomestico _electrodomesticoSeleccionado = ModoElectrodomestico.tradicional;
-
-  final TextEditingController _ingredientesCtrl = TextEditingController();
-
-  String _tipoComidaSeleccionado = 'Comida';
-  String _objetivoSeleccionado = 'Mantenimiento 2,000 kcal';
-  String _tipoCocinaSeleccionado = TiposCocina.mexicana;
-  String _alergias = '';
-  List<String> _estilos = [PerfilesNutricionales.libre];
-  List<String> _utensiliosDisponibles = UtensiliosCocina.porDefecto;
-
-  final List<String> _tiposComida = ['Desayuno', 'Comida', 'Cena', 'Snack'];
-  final List<String> _objetivosSalud = [
-    'Déficit 1,500 kcal',
-    'Mantenimiento 2,000 kcal',
-    'Volumen 2,500 kcal',
-    'Keto 1,700 kcal',
-    'Personalizada',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.modoPerrunoInicial) {
-      _modoPerruno = true;
-    }
-    if (widget.modoExpressInicial) {
-      _modoExpress = true;
-    }
-    if (widget.modoCeroTrastesInicial) {
-      _modoCeroTrastes = true;
-    }
-    if (widget.modoSinFuegoInicial) {
-      _modoSinFuego = true;
-    }
-    if (widget.ingredientesIniciales != null && widget.ingredientesIniciales!.isNotEmpty) {
-      _ingredientesCtrl.text = widget.ingredientesIniciales!;
-    }
-    _cargarPreferenciasParaChef();
-  }
-
-  Future<void> _cargarPreferenciasParaChef() async {
-    try {
-      final prefs = await ServicioPreferencias.obtenerPreferencias();
-      if (!mounted) return;
-      setState(() {
-        _alergias = prefs.alergias;
-        _estilos = prefs.estilos;
-        _utensiliosDisponibles = prefs.utensilios;
-        if (prefs.tiposCocina.isNotEmpty &&
-            prefs.tiposCocina.first != TiposCocina.todas) {
-          _tipoCocinaSeleccionado = prefs.tiposCocina.first;
-        } else {
-          _tipoCocinaSeleccionado = TiposCocina.mexicana;
-        }
-        if (prefs.estilos.contains(PerfilesNutricionales.keto)) {
-          _objetivoSeleccionado = 'Keto 1,700 kcal';
-        } else if (prefs.objetivo == PerfilesNutricionales.deficit) {
-          _objetivoSeleccionado = 'Déficit 1,500 kcal';
-        } else if (prefs.objetivo == PerfilesNutricionales.volumen) {
-          _objetivoSeleccionado = 'Volumen 2,500 kcal';
-        } else {
-          _objetivoSeleccionado = 'Mantenimiento 2,000 kcal';
-        }
-      });
-    } catch (e) {
-      debugPrint('Error cargando preferencias en PantallaChef: $e');
-    }
-  }
-
-  String construirPromptChef(
-    String ingredientesBase,
-    String tipoComida,
-    String objetivoSalud,
-    String tipoCocina,
-    bool esPerruno, [
+  static String generarPrompt({
+    required String ingredientesBase,
+    required String tipoComida,
+    required String objetivoSalud,
+    required String tipoCocina,
+    bool esPerruno = false,
+    bool esEscolar = false,
+    String etapaEscolar = 'Primaria (6-12 años)',
     ModoElectrodomestico electrodomestico = ModoElectrodomestico.tradicional,
-  ]) {
+    String alergias = '',
+    List<String> estilos = const [PerfilesNutricionales.libre],
+    List<String>? utensiliosDisponibles,
+    bool modoExpress = false,
+    bool modoCeroTrastes = false,
+    bool modoSinFuego = false,
+  }) {
     if (esPerruno) {
       final String insPerruno = ingredientesBase.isNotEmpty
           ? '- Ingredientes base a incluir: $ingredientesBase'
@@ -165,6 +94,96 @@ class _PantallaChefState extends State<PantallaChef> {
       ''';
     }
 
+    if (esEscolar) {
+      final String insEscolar = ingredientesBase.isNotEmpty
+          ? '- Ingredientes base o anhelos de la lonchera a incluir: $ingredientesBase'
+          : '- Ingredientes: Libertad creativa con alimentos frescos, nutritivos y atractivos para lonchera escolar.';
+
+      final String instruccionAlergias = alergias.trim().isNotEmpty
+          ? '- ALERGIAS Y RESTRICCIONES INFANTILES (PROHIBIDO USAR): ${alergias.trim()}.'
+          : '';
+
+      final String instruccionExpressEscolar = (modoExpress || modoSinFuego)
+          ? ServicioCocinaExpress.construirInstruccionesPromptExpress(
+              modoCeroTrastes: false,
+              modoSinFuego: modoSinFuego,
+              tiempoMaximoMinutos: modoSinFuego ? 8 : 12,
+            )
+          : '';
+
+      return '''
+      Eres un Chef Nutriólogo Pediátrico y Especialista en Loncheras Escolares Saludables.
+      Tu misión es diseñar una receta de lunch o snack escolar divertida, altamente nutritiva y muy práctica para que los papás preparen para sus hijos ($etapaEscolar).
+
+      Parámetros obligatorios:
+      $insEscolar
+      $instruccionAlergias
+      $instruccionExpressEscolar
+      - Tipo de comida: $tipoComida
+      - Nivel escolar: $etapaEscolar
+      - Objetivo: Energía sostenida, concentración escolar y crecimiento saludable.
+
+      REGLAS DE ORO DE LA LONCHERA ESCOLAR (MUY IMPORTANTES):
+      1. LOGÍSTICA DE TUPPER Y TRANSPORTE:
+         - La comida debe poderse comer fría o a temperatura ambiente (no depender forzosamente de microondas escolar).
+         - CERO derrames o salsas muy líquidas que humedezcan o batan el resto de la comida en la mochila.
+      2. ATRACTIVO Y TEXTURA PARA NIÑOS:
+         - Presentación divertida o formato "finger food" (rollitos, brochetitas, bastones, dips espesos, tortitas o figuras).
+         - Colores vivos naturales (fruta fresca, verdura crujiente).
+      3. SEGURIDAD PEDIÁTRICA:
+         - Sin huesos, sin espinas, sin chiles picantes que puedan irritar a un niño. Si se usan uvas o jitomates cherry, indicar partirlos a lo largo por seguridad.
+      4. BALANCE NUTRICIONAL INFANTIL:
+         - Porción aproximada de 280 a 450 kcal según $etapaEscolar.
+         - Combina proteína saludable (huevo, pollo, queso panela, atún, frijol/edamame) + fibra y vitaminas (fruta o verdura fresca) + carbohidrato de energía sostenida (avena, pan integral, maíz).
+      5. TIEMPO DE PREPARACIÓN RÁPIDO:
+         - Menor a 15 minutos de ensamble o cocción rápida (ideal para la noche anterior o la mañana temprana).
+
+      REGLAS DE UNIDADES DE MEDIDA:
+      - NO uses gramos (g) ni mililitros (ml) en la lista de ingredientes.
+      - Usa SIEMPRE fracciones de Kilo (kg) o Litro (L). Ejemplo: 0.1 kg en vez de 100g, 0.2 L en vez de 200ml.
+      - Para vegetales, frutas o huevos, usa "piezas" o "pzas".
+      - Para galletas, pan, queso, usa "rebanadas", "piezas" o "paquete".
+
+      REGLA CRÍTICA: DEBES responder ÚNICAMENTE con un objeto JSON válido y minificado.
+      NO incluyas saludos, explicaciones, ni bloques de código markdown (como ```json).
+
+      El JSON debe tener EXACTAMENTE esta estructura:
+      {
+        "titulo": "Rollitos de Pavo y Panela con Bastoncitos de Zanahoria",
+        "descripcion": "Lunch escolar súper fresco, colorido y fácil de comer en el recreo sin mancharse los dedos",
+        "tipo_comida": "$tipoComida",
+        "calorias": 340,
+        "macros": "Proteína: 22g | Carbos: 28g | Grasas: 12g",
+        "tiempo_preparacion": "10 minutos",
+        "ingredientes": [
+          {
+            "nombre_estandar": "pechuga de pavo",
+            "cantidad": 0.1,
+            "unidad": "kg"
+          },
+          {
+            "nombre_estandar": "queso panela",
+            "cantidad": 0.1,
+            "unidad": "kg"
+          },
+          {
+            "nombre_estandar": "zanahoria",
+            "cantidad": 1,
+            "unidad": "piezas"
+          }
+        ],
+        "instrucciones": "1. Cortar el queso panela en tiritas y la zanahoria en bastoncitos delgados.\\n2. Enrollar cada bastón de panela con una rebanada de pavo.\\n3. Acomodar en el tupper escolar junto con la fruta fresca.",
+        "bebida_escolar": {
+          "nombre": "Agua fresca de fresa y menta sin azúcar",
+          "beneficio": "Hidratación natural refrescante rica en vitamina C"
+        },
+        "tip_lonchera": "Guarda el tupper con una pequeña servilleta en la base para absorber cualquier humedad fresca."
+      }
+
+      Nota: En "nombre_estandar" usa SIEMPRE minúsculas y el nombre base del ingrediente (ej. "zanahoria", no "zanahorias en bastones").
+      ''';
+    }
+
     final String instruccionIngredientes = ingredientesBase.isNotEmpty
         ? '- Ingredientes principales o antojo del usuario (prioriza estos y combínalos con básicos): $ingredientesBase'
         : '- Ingredientes: ¡Tienes libertad creativa total! Inventa una receta deliciosa y original desde cero.';
@@ -174,15 +193,17 @@ class _PantallaChefState extends State<PantallaChef> {
             ? '- GASTRONOMÍA / ESTILO DE COCINA OBLIGATORIO: Cocina $tipoCocina (${TiposCocina.iconos[tipoCocina] ?? ""}). La receta DEBE ser 100% representativa de la tradición culinaria $tipoCocina (${TiposCocina.descripciones[tipoCocina] ?? ""}), usando técnicas, sazón y sabores típicos.'
             : '- GASTRONOMÍA: Cocina libre, internacional o fusión según los ingredientes y antojos provistos.';
 
-    final String instruccionAlergias = _alergias.trim().isNotEmpty
-        ? '- ALERGIAS Y RESTRICCIONES (PROHIBIDO USAR): ${_alergias.trim()}.'
+    final String instruccionAlergias = alergias.trim().isNotEmpty
+        ? '- ALERGIAS Y RESTRICCIONES (PROHIBIDO USAR): ${alergias.trim()}.'
         : '';
 
     final String instruccionEstilos =
-        PerfilesNutricionales.instruccionesPrompt(_estilos);
+        PerfilesNutricionales.instruccionesPrompt(estilos);
 
     final String instruccionUtensilios =
-        UtensiliosCocina.instruccionesPrompt(_utensiliosDisponibles);
+        UtensiliosCocina.instruccionesPrompt(
+          utensiliosDisponibles ?? UtensiliosCocina.porDefecto,
+        );
 
     final String instruccionElectrodomestico =
         electrodomestico == ModoElectrodomestico.thermomix
@@ -203,11 +224,11 @@ class _PantallaChefState extends State<PantallaChef> {
     '''
                 : '';
 
-    final String instruccionExpress = (_modoExpress || _modoCeroTrastes || _modoSinFuego)
+    final String instruccionExpress = (modoExpress || modoCeroTrastes || modoSinFuego)
         ? ServicioCocinaExpress.construirInstruccionesPromptExpress(
-            modoCeroTrastes: _modoCeroTrastes,
-            modoSinFuego: _modoSinFuego,
-            tiempoMaximoMinutos: _modoSinFuego ? 10 : 15,
+            modoCeroTrastes: modoCeroTrastes,
+            modoSinFuego: modoSinFuego,
+            tiempoMaximoMinutos: modoSinFuego ? 10 : 15,
           )
         : '';
 
@@ -261,6 +282,126 @@ class _PantallaChefState extends State<PantallaChef> {
     ''';
   }
 
+  @override
+  State<PantallaChef> createState() => _PantallaChefState();
+}
+
+class _PantallaChefState extends State<PantallaChef> {
+  SupabaseClient get supabase => Supabase.instance.client;
+  bool _generando = false;
+  bool _modoPerruno = false; // 🐾 Interruptor para recetas de perritos
+  bool _modoEscolar = false; // 🎒 Modo Chef Lonchera Kids
+  bool _modoExpress = false; // ⚡ Modo Express (≤ 15 min)
+  bool _modoCeroTrastes = false; // 🍳 Modo One-Pan (1 sola sartén)
+  bool _modoSinFuego = false; // 🥗 Modo Sin Fuego / Frío (5-10 min)
+  ModoElectrodomestico _electrodomesticoSeleccionado = ModoElectrodomestico.tradicional;
+
+  final TextEditingController _ingredientesCtrl = TextEditingController();
+
+  String _tipoComidaSeleccionado = 'Comida';
+  String _objetivoSeleccionado = 'Mantenimiento 2,000 kcal';
+  String _tipoCocinaSeleccionado = TiposCocina.mexicana;
+  String _etapaEscolar = 'Primaria (6-12 años)';
+  String _alergias = '';
+  List<String> _estilos = [PerfilesNutricionales.libre];
+  List<String> _utensiliosDisponibles = UtensiliosCocina.porDefecto;
+
+  final List<String> _tiposComida = ['Desayuno', 'Comida', 'Cena', 'Snack'];
+  final List<String> _tiposComidaEscolares = ['Lunch Escolar', 'Snack Escolar'];
+  final List<String> _etapasEscolares = [
+    'Kínder (3-5 años)',
+    'Primaria (6-12 años)',
+    'Secundaria (13+ años)',
+  ];
+  final List<String> _objetivosSalud = [
+    'Déficit 1,500 kcal',
+    'Mantenimiento 2,000 kcal',
+    'Volumen 2,500 kcal',
+    'Keto 1,700 kcal',
+    'Personalizada',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.modoEscolarInicial) {
+      _modoEscolar = true;
+      _tipoComidaSeleccionado = 'Lunch Escolar';
+    } else if (widget.modoPerrunoInicial) {
+      _modoPerruno = true;
+    }
+    if (widget.modoExpressInicial) {
+      _modoExpress = true;
+    }
+    if (widget.modoCeroTrastesInicial) {
+      _modoCeroTrastes = true;
+    }
+    if (widget.modoSinFuegoInicial) {
+      _modoSinFuego = true;
+    }
+    if (widget.ingredientesIniciales != null && widget.ingredientesIniciales!.isNotEmpty) {
+      _ingredientesCtrl.text = widget.ingredientesIniciales!;
+    }
+    _cargarPreferenciasParaChef();
+  }
+
+  Future<void> _cargarPreferenciasParaChef() async {
+    try {
+      final prefs = await ServicioPreferencias.obtenerPreferencias();
+      if (!mounted) return;
+      setState(() {
+        _alergias = prefs.alergias;
+        _estilos = prefs.estilos;
+        _utensiliosDisponibles = prefs.utensilios;
+        if (prefs.tiposCocina.isNotEmpty &&
+            prefs.tiposCocina.first != TiposCocina.todas) {
+          _tipoCocinaSeleccionado = prefs.tiposCocina.first;
+        } else {
+          _tipoCocinaSeleccionado = TiposCocina.mexicana;
+        }
+        if (prefs.estilos.contains(PerfilesNutricionales.keto)) {
+          _objetivoSeleccionado = 'Keto 1,700 kcal';
+        } else if (prefs.objetivo == PerfilesNutricionales.deficit) {
+          _objetivoSeleccionado = 'Déficit 1,500 kcal';
+        } else if (prefs.objetivo == PerfilesNutricionales.volumen) {
+          _objetivoSeleccionado = 'Volumen 2,500 kcal';
+        } else {
+          _objetivoSeleccionado = 'Mantenimiento 2,000 kcal';
+        }
+      });
+    } catch (e) {
+      debugPrint('Error cargando preferencias en PantallaChef: $e');
+    }
+  }
+
+  String construirPromptChef(
+    String ingredientesBase,
+    String tipoComida,
+    String objetivoSalud,
+    String tipoCocina,
+    bool esPerruno, [
+    ModoElectrodomestico electrodomestico = ModoElectrodomestico.tradicional,
+    bool esEscolar = false,
+    String etapaEscolar = 'Primaria (6-12 años)',
+  ]) {
+    return PantallaChef.generarPrompt(
+      ingredientesBase: ingredientesBase,
+      tipoComida: tipoComida,
+      objetivoSalud: objetivoSalud,
+      tipoCocina: tipoCocina,
+      esPerruno: esPerruno,
+      esEscolar: esEscolar,
+      etapaEscolar: etapaEscolar,
+      electrodomestico: electrodomestico,
+      alergias: _alergias,
+      estilos: _estilos,
+      utensiliosDisponibles: _utensiliosDisponibles,
+      modoExpress: _modoExpress,
+      modoCeroTrastes: _modoCeroTrastes,
+      modoSinFuego: _modoSinFuego,
+    );
+  }
+
   // 1. GENERA Y MUESTRA LA TARJETA DE VISTA PREVIA
   Future<void> generarRecetaPreview() async {
     setState(() => _generando = true);
@@ -282,6 +423,8 @@ class _PantallaChefState extends State<PantallaChef> {
         _tipoCocinaSeleccionado,
         _modoPerruno,
         _electrodomesticoSeleccionado,
+        _modoEscolar,
+        _etapaEscolar,
       );
 
       final response = await model.generateContent([Content.text(prompt)]);
@@ -315,7 +458,9 @@ class _PantallaChefState extends State<PantallaChef> {
 
   // 2. MUESTRA EL MODAL/TARJETA CON LA RECETA CREADA
   void _mostrarTarjetaVistaPrevia(Map<String, dynamic> receta) {
-    final Color colorPremium = Colors.red.shade800;
+    final Color colorPremium = _modoEscolar
+        ? const Color(0xFF00897B)
+        : (_modoPerruno ? Colors.amber.shade800 : Colors.red.shade800);
     List<dynamic> ingredientes = receta['ingredientes'] ?? [];
 
     showModalBottomSheet(
@@ -347,15 +492,19 @@ class _PantallaChefState extends State<PantallaChef> {
               Row(
                 children: [
                   Icon(
-                    _modoPerruno ? Icons.pets : Icons.auto_awesome,
+                    _modoEscolar
+                        ? Icons.backpack_rounded
+                        : (_modoPerruno ? Icons.pets : Icons.auto_awesome),
                     color: colorPremium,
                     size: 28,
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    _modoPerruno
-                        ? '¡Receta Canina Creada!'
-                        : '¡Receta Creada por el Chef!',
+                    _modoEscolar
+                        ? '¡Lunch Escolar Creado! 🎒'
+                        : (_modoPerruno
+                            ? '¡Receta Canina Creada!'
+                            : '¡Receta Creada por el Chef!'),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -393,13 +542,37 @@ class _PantallaChefState extends State<PantallaChef> {
                         children: [
                           Chip(
                             label: Text('${receta['calorias'] ?? 0} kcal'),
-                            backgroundColor: Colors.red.shade50,
+                            backgroundColor: _modoEscolar
+                                ? const Color(0xFFE0F2F1)
+                                : (_modoPerruno
+                                    ? Colors.amber.shade50
+                                    : Colors.red.shade50),
                             labelStyle: TextStyle(
                               color: colorPremium,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (!_modoPerruno) ...[
+                          if (_modoEscolar) ...[
+                            Chip(
+                              avatar: const Text('🎒', style: TextStyle(fontSize: 14)),
+                              label: Text(receta['tipo_comida'] ?? 'Lunch Escolar'),
+                              backgroundColor: const Color(0xFFE0F2F1),
+                              labelStyle: const TextStyle(
+                                color: Color(0xFF00695C),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (receta['tiempo_preparacion'] != null)
+                              Chip(
+                                avatar: const Text('⏱️', style: TextStyle(fontSize: 14)),
+                                label: Text('${receta['tiempo_preparacion']}'),
+                                backgroundColor: Colors.teal.shade50,
+                                labelStyle: const TextStyle(
+                                  color: Color(0xFF004D40),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ] else if (!_modoPerruno) ...[
                             Chip(
                               avatar: Text(
                                 TiposCocina.iconos[_tipoCocinaSeleccionado] ??
@@ -478,7 +651,57 @@ class _PantallaChefState extends State<PantallaChef> {
                         receta['instrucciones'] ?? '',
                         style: const TextStyle(fontSize: 14, height: 1.4),
                       ),
-                      if (receta['maridaje'] != null && !_modoPerruno) ...[
+                      if (_modoEscolar && receta['bebida_escolar'] != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2F1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF80CBC4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Text('🥤', style: TextStyle(fontSize: 16)),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Bebida Infantil Sugerida:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Color(0xFF004D40),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                receta['bebida_escolar'] is Map
+                                    ? '• ${receta['bebida_escolar']['nombre'] ?? ""}: ${receta['bebida_escolar']['beneficio'] ?? ""}'
+                                    : '• ${receta['bebida_escolar']}',
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF004D40)),
+                              ),
+                              if (receta['tip_lonchera'] != null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  '💡 Tip de lonchera: ${receta['tip_lonchera']}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFF00695C),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ] else if (receta['maridaje'] != null && !_modoPerruno && !_modoEscolar) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -586,7 +809,7 @@ class _PantallaChefState extends State<PantallaChef> {
       sb.writeln('CALORÍAS: $calorias kcal');
       if (macros.isNotEmpty) sb.writeln('MACROS: $macros');
       sb.writeln('TIPO: $tipo');
-      if (!_modoPerruno && _tipoCocinaSeleccionado.isNotEmpty) {
+      if (!_modoPerruno && !_modoEscolar && _tipoCocinaSeleccionado.isNotEmpty) {
         sb.writeln(
           'COCINA: ${TiposCocina.iconos[_tipoCocinaSeleccionado] ?? ""} $_tipoCocinaSeleccionado',
         );
@@ -598,7 +821,18 @@ class _PantallaChefState extends State<PantallaChef> {
       sb.writeln('\n🍳 INSTRUCCIONES:');
       sb.writeln(instrucciones);
 
-      if (!_modoPerruno && recetaGenerada['maridaje'] is Map) {
+      if (_modoEscolar && recetaGenerada['bebida_escolar'] != null) {
+        sb.writeln('\n🥤 BEBIDA INFANTIL SUGERIDA:');
+        if (recetaGenerada['bebida_escolar'] is Map) {
+          final b = recetaGenerada['bebida_escolar'] as Map;
+          sb.writeln('- ${b['nombre']}: ${b['beneficio'] ?? ""}');
+        } else {
+          sb.writeln('- ${recetaGenerada['bebida_escolar']}');
+        }
+        if (recetaGenerada['tip_lonchera'] != null) {
+          sb.writeln('💡 Tip de Lonchera: ${recetaGenerada['tip_lonchera']}');
+        }
+      } else if (!_modoPerruno && !_modoEscolar && recetaGenerada['maridaje'] is Map) {
         final m = recetaGenerada['maridaje'] as Map;
         sb.writeln('\n🍷 MARIDAJE SUGERIDO:');
         if (m['vino'] != null) sb.writeln('- Vino: ${m['vino']}');
@@ -607,11 +841,17 @@ class _PantallaChefState extends State<PantallaChef> {
       }
 
       final bool esPerruna = _modoPerruno;
+      final bool esEscolar = _modoEscolar;
       final String tituloFinal = recetaGenerada['titulo'] ??
-          (esPerruna ? 'Snack Canino Chef' : 'Receta Chef IA');
+          (esPerruna
+              ? 'Snack Canino Chef'
+              : (esEscolar ? 'Lunch Escolar Saludable' : 'Receta Chef IA'));
       final String descCompleta = sb.toString().trim();
-      final String tipoComidaFinal =
-          esPerruna ? 'Snack Canino' : (recetaGenerada['tipo_comida'] ?? 'Comida');
+      final String tipoComidaFinal = esPerruna
+          ? 'Snack Canino'
+          : (esEscolar
+              ? (recetaGenerada['tipo_comida'] ?? 'Lunch Escolar')
+              : (recetaGenerada['tipo_comida'] ?? 'Comida'));
 
       final resReceta = await ServicioRecetas.insertarReceta(
         titulo: tituloFinal,
@@ -624,7 +864,7 @@ class _PantallaChefState extends State<PantallaChef> {
             ? (recetaGenerada['calorias'] as num).toInt()
             : int.tryParse(
                 recetaGenerada['calorias']?.toString() ??
-                    (esPerruna ? '250' : '450'),
+                    (esPerruna ? '250' : (esEscolar ? '350' : '450')),
               ),
         macros: recetaGenerada['macros']?.toString(),
         imagenUrl: esPerruna
@@ -633,7 +873,7 @@ class _PantallaChefState extends State<PantallaChef> {
                 tituloFinal,
                 tipoComidaFinal,
               ),
-        esOficial: esPerruna ? false : ServicioAdmin.esAdmin(),
+        esOficial: (esPerruna || esEscolar) ? false : ServicioAdmin.esAdmin(),
         esPublica: true,
       );
 
@@ -967,9 +1207,140 @@ class _PantallaChefState extends State<PantallaChef> {
     );
   }
 
+  Widget _construirSelectorPerfilChef(Color colorPremium) {
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          _construirBotonPerfil(
+            icono: Icons.restaurant_menu,
+            titulo: 'Bistro 👨‍🍳',
+            subtitulo: 'Adultos',
+            seleccionado: !_modoEscolar && !_modoPerruno,
+            colorActivo: Colors.red.shade800,
+            onTap: () {
+              setState(() {
+                _modoEscolar = false;
+                _modoPerruno = false;
+                if (_tipoComidaSeleccionado == 'Lunch Escolar' ||
+                    _tipoComidaSeleccionado == 'Snack Canino' ||
+                    _tipoComidaSeleccionado == 'Snack Escolar') {
+                  _tipoComidaSeleccionado = 'Comida';
+                }
+              });
+            },
+          ),
+          const SizedBox(width: 4),
+          _construirBotonPerfil(
+            icono: Icons.backpack_rounded,
+            titulo: 'Kids 🎒',
+            subtitulo: 'Lonchera',
+            seleccionado: _modoEscolar,
+            colorActivo: const Color(0xFF00897B),
+            onTap: () {
+              setState(() {
+                _modoEscolar = true;
+                _modoPerruno = false;
+                _tipoComidaSeleccionado = 'Lunch Escolar';
+              });
+            },
+          ),
+          const SizedBox(width: 4),
+          _construirBotonPerfil(
+            icono: Icons.pets,
+            titulo: 'Lomitos 🐾',
+            subtitulo: 'Canino',
+            seleccionado: _modoPerruno,
+            colorActivo: Colors.amber.shade800,
+            onTap: () {
+              setState(() {
+                _modoPerruno = true;
+                _modoEscolar = false;
+                _tipoComidaSeleccionado = 'Snack Canino';
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirBotonPerfil({
+    required IconData icono,
+    required String titulo,
+    required String subtitulo,
+    required bool seleccionado,
+    required Color colorActivo,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: Material(
+        color: seleccionado ? Colors.white : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        elevation: seleccionado ? 1.5 : 0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: seleccionado
+                    ? colorActivo.withValues(alpha: 0.45)
+                    : Colors.transparent,
+                width: 1.2,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icono,
+                  size: 20,
+                  color: seleccionado ? colorActivo : Colors.grey.shade600,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  titulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        seleccionado ? FontWeight.bold : FontWeight.w600,
+                    color: seleccionado ? colorActivo : Colors.grey.shade800,
+                  ),
+                ),
+                Text(
+                  subtitulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    color: seleccionado
+                        ? colorActivo.withValues(alpha: 0.85)
+                        : Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Color colorPremium = Colors.red.shade800;
+    final Color colorPremium = _modoEscolar
+        ? const Color(0xFF00897B)
+        : (_modoPerruno ? Colors.amber.shade800 : Colors.red.shade800);
 
     return Scaffold(
       drawer: const MenuLateral(rutaActual: 'chef'),
@@ -989,7 +1360,9 @@ class _PantallaChefState extends State<PantallaChef> {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Text(
-            _modoPerruno ? 'Chef Perruno 🐾' : 'Chef IA 👨‍🍳',
+            _modoEscolar
+                ? 'Chef Lonchera Kids 🎒'
+                : (_modoPerruno ? 'Chef Perruno 🐾' : 'Chef IA 👨‍🍳'),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
@@ -1004,67 +1377,24 @@ class _PantallaChefState extends State<PantallaChef> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🐾 TARJETA / INTERRUPTOR DE MODO PERRUNO
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _modoPerruno
-                      ? Colors.amber.shade50
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _modoPerruno
-                        ? Colors.amber.shade700
-                        : Colors.grey.shade300,
-                    width: 1.5,
-                  ),
-                ),
-                child: SwitchListTile(
-                  title: Text(
-                    _modoPerruno
-                        ? 'Modo Chef Perruno Activado 🐾'
-                        : 'Activar Recetas para Perritos 🐶',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _modoPerruno
-                          ? Colors.amber.shade900
-                          : Colors.black87,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _modoPerruno
-                        ? 'Generando snacks y comida segura para mascotas'
-                        : 'Cambia para inventar comida apta para tus perros',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  secondary: Icon(
-                    _modoPerruno ? Icons.pets : Icons.restaurant,
-                    color: _modoPerruno ? Colors.amber.shade800 : Colors.grey,
-                    size: 30,
-                  ),
-                  activeThumbColor:
-                      Colors.amber.shade800, // Actualizado a activeThumbColor
-                  value: _modoPerruno,
-                  onChanged: (val) {
-                    setState(() => _modoPerruno = val);
-                  },
-                ),
-              ),
+              // 🎛️ SELECTOR SUPERIOR DE PERFIL DE CHEF (Bistro / Kids / Lomitos)
+              _construirSelectorPerfilChef(colorPremium),
               const SizedBox(height: 24),
 
               Icon(
-                _modoPerruno ? Icons.pets : Icons.auto_awesome,
+                _modoEscolar
+                    ? Icons.backpack_rounded
+                    : (_modoPerruno ? Icons.pets : Icons.auto_awesome),
                 size: 60,
                 color: colorPremium,
               ),
               const SizedBox(height: 16),
               Text(
-                _modoPerruno
-                    ? '¿Qué ingredientes seguros tienes para tu perrito?'
-                    : '¿Qué tienes en tu despensa o qué se te antoja?',
+                _modoEscolar
+                    ? '¿Qué tienes para la lonchera de hoy?'
+                    : (_modoPerruno
+                        ? '¿Qué ingredientes seguros tienes para tu perrito?'
+                        : '¿Qué tienes en tu despensa o qué se te antoja?'),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -1073,9 +1403,11 @@ class _PantallaChefState extends State<PantallaChef> {
               ),
               const SizedBox(height: 8),
               Text(
-                _modoPerruno
-                    ? 'Ingresa pollo, avena, zanahoria, o déjalo vacío para sugerencia veterinaria.'
-                    : 'Ingresa ingredientes disponibles, el antojo del día, o déjalo vacío para que el Chef IA te sorprenda.',
+                _modoEscolar
+                    ? 'Ingresa fruta, pan, pavo, queso, verdura, o déjalo vacío para una idea pediátrica divertida.'
+                    : (_modoPerruno
+                        ? 'Ingresa pollo, avena, zanahoria, o déjalo vacío para sugerencia veterinaria.'
+                        : 'Ingresa ingredientes disponibles, el antojo del día, o déjalo vacío para que el Chef IA te sorprenda.'),
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -1085,9 +1417,11 @@ class _PantallaChefState extends State<PantallaChef> {
                 controller: _ingredientesCtrl,
                 maxLines: 2,
                 decoration: InputDecoration(
-                  labelText: _modoPerruno
-                      ? 'Ej. Pollo hervido, zanahoria (Opcional)'
-                      : 'Ej. Pechuga de pollo, espinacas, o algo picante y caldoso (Opcional)',
+                  labelText: _modoEscolar
+                      ? 'Ej. Jamón de pavo, fresas, pan integral, zanahoria (Opcional)'
+                      : (_modoPerruno
+                          ? 'Ej. Pollo hervido, zanahoria (Opcional)'
+                          : 'Ej. Pechuga de pollo, espinacas, o algo picante y caldoso (Opcional)'),
                   floatingLabelStyle: TextStyle(
                     color: colorPremium,
                     fontWeight: FontWeight.bold,
@@ -1105,8 +1439,175 @@ class _PantallaChefState extends State<PantallaChef> {
               ),
               const SizedBox(height: 24),
 
-              // Ocultamos tipos de comida, objetivos y gastronomía si está en modo perruno
-              if (!_modoPerruno) ...[
+              // 🎒 OPCIONES ESPECIALIZADAS PARA LONCHERA ESCOLAR
+              if (_modoEscolar) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFE0F2F1),
+                        Colors.teal.shade50,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFF80CBC4),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.backpack_rounded, color: Color(0xFF00695C), size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reglas de Oro de la Lonchera 🎒',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Color(0xFF004D40),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Comida que resiste la mochila escolar sin derrames, lista para comer fría o tibia sin microondas:',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF004D40)),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip(
+                            avatar: const Text('⚡', style: TextStyle(fontSize: 14)),
+                            label: const Text('Express (≤ 10 min)'),
+                            selected: _modoExpress,
+                            selectedColor: const Color(0xFF00897B),
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: _modoExpress ? Colors.white : const Color(0xFF00695C),
+                              fontWeight: _modoExpress ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: _modoExpress
+                                    ? Colors.transparent
+                                    : const Color(0xFF80CBC4),
+                              ),
+                            ),
+                            onSelected: (val) => setState(() => _modoExpress = val),
+                          ),
+                          FilterChip(
+                            avatar: const Text('❄️', style: TextStyle(fontSize: 14)),
+                            label: const Text('Sin Estufa / Frío'),
+                            selected: _modoSinFuego,
+                            selectedColor: const Color(0xFF00897B),
+                            backgroundColor: Colors.white,
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: _modoSinFuego ? Colors.white : const Color(0xFF00695C),
+                              fontWeight: _modoSinFuego ? FontWeight.bold : FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: _modoSinFuego
+                                    ? Colors.transparent
+                                    : const Color(0xFF80CBC4),
+                              ),
+                            ),
+                            onSelected: (val) => setState(() => _modoSinFuego = val),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Tipo de Comida Escolar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: _tiposComidaEscolares.map((tipo) {
+                    final bool isSelected = _tipoComidaSeleccionado == tipo;
+                    return ChoiceChip(
+                      label: Text(tipo),
+                      selected: isSelected,
+                      selectedColor: const Color(0xFF00897B),
+                      backgroundColor: Colors.grey.shade200,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _tipoComidaSeleccionado = tipo);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Etapa / Edad Escolar',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: _etapasEscolares.map((etapa) {
+                    final bool isSelected = _etapaEscolar == etapa;
+                    return ChoiceChip(
+                      label: Text(etapa),
+                      selected: isSelected,
+                      selectedColor: const Color(0xFF00897B),
+                      backgroundColor: Colors.grey.shade200,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _etapaEscolar = etapa);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 32),
+              ] else if (!_modoPerruno) ...[
                 // ⏱️ ATAJOS EXPRESS Y CERO TRASTES
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -1385,24 +1886,28 @@ class _PantallaChefState extends State<PantallaChef> {
                           strokeWidth: 2,
                         ),
                       )
-                    : Icon(_modoPerruno ? Icons.pets : Icons.restaurant_menu),
+                    : Icon(_modoEscolar
+                        ? Icons.backpack_rounded
+                        : (_modoPerruno ? Icons.pets : Icons.restaurant_menu)),
                 label: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     _generando
                         ? 'Cocinando...'
-                        : (_modoPerruno
-                              ? 'Cocinar Snack Perruno 🐾'
-                              : (_electrodomesticoSeleccionado ==
-                                      ModoElectrodomestico.thermomix
-                                  ? 'Cocinar con Thermomix 🤖'
-                                  : (_electrodomesticoSeleccionado ==
-                                          ModoElectrodomestico.airFryer
-                                      ? 'Cocinar con Air Fryer 🍟'
-                                      : (_tipoCocinaSeleccionado ==
-                                              TiposCocina.todas
-                                          ? 'Cocinar Receta con IA 👨‍🍳'
-                                          : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳')))),
+                        : (_modoEscolar
+                            ? 'Cocinar Lonchera Escolar con IA 🎒✨'
+                            : (_modoPerruno
+                                ? 'Cocinar Snack Perruno 🐾'
+                                : (_electrodomesticoSeleccionado ==
+                                        ModoElectrodomestico.thermomix
+                                    ? 'Cocinar con Thermomix 🤖'
+                                    : (_electrodomesticoSeleccionado ==
+                                            ModoElectrodomestico.airFryer
+                                        ? 'Cocinar con Air Fryer 🍟'
+                                        : (_tipoCocinaSeleccionado ==
+                                                TiposCocina.todas
+                                            ? 'Cocinar Receta con IA 👨‍🍳'
+                                            : 'Cocinar Receta $_tipoCocinaSeleccionado con IA 👨‍🍳'))))),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1410,15 +1915,17 @@ class _PantallaChefState extends State<PantallaChef> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _modoPerruno
-                      ? Colors.amber.shade800
-                      : (_electrodomesticoSeleccionado ==
-                              ModoElectrodomestico.thermomix
-                          ? const Color(0xFF00897B)
+                  backgroundColor: _modoEscolar
+                      ? const Color(0xFF00897B)
+                      : (_modoPerruno
+                          ? Colors.amber.shade800
                           : (_electrodomesticoSeleccionado ==
-                                  ModoElectrodomestico.airFryer
-                              ? const Color(0xFFF57C00)
-                              : colorPremium)),
+                                  ModoElectrodomestico.thermomix
+                              ? const Color(0xFF00897B)
+                              : (_electrodomesticoSeleccionado ==
+                                      ModoElectrodomestico.airFryer
+                                  ? const Color(0xFFF57C00)
+                                  : colorPremium))),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

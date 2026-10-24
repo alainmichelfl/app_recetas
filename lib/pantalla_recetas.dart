@@ -2578,6 +2578,42 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                                 ),
                                 const SizedBox(width: 6),
                                 InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const PantallaChef(
+                                          modoEscolarInicial: true,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF004D40),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Chef IA 🎒',
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                InkWell(
                                   onTap: () => ServicioRecordatorios.mostrarModalCentroRecordatorios(context),
                                   borderRadius: BorderRadius.circular(6),
                                   child: Container(
@@ -2970,22 +3006,50 @@ class _PantallaRecetasState extends State<PantallaRecetas> {
                 style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
               const SizedBox(height: 14),
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _filtroAudiencia = FiltroAudienciaReceta.oficiales;
-                    _filtrarRecetas();
-                  });
-                },
-                icon: const Icon(Icons.star_rounded, size: 18),
-                label: const Text('Ver Todo el Catálogo'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00897B),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PantallaChef(
+                            modoEscolarInicial: true,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text('Crear con Chef Escolar 🎒✨'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00897B),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
-                ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _filtroAudiencia = FiltroAudienciaReceta.oficiales;
+                        _filtrarRecetas();
+                      });
+                    },
+                    icon: const Icon(Icons.star_rounded, size: 18),
+                    label: const Text('Ver Todo el Catálogo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00897B),
+                      side: const BorderSide(color: Color(0xFF00897B)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ] else if (_filtroAudiencia == FiltroAudienciaReceta.recienSalidas) ...[
               const SizedBox(height: 6),
