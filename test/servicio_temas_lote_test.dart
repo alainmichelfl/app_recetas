@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_recetas/servicio_temas_lote.dart';
 
 void main() {
-  group('ServicioTemasLote - Catálogo Integral de 37 Especiales y Ruleta Sorpresa', () {
-    test('Contiene exactamente 37 temas oficiales distribuidos en 5 grupos', () {
+  group('ServicioTemasLote - Catálogo Integral de 38 Especiales y Ruleta Sorpresa', () {
+    test('Contiene exactamente 38 temas oficiales distribuidos en 5 grupos', () {
       final todos = ServicioTemasLote.obtenerTodos();
-      expect(todos.length, equals(37));
+      expect(todos.length, equals(38));
 
       final temporadas = ServicioTemasLote.obtenerPorGrupo(GrupoTemaLote.temporada);
       expect(temporadas.length, equals(12));
@@ -14,7 +14,7 @@ void main() {
       expect(cocinas.length, equals(10));
 
       final estilos = ServicioTemasLote.obtenerPorGrupo(GrupoTemaLote.estilosVida);
-      expect(estilos.length, equals(4));
+      expect(estilos.length, equals(5));
 
       final fitness = ServicioTemasLote.obtenerPorGrupo(GrupoTemaLote.fitnessSalud);
       expect(fitness.length, equals(5));
