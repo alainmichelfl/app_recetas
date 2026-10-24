@@ -371,11 +371,11 @@ class ServicioRecetas {
     134: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=600&q=80', // Fajitas Express de Pechuga con Hongos y Manzana
     135: 'https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=600&q=80', // Sopa Ligera de Hongos Silvestres y Epazote
     136: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80', // Ensalada Nocturna de Manzana, Betabel y Panela
-    137: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=600&q=80', // Camote Horneado Relleno de Pollo Deshebrado
-    138: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80', // Crema Ligera de Calabaza con Hongos Salteados
+    137: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/camote_horneado_relleno_pollo.jpg', // Camote Horneado Relleno de Pollo Deshebrado
+    138: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/crema_calabaza_hongos_salteados.jpg', // Crema Ligera de Calabaza con Hongos Salteados
     139: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80', // Salteado Oriental de Calabaza de Castilla y Pollo
-    140: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?auto=format&fit=crop&w=600&q=80', // Compota Tibia de Manzana y Guayaba con Canela
-    141: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80', // Chips de Camote Morado y Betabel al Horno
+    140: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/compota_manzana_guayaba_canela.jpg', // Compota Tibia de Manzana y Guayaba con Canela
+    141: 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chips_camote_morado_betabel.jpg', // Chips de Camote Morado y Betabel al Horno
     142: 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80', // Pepitas de Calabaza Tostadas al Comal con Canela
     143: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=600&q=80', // Gajos de Manzana Dorada con Requesón y Nuez
     144: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80', // Gajos de Mandarina con Salpicado de Canela y Pepitas
@@ -502,7 +502,7 @@ class ServicioRecetas {
       return 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('camote relleno') || t.contains('camote horneado')) {
-      return 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/camote_horneado_relleno_pollo.jpg';
     }
     if (t.contains('tejocote') || (t.contains('pollo') && t.contains('camote morado'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/guisado_pollo_camote_tejocote.jpg';
@@ -561,6 +561,9 @@ class ServicioRecetas {
     }
 
     // 9. Sopas, cremas y caldos
+    if (t.contains('crema') && (t.contains('calabaza') || t.contains('hongo'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/crema_calabaza_hongos_salteados.jpg';
+    }
     if (t.contains('lenteja') && (t.contains('plátano') || t.contains('platano') || t.contains('macho'))) {
       return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/lentejas_platano_macho.jpg';
     }
@@ -598,14 +601,14 @@ class ServicioRecetas {
     if (t.contains('pepita') || t.contains('semilla') || t.contains('semillas')) {
       return 'https://images.unsplash.com/photo-1514733670139-4d87a1941d55?auto=format&fit=crop&w=600&q=80';
     }
-    if (t.contains('chip') || t.contains('chips') || (t.contains('camote') && t.contains('horno'))) {
-      return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=600&q=80';
+    if (t.contains('chip') || t.contains('chips') || (t.contains('camote') && t.contains('betabel'))) {
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/chips_camote_morado_betabel.jpg';
     }
     if (t.contains('mandarina') || t.contains('naranja') || t.contains('citrico') || t.contains('cítrico')) {
       return 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=600&q=80';
     }
     if (t.contains('compota') || t.contains('guayaba')) {
-      return 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?auto=format&fit=crop&w=600&q=80';
+      return 'https://raw.githubusercontent.com/alainmichelfl/app_recetas/main/web/recetas/compota_manzana_guayaba_canela.jpg';
     }
     if (t.contains('bocadito') || t.contains('energy ball') || t.contains('trufa')) {
       if (!t.contains('perro') && !t.contains('canin') && !t.contains('dog')) {

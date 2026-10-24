@@ -511,6 +511,31 @@ void main() {
         titulo: 'Licuado de Avena, Plátano y Crema de Maní',
       );
       expect(imgLicuadoAvena, contains('licuado_avena_platano_mani'));
+
+      // 6. Semántica Bloque 8 (Discordancias de Otoño)
+      final imgChipsCamote = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 141,
+        titulo: 'Chips de Camote Morado y Betabel al Horno',
+      );
+      expect(imgChipsCamote, contains('chips_camote_morado_betabel'));
+
+      final imgCompota = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 140,
+        titulo: 'Compota Tibia de Manzana y Guayaba con Canela',
+      );
+      expect(imgCompota, contains('compota_manzana_guayaba_canela'));
+
+      final imgCamoteRelleno = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 137,
+        titulo: 'Camote Horneado Relleno de Pollo Deshebrado',
+      );
+      expect(imgCamoteRelleno, contains('camote_horneado_relleno_pollo'));
+
+      final imgCremaCalabaza = ServicioRecetas.obtenerImagenOptimizada(
+        idReceta: 138,
+        titulo: 'Crema Ligera de Calabaza con Hongos Salteados',
+      );
+      expect(imgCremaCalabaza, contains('crema_calabaza_hongos_salteados'));
     });
 
     test('auditarImagenReceta identifica y sanea URLs discordantes o en lista negra', () {
